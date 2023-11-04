@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>git学习记录</title>
+    <link href="/2023/11/04/git%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/"/>
+    <url>/2023/11/04/git%E5%AD%A6%E4%B9%A0%E8%AE%B0%E5%BD%95/</url>
+    
+    <content type="html"><![CDATA[<p>网站学习链接：<a href="https://learngitbranching.js.org/?locale=zh_CN">https://learngitbranching.js.org/?locale=zh_CN</a></p><p>经验贴：<a href="https://zhuanlan.zhihu.com/p/383960650">https://zhuanlan.zhihu.com/p/383960650</a></p><ul><li><code>git brach -b &lt;branchName&gt;</code> 新建一个<code>branchName</code>分支，并切换到那个分支</li><li><code>git checkout branchName^</code> 使得HEAD指向<code>branchName</code>的前一个分支，有几个<code>^</code>就代表前移几个，如果<code>branchName</code> 有多个parent，那么<code>^num</code> 就是指选择跳到第几个parent</li><li><code>git checkout branchName~2</code> 使得HEAD指向<code>branchName</code> 的前2个分支，如果没有后面的数字就是默认1</li><li><code>git checkout HEAD~^2~2</code> ,<code>git branch -f bugWork HEAD~^2^</code>git的操作符还支持链式操作</li><li><code>git revert</code>用于撤销提交，生成一条新的提交来覆盖之前的修改，保留修改历史，语法：<code>git revert &lt;commit&gt;</code> ，其中，<code>&lt;commit&gt;</code>是<strong>要撤销的提交</strong>的哈希值或引用</li><li><code>git reset</code>用于重置分支的指针，可以选择保留或丢弃之前的修改，改变提交历史，语法：<code>git reset &lt;commit&gt;</code> ，其中，<code>&lt;commit&gt;</code>是<strong>要重置到的目标提交</strong>的哈希值或引用。<ul><li><code>-soft</code>：重置分支的指针，但不改变工作区和暂存区的内容。之前的修改将被保留在暂存区中，你可以随时重新提交它们。</li><li><code>-mixed</code>（默认选项）：重置分支的指针，并清除暂存区的内容。之前的修改将保留在工作区中，但不会自动提交。</li><li><code>-hard</code>：重置分支的指针，并清除暂存区和工作区的内容。之前的修改将完全丢失，慎用该选项。</li></ul></li><li>使用<code>git reset</code>会改变分支的提交历史。如果你在公共分支上使用<code>git reset</code>，并将其推送到远程仓库，可能会导致其他人的问题。因此，在公共分支上通常更推荐使用<code>git revert</code>。</li><li><code>git rebase &lt;branch&gt; &lt;based_branch&gt;</code> 可以指定将branch对based_branch进行rebase</li><li><code>git cherry-pick commit1 commit2</code> 可以将两个commit放到HEAD后面,注意commit的顺序就是这里排列的顺序</li><li><code>git rebase -i HEAD~4</code> 是一个 Git 命令，用于以<strong>交互方式</strong>进行历史提交的重新整理（rebase）。该命令允许你修改最近的 4 个提交，可以根据需要修改这些操作命令。常见的操作命令包括 “pick”（保留提交）、”edit”（修改提交）、”reword”（修改提交信息）、”squash”（合并提交）等。</li><li><code>git rebase</code></li><li><code>git branch -f main caption</code> 用于将分支<code>main</code>的指针强制移动到指定的提交<code>caption</code>上。</li><li><code>git commit --amend</code>是一个用于修改最近一次提交的Git命令。</li><li><code>git tag tagName commitName</code> 给c1提交赋上v0标签。</li><li><code>git describe &lt;commit&gt;</code> 如果不指定<code>&lt;commit&gt;</code>，则默认使用当前所在的提交。如果这个<code>&lt;commit&gt;</code> 有标签就输出相应的标签，如果没有就会去找最近的标签，生成一个描述，格式为<code>&lt;tag&gt;-&lt;num&gt;-g&lt;hash&gt;</code>，其中<code>&lt;tag&gt;</code>是最近的标签，<code>&lt;num&gt;</code>是指定提交与最近标签之间的提交数，<code>&lt;hash&gt;</code>是指定提交的简短哈希值。</li><li><code>git fetch</code> 会获取远程厂库的所有分支的所有提交记录，并把<code>orgin/xxx</code> 指向对应的远程提交，但是它并不会更改本地的内容还有本地的分支</li><li><code>git pull</code> 实际上是<code>git fetch</code>和<code>git merge</code>的合集，它会获取远程更新并与当前对应分支合并</li><li><code>git pull --rebase</code> 是<code>git fetch</code> 和<code>git rebase</code> 的合集，它会获取远程更新并对其进行rebase</li><li><code>git push</code> 实际上会merge本地拷贝的<code>origin/xxxx</code>分支然后再提交</li><li><code>git checkout -b foo origin/main</code> 可以把<code>foo</code>和远程分支<code>origin/main</code>绑定起来</li><li><code>git branch -u o/main foo</code> 使得foo分支直接绑定远程分支main，如果当前分支就是foo，就可省略foo</li><li><code>git branch -m &lt;old_branch_name&gt; &lt;new_branch_name&gt;</code> 可以修改branch的名字</li><li><code>git push origin main</code> 将本地 <code>main</code> 分支的提交推送到远程仓库 <code>origin</code> 的 <code>main</code> 分支的命令。</li><li><code>git push origin &lt;source&gt;:&lt;destination&gt;</code> 将本地 <code>&lt;source&gt;</code> 分支的提交推送到远程仓库 <code>origin</code> 的 <code>&lt;destination&gt;</code> 分支的命令。这样可以将本地的修改共享给其他协作者，并将本地分支映射到远程仓库的不同分支。<code>source</code>既可以是<code>branch</code>的名字也可以是某个指定的提交位置例如<code>HEAD~2</code></li><li><code>git fetch origin &lt;source&gt;:&lt;destination&gt;</code> 将远程的厂库<code>origin</code>的<code>source</code>分支更新到本地<code>destination</code>分支。注意<code>source</code>也是既可以是分支名也可以是某个指定的提交位置。注意这样子的<code>o/xxxx</code>分支不会进行变化</li><li><code>git push origin :side</code> 会删除远程的side分支</li><li><code>git fetch origin :bugFix</code> 会在本地创建一个bugFix分支</li><li><code>git pull origin foo</code> 相当于：<code>git fetch origin foo; git merge o/foo</code></li><li><code>git pull origin bar~1:bugFix</code> 相当于：<code>git fetch origin bar~1:bugFix; git merge bugFix</code></li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>git</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>原创</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>博客基础使用指南</title>
     <link href="/2023/11/04/%E5%8D%9A%E5%AE%A2%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/"/>
     <url>/2023/11/04/%E5%8D%9A%E5%AE%A2%E5%9F%BA%E7%A1%80%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/</url>
