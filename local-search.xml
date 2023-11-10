@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>如何写出优雅的代码</title>
+    <link href="/2023/11/09/%E5%A6%82%E4%BD%95%E5%86%99%E5%87%BA%E4%BC%98%E9%9B%85%E7%9A%84%E4%BB%A3%E7%A0%81/"/>
+    <url>/2023/11/09/%E5%A6%82%E4%BD%95%E5%86%99%E5%87%BA%E4%BC%98%E9%9B%85%E7%9A%84%E4%BB%A3%E7%A0%81/</url>
+    
+    <content type="html"><![CDATA[<h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>最近在写模拟器的代码，现在需要对整体的架构都进行一个大更改，而当我回过头去看时发现好多代码都写得很丑，越写越像屎山代码，需要对整体进行一轮迭代，故而正好趁此机会来学习一下如何写一个优雅的代码。写之前看了很多博客，这里记录一下对自己比较有启发的点。</p><h1 id="什么是优雅的代码"><a href="#什么是优雅的代码" class="headerlink" title="什么是优雅的代码"></a>什么是优雅的代码</h1><pre><code class="hljs">这一个衡量标准很直接：WTF min</code></pre><p><img src="https://mmbiz.qpic.cn/mmbiz_png/33P2FdAnjuibGJqPnYuKRU1D9yoltx6VPpxMnzkicnR3QO7lOuQ2pD2g9FcctvNhic64V5WtsnNXSku4MqB4JKbnw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1" alt="优雅的代码"></p><p>代码最后还是需要给人读的，需要认识到：</p><pre><code class="hljs">任何一个傻瓜都能写出计算机可以理解的代码。唯有写出人类容易理解的代码，才是优秀的程序员。—— Martin Fowler</code></pre><p>好的代码最重要的特点：整洁</p><pre><code class="hljs">整洁的代码如同优美的散文。—— Grady Booch</code></pre><h1 id="如何保证代码整洁"><a href="#如何保证代码整洁" class="headerlink" title="如何保证代码整洁"></a>如何保证代码整洁</h1><h2 id="1-有意义的命名"><a href="#1-有意义的命名" class="headerlink" title="1. 有意义的命名"></a>1. 有意义的命名</h2><p>命名要尽可能地输出多的信息，让人能快速理解这个类、变量或者函数的含义、功能。<strong>花时间来取名是值得的</strong></p><figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"><span class="hljs-comment">/**</span><br><span class="hljs-comment">* 创建后的天数</span><br><span class="hljs-comment">**/</span><br><span class="hljs-built_in">int</span> d;<br></code></pre></td></tr></table></figure><figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf">int daysSinceCreation<span class="hljs-comment">;</span><br></code></pre></td></tr></table></figure><p>后一种命名就能够更加凸显变量的含义了。</p><p>命名是越短越好的，但是为了能够清晰表达意思，取长名字也是值得的。</p><p>尽量不要取相似的名字以让人困惑。</p><h2 id="2-优雅的注释"><a href="#2-优雅的注释" class="headerlink" title="2. 优雅的注释"></a>2. 优雅的注释</h2><p>一份优雅的代码本身就应该具有足够的表达力，不需要注释就能看懂。<strong>注释的存在往往是弥补我们无法用代码清晰表达意图的情况</strong>。当发现自己需要对某处的代码写注释时就需要考虑是不是应该用更好的代码对其进行替代了。</p><pre><code class="hljs">好代码&gt;&gt;坏代码+注释</code></pre><p>注释应该只需要注重解释上层的东西，包括设计的意图、功能，而不需要解释执行的细节，这由代码来进行展示。</p><p>注释不要去写能由git记录的信息。</p><h2 id="3-简洁的函数"><a href="#3-简洁的函数" class="headerlink" title="3. 简洁的函数"></a>3. 简洁的函数</h2><p>控制函数的长度，一般不要长于一个屏幕的大小，也就是<strong>控制在30行以内</strong></p><p><strong>if语句、else语句、while语句等，其中的代码应该只有一行</strong>，该行通常是一个调用语句，这样不但能保持短小，还可以给调用方法命名一个有说明性的名字，进一步增加代码的可读性</p><p>函数的功能要单一，具有原子性，以方便函数复用。最简单的规则就是看看该方法是否能在拆出一个方法，且拆出去的方法是不同于该方法的诠释和实现。</p><p>需要保证函数中的抽象层级一致。</p><p>不要返回null或者特殊对象等，不要传入null。</p><p>函数参数不要超过3个，如果超过就需要考虑将其抽象为类。</p><h2 id="4-整齐的代码结构"><a href="#4-整齐的代码结构" class="headerlink" title="4. 整齐的代码结构"></a>4. 整齐的代码结构</h2><p>一个文件的代码数量需要<strong>控制在200行以内</strong>，最多不要超过500行。</p><p>关系紧密的代码放在一起</p><ul><li>变量声明放在其使用的位置</li><li>函数的调用者要放在被调用者上面，以从上到下展示调用依赖顺序</li></ul><p>对象暴露行为，隐藏数据，调用对象时不应该了解该对象的内部情况。</p><p>一组代码代表一个完整的思路，不同组的代码中间要用空行间隔。</p><h2 id="5-重构代码"><a href="#5-重构代码" class="headerlink" title="5. 重构代码"></a>5. 重构代码</h2><p>好代码不是一蹴而就的，重构代码是必要的。</p><p>重复的代码肯定是可以抽象出一个上层函数的。</p><ul><li>都同一个类中就考虑将其提炼出一个函数</li><li>不在同一个类中，就需要考虑创建一个共享的地方，可以是一个工具类，以便多个类都可以使用它</li><li>只是相似的话，可以重拍顺序，将相同的部分提料出来</li></ul><p>过长的函数可以通过提取函数的方式来缩短。</p><p>如果一个类不是单一职责的，则可能会导致一旦其变化就需要修改多个其他类，或者不同类的变化都需要修改这个类，这时就需要考虑对其重构，划定职责。</p><p>有时候会发现三四个相同的字段，在多个类和函数中均出现，这时候说明有必要给这一组字段建立一个类，将其封装起来。</p><p>以查询代替临时变量，也就是对于复杂的赋值表达式，使用函数来进行替代。</p><p>对于复杂过长的函数，可能将其转化为一个类进行重构。</p><h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>写一份优雅的代码远比写一份能跑的代码难，但是这是值得的。想如何写代码远比写代码来得更加重要，写代码时的角度需要变化，不要以自己的角度去看自己写的代码，而是要以一个代码阅读者的角度来审视自己的代码。</p><h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><ul><li><a href="https://mp.weixin.qq.com/s?__biz=MzAxNDEwNjk5OQ==&mid=2650403801&idx=1&sn=5dab2af09f753fd089fe0f1f56260b10&chksm=83953bc1b4e2b2d79f78028ed6e79651167d85bf67453af791d9304fa4003eed73d9f2957fc7&scene=21#wechat_redirect">阿里工程师谈，什么是好的代码？</a></li><li><a href="https://developer.aliyun.com/article/1117703">一文详解｜如何写出优雅的代码</a></li><li><a href="https://www.zhihu.com/question/28492982">如何写出优雅的代码？</a></li><li><a href="https://juejin.cn/post/7016992016521232421">如何写出优雅的代码？</a></li><li><a href="https://github.com/CodingDocs/advanced-programmer/blob/master/docs/%E5%85%AB%E7%82%B9%E5%BB%BA%E8%AE%AE%E5%8A%A9%E6%82%A8%E5%86%99%E5%87%BA%E4%BC%98%E9%9B%85%E7%9A%84Java%E4%BB%A3%E7%A0%81.md">八点建议助您写出优雅的Java代码</a></li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>代码风格</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>原创</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>【论文阅读】MapReduce: Simplified Data Processing on Large Clusters</title>
     <link href="/2023/11/05/MapReducePaperRead/"/>
     <url>/2023/11/05/MapReducePaperRead/</url>
