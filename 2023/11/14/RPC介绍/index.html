@@ -16,24 +16,24 @@
   <meta name="author" content="John Doe">
   <meta name="keywords" content="">
   
-    <meta name="description" content="引言最近在写模拟器的代码，现在需要对整体的架构都进行一个大更改，而当我回过头去看时发现好多代码都写得很丑，越写越像屎山代码，需要对整体进行一轮迭代，故而正好趁此机会来学习一下如何写一个优雅的代码。写之前看了很多博客，这里记录一下对自己比较有启发的点。 什么是优雅的代码这一个衡量标准很直接：WTF min   代码最后还是需要给人读的，需要认识到： 任何一个傻瓜都能写出计算机可以理解的代码。唯有写出">
+    <meta name="description" content="最近在学MIT6.824的lab1——MapReduce，发现其中使用到了RPC来让work和coordinator之间通信，故而乘机学习一下。  介绍RPC（Remote Procedure Call，远程过程调用）是一种在分布式系统中进行进程间通信的协议。它允许一个程序（客户端）调用另一个程序（服务器）上的函数或过程，就像调用本地函数一样，而不必关心底层网络细节。 在 RPC 中，客户端和服务">
 <meta property="og:type" content="article">
-<meta property="og:title" content="如何写出优雅的代码">
-<meta property="og:url" content="http://example.com/2023/11/09/%E5%A6%82%E4%BD%95%E5%86%99%E5%87%BA%E4%BC%98%E9%9B%85%E7%9A%84%E4%BB%A3%E7%A0%81/index.html">
+<meta property="og:title" content="RPC介绍">
+<meta property="og:url" content="http://example.com/2023/11/14/RPC%E4%BB%8B%E7%BB%8D/index.html">
 <meta property="og:site_name" content="滑滑蛋的个人博客">
-<meta property="og:description" content="引言最近在写模拟器的代码，现在需要对整体的架构都进行一个大更改，而当我回过头去看时发现好多代码都写得很丑，越写越像屎山代码，需要对整体进行一轮迭代，故而正好趁此机会来学习一下如何写一个优雅的代码。写之前看了很多博客，这里记录一下对自己比较有启发的点。 什么是优雅的代码这一个衡量标准很直接：WTF min   代码最后还是需要给人读的，需要认识到： 任何一个傻瓜都能写出计算机可以理解的代码。唯有写出">
+<meta property="og:description" content="最近在学MIT6.824的lab1——MapReduce，发现其中使用到了RPC来让work和coordinator之间通信，故而乘机学习一下。  介绍RPC（Remote Procedure Call，远程过程调用）是一种在分布式系统中进行进程间通信的协议。它允许一个程序（客户端）调用另一个程序（服务器）上的函数或过程，就像调用本地函数一样，而不必关心底层网络细节。 在 RPC 中，客户端和服务">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://camo.githubusercontent.com/ded622d3db4ad28f7b47098ae182c09dc1d629c90f487a885f683527825ecc94/687474703a2f2f692e737461636b2e696d6775722e636f6d2f65545a76572e6a7067">
-<meta property="article:published_time" content="2023-11-09T15:36:55.000Z">
-<meta property="article:modified_time" content="2023-11-10T02:55:52.789Z">
+<meta property="og:image" content="https://pic4.zhimg.com/45366c44f775abfd0ac3b43bccc1abc3_b">
+<meta property="article:published_time" content="2023-11-13T16:01:14.000Z">
+<meta property="article:modified_time" content="2023-11-14T15:15:26.231Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="原创">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://camo.githubusercontent.com/ded622d3db4ad28f7b47098ae182c09dc1d629c90f487a885f683527825ecc94/687474703a2f2f692e737461636b2e696d6775722e636f6d2f65545a76572e6a7067">
+<meta name="twitter:image" content="https://pic4.zhimg.com/45366c44f775abfd0ac3b43bccc1abc3_b">
   
   
   
-  <title>如何写出优雅的代码 - 滑滑蛋的个人博客</title>
+  <title>RPC介绍 - 滑滑蛋的个人博客</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -241,7 +241,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="如何写出优雅的代码"></span>
+            <span id="subtitle" data-typed-text="RPC介绍"></span>
           
         </div>
 
@@ -252,8 +252,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2023-11-09 23:36" pubdate>
-          2023年11月9日 晚上
+        <time datetime="2023-11-14 00:01" pubdate>
+          2023年11月14日 凌晨
         </time>
       </span>
     
@@ -264,7 +264,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.5k 字
+          2.7k 字
         
       </span>
     
@@ -275,7 +275,7 @@
         
         
         
-          8 分钟
+          14 分钟
         
       </span>
     
@@ -320,66 +320,45 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">如何写出优雅的代码</h1>
+            <h1 id="seo-header">RPC介绍</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>最近在写模拟器的代码，现在需要对整体的架构都进行一个大更改，而当我回过头去看时发现好多代码都写得很丑，越写越像屎山代码，需要对整体进行一轮迭代，故而正好趁此机会来学习一下如何写一个优雅的代码。写之前看了很多博客，这里记录一下对自己比较有启发的点。</p>
-<h1 id="什么是优雅的代码"><a href="#什么是优雅的代码" class="headerlink" title="什么是优雅的代码"></a>什么是优雅的代码</h1><pre><code class="hljs">这一个衡量标准很直接：WTF min
+                <pre><code class="hljs">最近在学MIT6.824的lab1——MapReduce，发现其中使用到了RPC来让work和coordinator之间通信，故而乘机学习一下。
 </code></pre>
-<p><img src="https://camo.githubusercontent.com/ded622d3db4ad28f7b47098ae182c09dc1d629c90f487a885f683527825ecc94/687474703a2f2f692e737461636b2e696d6775722e636f6d2f65545a76572e6a7067" srcset="/img/loading.gif" lazyload alt="优雅的代码"></p>
-<p>代码最后还是需要给人读的，需要认识到：</p>
-<pre><code class="hljs">任何一个傻瓜都能写出计算机可以理解的代码。唯有写出人类容易理解的代码，才是优秀的程序员。—— Martin Fowler
-</code></pre>
-<p>好的代码最重要的特点：整洁</p>
-<pre><code class="hljs">整洁的代码如同优美的散文。—— Grady Booch
-</code></pre>
-<h1 id="如何保证代码整洁"><a href="#如何保证代码整洁" class="headerlink" title="如何保证代码整洁"></a>如何保证代码整洁</h1><h2 id="1-有意义的命名"><a href="#1-有意义的命名" class="headerlink" title="1. 有意义的命名"></a>1. 有意义的命名</h2><p>命名要尽可能地输出多的信息，让人能快速理解这个类、变量或者函数的含义、功能。<strong>花时间来取名是值得的</strong></p>
-<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"><span class="hljs-comment">/**</span><br><span class="hljs-comment">* 创建后的天数</span><br><span class="hljs-comment">**/</span><br><span class="hljs-built_in">int</span> d;<br></code></pre></td></tr></table></figure>
-<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf">int daysSinceCreation<span class="hljs-comment">;</span><br></code></pre></td></tr></table></figure>
+<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>RPC（Remote Procedure Call，远程过程调用）是一种在分布式系统中进行进程间通信的协议。它允许一个程序（客户端）调用另一个程序（服务器）上的函数或过程，就像调用本地函数一样，而不必关心底层网络细节。</p>
+<p>在 RPC 中，客户端和服务器可以在不同的机器上，甚至在不同的网络上。RPC 提供了一种抽象，使得远程调用看起来就像是本地调用一样。通过 RPC，程序可以通过网络传输数据和调用远程函数，使得分布式系统中的组件可以协同工作。</p>
+<p>其整体流程如下图所示：</p>
+<p><img src="https://pic4.zhimg.com/45366c44f775abfd0ac3b43bccc1abc3_b" srcset="/img/loading.gif" lazyload alt="RPC流程"></p>
+<p>对于RPC需要关注的主要有三点：</p>
+<ul>
+<li><strong>通信协议：</strong> RPC可以基于TCP或者HTTP协议，一般而言TCP的协议更快</li>
+<li><strong>寻址：</strong> 远程提供服务器需要提供服务所在地址，例如IP和端口</li>
+<li><strong>数据序列化：</strong> 远程调用无法依据内存进行参数和结果传递，所以需要规定序列化的格式，例如Json格式</li>
+</ul>
+<p>常用的RPC框架有如下这些： </p>
+<ul>
+<li>Thrift：thrift是一个软件框架，用来进行可扩展且跨语言的服务的开发。它结合了功能强大的软件堆栈和代码生成引擎，以构建在 C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#, Cocoa, JavaScript, Node.js, Smalltalk, and OCaml 这些编程语言间无缝结合的、高效的服务。</li>
+<li>gRPC：一开始由 google 开发，是一款语言中立、平台中立、开源的远程过程调用(RPC)系统。</li>
+<li>Dubbo：Dubbo是一个分布式服务框架，以及SOA治理方案。其功能主要包括：高性能NIO通讯及多协议集成，服务动态寻址与路由，软负载均衡与容错，依赖分析与降级等。Dubbo是阿里巴巴内部的SOA服务化治理方案的核心框架，Dubbo自2011年开源后，已被许多非阿里系公司使用。</li>
+<li>Spring Cloud：Spring Cloud由众多子项目组成，如Spring Cloud Config、Spring Cloud Netflix、Spring Cloud Consul 等，提供了搭建分布式系统及微服务常用的工具，如配置管理、服务发现、断路器、智能路由、微代理、控制总线、一次性token、全局锁、选主、分布式会话和集群状态等，满足了构建微服务所需的所有解决方案。Spring Cloud基于Spring Boot, 使得开发部署极其简单。</li>
+</ul>
+<h1 id="GO语言示例"><a href="#GO语言示例" class="headerlink" title="GO语言示例"></a>GO语言示例</h1><p>在 Go 语言中，标准库提供了一个 net&#x2F;rpc 包，用于实现 RPC。基本的使用流程包括注册对象、注册服务、处理请求等。以下是一个简单的 Go RPC 例子：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;net&quot;</span><br>	<span class="hljs-string">&quot;net/rpc&quot;</span><br>)<br><br><span class="hljs-comment">// 定义一个用于 RPC 的对象</span><br><span class="hljs-keyword">type</span> MyService <span class="hljs-keyword">struct</span>&#123;&#125;<br><br><span class="hljs-comment">// 定义一个 RPC 方法</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *MyService)</span></span> Multiply(args *Args, reply *<span class="hljs-type">int</span>) <span class="hljs-type">error</span> &#123;<br>	*reply = args.A * args.B<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-comment">// 定义传递给 RPC 方法的参数结构</span><br><span class="hljs-keyword">type</span> Args <span class="hljs-keyword">struct</span> &#123;<br>	A, B <span class="hljs-type">int</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-comment">// 注册服务</span><br>	rpc.Register(<span class="hljs-built_in">new</span>(MyService))<br><br>	<span class="hljs-comment">// 创建监听器</span><br>	listener, err := net.Listen(<span class="hljs-string">&quot;tcp&quot;</span>, <span class="hljs-string">&quot;:1234&quot;</span>)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-built_in">panic</span>(err)<br>	&#125;<br><br>	<span class="hljs-comment">// 处理连接</span><br>	<span class="hljs-keyword">for</span> &#123;<br>		conn, err := listener.Accept()<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">continue</span><br>		&#125;<br>		<span class="hljs-keyword">go</span> rpc.ServeConn(conn)<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
-<p>后一种命名就能够更加凸显变量的含义了。</p>
-<p>命名是越短越好的，但是为了能够清晰表达意思，取长名字也是值得的。</p>
-<p>尽量不要取相似的名字以让人困惑。</p>
-<h2 id="2-优雅的注释"><a href="#2-优雅的注释" class="headerlink" title="2. 优雅的注释"></a>2. 优雅的注释</h2><p>一份优雅的代码本身就应该具有足够的表达力，不需要注释就能看懂。<strong>注释的存在往往是弥补我们无法用代码清晰表达意图的情况</strong>。当发现自己需要对某处的代码写注释时就需要考虑是不是应该用更好的代码对其进行替代了。</p>
-<pre><code class="hljs">好代码&gt;&gt;坏代码+注释
-</code></pre>
-<p>注释应该只需要注重解释上层的东西，包括设计的意图、功能，而不需要解释执行的细节，这由代码来进行展示。</p>
-<p>注释不要去写能由git记录的信息。</p>
-<h2 id="3-简洁的函数"><a href="#3-简洁的函数" class="headerlink" title="3. 简洁的函数"></a>3. 简洁的函数</h2><p>控制函数的长度，一般不要长于一个屏幕的大小，也就是<strong>控制在30行以内</strong></p>
-<p><strong>if语句、else语句、while语句等，其中的代码应该只有一行</strong>，该行通常是一个调用语句，这样不但能保持短小，还可以给调用方法命名一个有说明性的名字，进一步增加代码的可读性</p>
-<p>函数的功能要单一，具有原子性，以方便函数复用。最简单的规则就是看看该方法是否能在拆出一个方法，且拆出去的方法是不同于该方法的诠释和实现。</p>
-<p>需要保证函数中的抽象层级一致。</p>
-<p>不要返回null或者特殊对象等，不要传入null。</p>
-<p>函数参数不要超过3个，如果超过就需要考虑将其抽象为类。</p>
-<h2 id="4-整齐的代码结构"><a href="#4-整齐的代码结构" class="headerlink" title="4. 整齐的代码结构"></a>4. 整齐的代码结构</h2><p>一个文件的代码数量需要<strong>控制在200行以内</strong>，最多不要超过500行。</p>
-<p>关系紧密的代码放在一起</p>
-<ul>
-<li>变量声明放在其使用的位置</li>
-<li>函数的调用者要放在被调用者上面，以从上到下展示调用依赖顺序</li>
-</ul>
-<p>对象暴露行为，隐藏数据，调用对象时不应该了解该对象的内部情况。</p>
-<p>一组代码代表一个完整的思路，不同组的代码中间要用空行间隔。</p>
-<h2 id="5-重构代码"><a href="#5-重构代码" class="headerlink" title="5. 重构代码"></a>5. 重构代码</h2><p>好代码不是一蹴而就的，重构代码是必要的。</p>
-<p>重复的代码肯定是可以抽象出一个上层函数的。</p>
-<ul>
-<li>都同一个类中就考虑将其提炼出一个函数</li>
-<li>不在同一个类中，就需要考虑创建一个共享的地方，可以是一个工具类，以便多个类都可以使用它</li>
-<li>只是相似的话，可以重拍顺序，将相同的部分提料出来</li>
-</ul>
-<p>过长的函数可以通过提取函数的方式来缩短。</p>
-<p>如果一个类不是单一职责的，则可能会导致一旦其变化就需要修改多个其他类，或者不同类的变化都需要修改这个类，这时就需要考虑对其重构，划定职责。</p>
-<p>有时候会发现三四个相同的字段，在多个类和函数中均出现，这时候说明有必要给这一组字段建立一个类，将其封装起来。</p>
-<p>以查询代替临时变量，也就是对于复杂的赋值表达式，使用函数来进行替代。</p>
-<p>对于复杂过长的函数，可能将其转化为一个类进行重构。</p>
-<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>写一份优雅的代码远比写一份能跑的代码难，但是这是值得的。想如何写代码远比写代码来得更加重要，写代码时的角度需要变化，不要以自己的角度去看自己写的代码，而是要以一个代码阅读者的角度来审视自己的代码。</p>
-<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzAxNDEwNjk5OQ==&mid=2650403801&idx=1&sn=5dab2af09f753fd089fe0f1f56260b10&chksm=83953bc1b4e2b2d79f78028ed6e79651167d85bf67453af791d9304fa4003eed73d9f2957fc7&scene=21#wechat_redirect">阿里工程师谈，什么是好的代码？</a></li>
-<li><a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/1117703">一文详解｜如何写出优雅的代码</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/28492982">如何写出优雅的代码？</a></li>
-<li><a target="_blank" rel="noopener" href="https://juejin.cn/post/7016992016521232421">如何写出优雅的代码？</a></li>
-<li><a target="_blank" rel="noopener" href="https://github.com/CodingDocs/advanced-programmer/blob/master/docs/%E5%85%AB%E7%82%B9%E5%BB%BA%E8%AE%AE%E5%8A%A9%E6%82%A8%E5%86%99%E5%87%BA%E4%BC%98%E9%9B%85%E7%9A%84Java%E4%BB%A3%E7%A0%81.md">八点建议助您写出优雅的Java代码</a></li>
+<p>在该例子中，MyService 结构体中的 Multiply 方法被注册为 RPC 服务。通过监听端口 1234，该服务可以接收客户端的 RPC 调用请求。客户端可以通过 net&#x2F;rpc 包中的函数来发起远程调用。RPC 在分布式系统中广泛用于实现不同节点之间的通信和协作。</p>
+<p>以下是一个简单的 Go RPC 客户端的调用代码示例,程序需要确保 RPC 客户端的网络协议和端口与服务器端一致，这样它们才能正确地进行通信。在这个例子中，服务器端监听的是 TCP 端口 1234。：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;net/rpc&quot;</span><br>)<br><br><span class="hljs-comment">// 定义传递给 RPC 方法的参数结构</span><br><span class="hljs-keyword">type</span> Args <span class="hljs-keyword">struct</span> &#123;<br>	A, B <span class="hljs-type">int</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-comment">// 连接 RPC 服务器</span><br>	client, err := rpc.Dial(<span class="hljs-string">&quot;tcp&quot;</span>, <span class="hljs-string">&quot;localhost:1234&quot;</span>)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-built_in">panic</span>(err)<br>	&#125;<br>	<span class="hljs-keyword">defer</span> client.Close()<br><br>	<span class="hljs-comment">// 准备 RPC 调用的参数</span><br>	args := Args&#123;<span class="hljs-number">3</span>, <span class="hljs-number">4</span>&#125;<br><br>	<span class="hljs-comment">// 调用 Multiply 方法</span><br>	<span class="hljs-keyword">var</span> result <span class="hljs-type">int</span><br>	err = client.Call(<span class="hljs-string">&quot;MyService.Multiply&quot;</span>, args, &amp;result)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-built_in">panic</span>(err)<br>	&#125;<br><br>	<span class="hljs-comment">// 打印结果</span><br>	fmt.Printf(<span class="hljs-string">&quot;Result of 3 * 4: %d\n&quot;</span>, result)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>在这个例子中，rpc.Dial 函数用于连接到服务器，然后通过 client.Call 方法调用远程的 Multiply 方法。在调用过程中，需要传递参数结构 Args 和一个用于接收结果的变量。最后，打印出调用结果:</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">Result</span> of <span class="hljs-number">3</span> * <span class="hljs-number">4</span>: <span class="hljs-number">12</span><br></code></pre></td></tr></table></figure>
+
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://jaminzhang.github.io/architecture/RPC-Introduction/">https://jaminzhang.github.io/architecture/RPC-Introduction/</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/187560185">https://zhuanlan.zhihu.com/p/187560185</a></li>
+<li><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/2021745">https://cloud.tencent.com/developer/article/2021745</a></li>
+<li><a target="_blank" rel="noopener" href="https://chat.openai.com/">ChatGPT</a></li>
 </ul>
 
                 
@@ -399,8 +378,15 @@
     
       <span class="category-chain">
         
-  <a href="/categories/%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC/" class="category-chain-item">代码风格</a>
+  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="category-chain-item">分布式</a>
   
+  
+    <span>></span>
+    
+  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/go/" class="category-chain-item">go</a>
+  
+  
+
   
 
       </span>
@@ -426,8 +412,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>如何写出优雅的代码</div>
-      <div>http://example.com/2023/11/09/如何写出优雅的代码/</div>
+      <div>RPC介绍</div>
+      <div>http://example.com/2023/11/14/RPC介绍/</div>
     </div>
     <div class="license-meta">
       
@@ -439,7 +425,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2023年11月9日</div>
+          <div>2023年11月14日</div>
         </div>
       
       
@@ -471,18 +457,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2023/11/14/RPC%E4%BB%8B%E7%BB%8D/" title="RPC介绍">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">RPC介绍</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2023/11/05/MapReducePaperRead/" title="【论文阅读】MapReduce: Simplified Data Processing on Large Clusters">
-                        <span class="hidden-mobile">【论文阅读】MapReduce: Simplified Data Processing on Large Clusters</span>
+                      <a href="/2023/11/09/%E5%A6%82%E4%BD%95%E5%86%99%E5%87%BA%E4%BC%98%E9%9B%85%E7%9A%84%E4%BB%A3%E7%A0%81/" title="如何写出优雅的代码">
+                        <span class="hidden-mobile">如何写出优雅的代码</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
