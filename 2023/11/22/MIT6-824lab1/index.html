@@ -23,18 +23,18 @@
 <meta property="og:site_name" content="滑滑蛋的个人博客">
 <meta property="og:description" content="MIT6.824是一门经典的分布式课程，课程链接：https:&#x2F;&#x2F;pdos.csail.mit.edu&#x2F;6.824&#x2F;labs&#x2F;lab-mr.html，对于lab 1我们需要在提供的代码框架的基础上补充coordinator和worker的代码，以实现分布式的MapReduce程序。 本人在借鉴了部分其他人的设计思想的基础上，独立完成了所有的代码，最后设计的实现能够通过所有的测试脚本。 实现的代码厂">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/2023/11/22/MIT6-824lab1/MapReduce.png">
-<meta property="og:image" content="http://example.com/2023/11/22/MIT6-824lab1/coordinator%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.jpg">
-<meta property="og:image" content="http://example.com/2023/11/22/MIT6-824lab1/worker%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.jpg">
-<meta property="og:image" content="http://example.com/2023/11/22/MIT6-824lab1/%E4%B8%AD%E9%97%B4%E6%96%87%E4%BB%B6.jpg">
-<meta property="og:image" content="http://example.com/2023/11/22/MIT6-824lab1/%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C.jpg">
-<meta property="og:image" content="http://example.com/2023/11/22/MIT6-824lab1/%E6%B5%8B%E8%AF%95%E8%84%9A%E6%9C%AC%E7%BB%93%E6%9E%9C.jpg">
+<meta property="og:image" content="http://example.com/MIT6-824lab1/MapReduce.png">
+<meta property="og:image" content="http://example.com/MIT6-824lab1/coordinator%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.jpg">
+<meta property="og:image" content="http://example.com/MIT6-824lab1/worker%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.jpg">
+<meta property="og:image" content="http://example.com/MIT6-824lab1/%E4%B8%AD%E9%97%B4%E6%96%87%E4%BB%B6.jpg">
+<meta property="og:image" content="http://example.com/MIT6-824lab1/%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C.jpg">
+<meta property="og:image" content="http://example.com/MIT6-824lab1/%E6%B5%8B%E8%AF%95%E8%84%9A%E6%9C%AC%E7%BB%93%E6%9E%9C.jpg">
 <meta property="article:published_time" content="2023-11-22T10:41:04.000Z">
-<meta property="article:modified_time" content="2023-11-23T07:54:33.105Z">
+<meta property="article:modified_time" content="2023-11-23T08:22:14.666Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="原创">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/2023/11/22/MIT6-824lab1/MapReduce.png">
+<meta name="twitter:image" content="http://example.com/MIT6-824lab1/MapReduce.png">
   
   
   
@@ -342,7 +342,7 @@
 <h1 id="总体设计"><a href="#总体设计" class="headerlink" title="总体设计"></a>总体设计</h1><p><strong>worker</strong>会不断向coordinator发送心跳，申请任务，拿到任务后进行map或者renduce类型的task的执行，在执行完毕后发送请求给coordinator以表示该任务完成了。当coordinator告诉其所有任务都完成时，他会结束运行</p>
 <p><strong>coordinator</strong>只维护task的状态不维护各个worker的状态。worker向其发送心跳申请任务时，coordinator会去遍历任务，取出还没有发送的任务或者过了太长时间都没有完成的任务返回回去，如果没有，就返回一个等待任务。coordinator接收到worker的某个任务完成的请求时会改变这个任务的状态，如果当前阶段所有的任务都完成了就转向下一个阶段，知道转到了所有MapReduce任务都完成的阶段。</p>
 <p>整体流程如下图所示：</p>
-<p><img src="/2023/11/22/MIT6-824lab1/MapReduce.png" srcset="/img/loading.gif" lazyload alt="MapReduce流程"></p>
+<p><img src="/./MIT6-824lab1/MapReduce.png" srcset="/img/loading.gif" lazyload alt="MapReduce流程"></p>
 <h1 id="rpc信息传递设计"><a href="#rpc信息传递设计" class="headerlink" title="rpc信息传递设计"></a>rpc信息传递设计</h1><h2 id="Heartbeat"><a href="#Heartbeat" class="headerlink" title="Heartbeat"></a>Heartbeat</h2><p>worker通过rpc向coordinator发送心跳（Heartbeat）来申请任务。如下：</p>
 <ul>
 <li><p>关键结构体定义如下，HeartbeatRequest是个空结构，HeartbeatResponse承载了coordinator返回给worker的信息，这里的信息实际上是运行map类型和reduce类型的task所必须的信息的集合。所有的返回都需要JobType来标明其类型，需要id来标明其是哪个作业，<strong>对于map类型作业</strong>，其额外需要FilePath来获取任务的输入，还需要NReduce来决定输出的数量，<strong>对于reduce类型作业</strong>，其额外需要NMap来辅助获取map类型的中间输出。</p>
@@ -395,15 +395,15 @@
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">atomicWriteFile</span><span class="hljs-params">(filename <span class="hljs-type">string</span>, reader io.Reader)</span></span> (err <span class="hljs-type">error</span>) &#123;<br>	tmpFileName, err := writeToTmpFile(filename, reader)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;cannot write to temp file: %v&quot;</span>, err)<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> err := os.Rename(tmpFileName, filename); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;cannot rename temp file: %v&quot;</span>, err)<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">writeToTmpFile</span><span class="hljs-params">(filename <span class="hljs-type">string</span>, reader io.Reader)</span></span> (tmpFileName <span class="hljs-type">string</span>, err <span class="hljs-type">error</span>) &#123;<br>	dir, file := filepath.Split(filename)<br>	<span class="hljs-keyword">if</span> dir == <span class="hljs-string">&quot;&quot;</span> &#123;<br>		dir = <span class="hljs-string">&quot;.&quot;</span><br>	&#125;<br><br>	tmpFile, err := os.CreateTemp(dir, file)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-string">&quot;&quot;</span>, fmt.Errorf(<span class="hljs-string">&quot;cannot create temp file: %v&quot;</span>, err)<br>	&#125;<br>	<span class="hljs-keyword">defer</span> tmpFile.Close()<br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			os.Remove(tmpFile.Name())<br>		&#125;<br>	&#125;()<br><br>	_, err = io.Copy(tmpFile, reader)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-string">&quot;&quot;</span>, fmt.Errorf(<span class="hljs-string">&quot;cannot write to temp file: %v&quot;</span>, err)<br>	&#125;<br>	<span class="hljs-keyword">if</span> err := tmpFile.Close(); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-string">&quot;&quot;</span>, fmt.Errorf(<span class="hljs-string">&quot;cannot close temp file: %v&quot;</span>, err)<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> tmpFile.Name(), <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
 
 <h1 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h1><p>coordinator运行结果:</p>
-<p><img src="/2023/11/22/MIT6-824lab1/coordinator%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.jpg" srcset="/img/loading.gif" lazyload alt="coordinator运行结果"></p>
+<p><img src="/./MIT6-824lab1/coordinator%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.jpg" srcset="/img/loading.gif" lazyload alt="coordinator运行结果"></p>
 <p>worker运行结果:</p>
-<p><img src="/2023/11/22/MIT6-824lab1/worker%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.jpg" srcset="/img/loading.gif" lazyload alt="worker运行结果"></p>
+<p><img src="/./MIT6-824lab1/worker%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C.jpg" srcset="/img/loading.gif" lazyload alt="worker运行结果"></p>
 <p>中间文件：</p>
-<p><img src="/2023/11/22/MIT6-824lab1/%E4%B8%AD%E9%97%B4%E6%96%87%E4%BB%B6.jpg" srcset="/img/loading.gif" lazyload alt="中间文件"></p>
+<p><img src="/./MIT6-824lab1/%E4%B8%AD%E9%97%B4%E6%96%87%E4%BB%B6.jpg" srcset="/img/loading.gif" lazyload alt="中间文件"></p>
 <p>输出结果：</p>
-<p><img src="/2023/11/22/MIT6-824lab1/%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C.jpg" srcset="/img/loading.gif" lazyload alt="输出结果"></p>
+<p><img src="/./MIT6-824lab1/%E8%BE%93%E5%87%BA%E7%BB%93%E6%9E%9C.jpg" srcset="/img/loading.gif" lazyload alt="输出结果"></p>
 <p>测试脚本结果：</p>
-<p><img src="/2023/11/22/MIT6-824lab1/%E6%B5%8B%E8%AF%95%E8%84%9A%E6%9C%AC%E7%BB%93%E6%9E%9C.jpg" srcset="/img/loading.gif" lazyload alt="测试脚本结果"></p>
+<p><img src="/./MIT6-824lab1/%E6%B5%8B%E8%AF%95%E8%84%9A%E6%9C%AC%E7%BB%93%E6%9E%9C.jpg" srcset="/img/loading.gif" lazyload alt="测试脚本结果"></p>
 <h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>最后进行脚本测试的时候发现early_exit这个点总是通不过，这个脚本会捕捉最早退出运行的进程，然后拷贝所有输出文件，然后再在所有进程都退出的时候拷贝所有输出文件，以此对比两个文件是否相同，来判断是否coordinator和所有的woker都在任务全部完成后再退出。</p>
 <p>后面仔细查看不通过的原因发现是因为其依靠下面的部分来进行捕捉退出的进程,本机器上使用的是<code>wait -n</code>,但是实际查看发现其并没有正确地在相关进程退出时进行触发，而是一开始就触发了，其触发时coordinator和所有worker其实都还在前台运行了，后面讲这部分改成了if里面的测试，就可以正常捕捉退出的进程然后顺利通过了。</p>
 <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-built_in">jobs</span> &amp;&gt; /dev/null<br><span class="hljs-keyword">if</span> [[ <span class="hljs-string">&quot;<span class="hljs-variable">$OSTYPE</span>&quot;</span> = <span class="hljs-string">&quot;darwin&quot;</span>* ]]<br><span class="hljs-keyword">then</span><br>  <span class="hljs-comment"># bash on the Mac doesn&#x27;t have wait -n</span><br>  <span class="hljs-keyword">while</span> [ ! -e <span class="hljs-variable">$DF</span> ]<br>  <span class="hljs-keyword">do</span><br>    <span class="hljs-built_in">sleep</span> 0.2<br>  <span class="hljs-keyword">done</span><br><span class="hljs-keyword">else</span><br>  <span class="hljs-comment"># the -n causes wait to wait for just one child process,</span><br>  <span class="hljs-comment"># rather than waiting for all to finish.</span><br>  <span class="hljs-built_in">wait</span> -n<br><span class="hljs-keyword">fi</span><br></code></pre></td></tr></table></figure>
@@ -517,6 +517,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2023/12/01/IDEA%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91%E9%80%89%E9%A1%B9%E4%B8%A2%E5%A4%B1%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95/" title="IDEA远程开发选项丢失修复方法">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">IDEA远程开发选项丢失修复方法</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
