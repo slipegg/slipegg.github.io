@@ -1,0 +1,877 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="The Google file System论文是MIT6.824中推荐阅读的论文，他是Google早期的三大论文之一，由于课程并不需要实现这个系统，所以就对整部论文中的关键点进行介绍总结。 相关背景为了满足Google快速增长的数据处理需求，Google需要自己构建一套文件系统——The Google file System(GFS)。而这套文件系统也必须是分布式的文件系统才足以满足要求，但是我">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【论文阅读】The Google file System">
+<meta property="og:url" content="http://example.com/2023/12/05/TheGoogleFileSystemPaperRead/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="The Google file System论文是MIT6.824中推荐阅读的论文，他是Google早期的三大论文之一，由于课程并不需要实现这个系统，所以就对整部论文中的关键点进行介绍总结。 相关背景为了满足Google快速增长的数据处理需求，Google需要自己构建一套文件系统——The Google file System(GFS)。而这套文件系统也必须是分布式的文件系统才足以满足要求，但是我">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2023/12/05/TheGoogleFileSystemPaperRead/GFSarch.png">
+<meta property="og:image" content="http://example.com/2023/12/05/TheGoogleFileSystemPaperRead/write.png">
+<meta property="og:image" content="http://example.com/2023/12/05/TheGoogleFileSystemPaperRead/consistent.jpg">
+<meta property="article:published_time" content="2023-12-05T09:21:31.000Z">
+<meta property="article:modified_time" content="2023-12-06T03:17:13.593Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="原创">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2023/12/05/TheGoogleFileSystemPaperRead/GFSarch.png">
+  
+  
+  
+  <title>【论文阅读】The Google file System - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【论文阅读】The Google file System"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-12-05 17:21" pubdate>
+          2023年12月5日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          12k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          61 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【论文阅读】The Google file System</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>The Google file System论文是MIT6.824中推荐阅读的论文，他是Google早期的三大论文之一，由于课程并不需要实现这个系统，所以就对整部论文中的关键点进行介绍总结。</p>
+<h1 id="相关背景"><a href="#相关背景" class="headerlink" title="相关背景"></a>相关背景</h1><p>为了满足Google快速增长的数据处理需求，Google需要自己构建一套文件系统——The Google file System(GFS)。而这套文件系统也必须是分布式的文件系统才足以满足要求，但是我们都知道这面临着很多困难：</p>
+<ul>
+<li>分布式的文件系统会使用大量的主机，而这会使得主机出错成为常态</li>
+<li>为了解决时不时的一部分主机出错带来的影响，我们需要对文件进行拷贝放置到多个主机上</li>
+<li>一旦文件有多份，我们就需要就其产生的一致性问题进行解决</li>
+<li>而保证一致性就又会导致系统的低性能</li>
+<li>一致性和低性能的取舍一直是一个研究的重点问题</li>
+</ul>
+<p>GFS就在解决上述问题，同时他也着重于解决自己场景下的问题，其设计的特点如下：</p>
+<ul>
+<li>故障设备经常发生</li>
+<li>文件比传统标准更大，数GB大小的文件是十分常见的</li>
+<li>系统负载主要来自两种读操作：大规模的流式读取和小规模的随机读取</li>
+<li>系统负载还来自很多对文件的大规模追加写入</li>
+<li>同时设计应用程序和文件系统API便于提高整个系统的灵活性</li>
+</ul>
+<h1 id="设计概述"><a href="#设计概述" class="headerlink" title="设计概述"></a>设计概述</h1><p><img src="/2023/12/05/TheGoogleFileSystemPaperRead/GFSarch.png" srcset="/img/loading.gif" lazyload alt="图1 GFS架构"></p>
+<p>如图1所示，一个GFS集群包括单个master（主服务器）和多个chunkserver（块服务器），并被多个client（客户端）访问。每个节点通常为一个运行着用户级服务进程的Linux主机。</p>
+<h2 id="chunk"><a href="#chunk" class="headerlink" title="chunk"></a>chunk</h2><p>文件被划分为若干个64MB大小的chunk（块）。每个chunk被一个不可变的全局唯一的64位chunk handle（块标识符）唯一标识，chunk handle在chunk被创建时由主节点分配。chunkserver将chunk作为Linux文件存储到本地磁盘中，通过chunk handle和byte range（字节范围）来确定需要被读写的chunk和chunk中的数据。为了可靠性考虑，每个chunk会在多个chunkserver中有副本。默认存储三份副本，用户也可以为不同的命名空间的域指定不同的副本级别。</p>
+<p>64MB大小的chunk其实并没有带来内部碎片，因为每个chunk的副本被作为普通的Linux文件存储在chunkserver上，linux文件上是以几KB为单位进行存储空间分配的，其仅在需要时扩展。懒式空间分配（lazy space allocation）避免了内部碎片（internal fragmentation）带来的空间浪费。</p>
+<p>同时一个较大的chunk带来了以下的优势：</p>
+<ol>
+<li>减少了client与master交互的次数，</li>
+<li>使得client可以在一个chunk上执行更多的操作</li>
+<li>减小了master中存储的云数据的大小</li>
+</ol>
+<p>需要注意的是如果多个client访问同一个文件，那么存储这这些文件的chunkserver会成为hot spot（热点）。但是因为应用程序大部分都顺序地读取包含很多chunk的大文件，所以hot spot不是主要问题。而如果出现这个问题，一个潜在的长期解决方案是在让client在这种场景下从其他client读取数据。</p>
+<h2 id="master"><a href="#master" class="headerlink" title="master"></a>master</h2><p>master维护系统所有的元数据。元数据包括命名空间（namespace）、访问控制（access control）信息、文件到chunk的映射和chunk当前的位置。master还控制系统级活动如chunk租约（chunk lease）管理、孤儿chunk垃圾回收（garbage collection of orphaned chunks）和chunkserver间的chunk迁移（migration）。master周期性地通过心跳（HeartBeat）消息与每个chunkserver通信，向其下达指令并采集其状态信息。</p>
+<p>文件和块的命名空间、文件到chunk的映射这两种类型还通过将变更记录到一个操作日志（operation log）的方式持久化存储在master的磁盘上。具体来说需要将操作日志备份到多台远程主机上，且只有当当前操作记录条目被本地和远程主机均写入到了磁盘后才能向客户端发出响应。master会在操作记录被写入前批量合并一些操作记录来减少写入和备份操作对整个系统吞吐量的影响。master会对其状态创建一个检查点（checkpoint），这样master就可以从磁盘加载最后一个检查点并重放该检查点后的日志来恢复状态。因为创建一个检查点需要一段时间，所以master被设计为可以在不推迟新到来的变更的情况下创建检查点。创建检查点时，master会切换到一个新的日志文件并在一个独立的线程中创建检查点，这个新的检查点包含了在切换前的所有变更。</p>
+<p>master不会持久化存储chunk的位置信息，而是在启动时和当chunkserver加入集群时向chunkserver询问其存储的chunk信息。这样相比于持久化，消除了当chunkserver加入或离开集群、更改名称、故障、重启等问题时，保持master和chunkserver同步的问题。</p>
+<h2 id="chunk-server"><a href="#chunk-server" class="headerlink" title="chunk server"></a>chunk server</h2><p>chunk副本分配到chunk server策略有两个目标：最大化数据<strong>可靠性</strong>和<strong>可用性</strong>、<strong>最大化网络带宽利用</strong>。对于这两个目标，仅将副本分散在所有机器上是不够的，这样做只保证了容忍磁盘或机器故障且只充分利用了每台机器的网络带宽。我们必须<strong>在机架间分散chunk的副本</strong>。这样可以保证在一整个机架都被损坏或离线时（例如，由交换机、电源电路等共享资源问题引起的故障），chunk的一些副本仍存在并保持可用状态。除此之外，这样还使对chunk的流量（特别是读流量）<strong>能够充分利用多个机架的总带宽</strong>。而另一方面，其代价就是<strong>写流量必须流经多个机架</strong>，导致一定程度的速度损耗。</p>
+<p>chunk副本的创建可能由三个原因引起：chunk创建、重做副本（re-replication）和重均衡（rebalance）。</p>
+<p><strong>chunk创建</strong>时，选择chunk server主要需要考虑以下因素：</p>
+<ol>
+<li>希望在磁盘利用率低于平均值的chunkserver上放置副本，以平衡chunkserver间的磁盘利用率</li>
+<li>希望限制每台chunkserver上最近创建的chunk的数量。尽管创建chunk本身开销很小，但由于创建后一般会接着马上大量写，所以需要平衡限制写入流量</li>
+<li>希望将chunk的副本跨机架分散。</li>
+</ol>
+<p><strong>重做副本</strong>一般是因为chunk被损坏了或者chunk server不可用了，或者目标副本数增加了，重做副本需要有优先级：</p>
+<ol>
+<li>当前chunk副本数与目标副本数之差越大优先级就越高</li>
+<li>更倾向于优先为还存在的文件的chunk重做副本，而不是优先为最近被删除的文件重做。</li>
+<li>为了最小化故障对正在运行的应用程序的影响，我们提高了所有正在阻塞client进程的chunk的优先级。</li>
+</ol>
+<p>重做副本选择chunk server所考虑的因素与chunk 创建一样，但是为了防止克隆操作的流量远高于client流量的情况发生，master需要对整个集群中活动的克隆操作数和每个chunkserver上活动的<strong>克隆操作数进行限制</strong>。除此之外，在克隆操作中，每个chunkserver还会<strong>限制对源chunkserver的读请求</strong>，以限制每个克隆操作占用的总带宽。</p>
+<p>每隔一段时间master会对副本进行<strong>重均衡</strong>：master会检测当前的副本分布并移动副本位置，使磁盘空间和负载更加均衡。同样，在这个过程中，master会逐渐填充一个新的chunkserver，而不会立刻让来自新chunk的高负荷的写入流量压垮新的chunkserver。新副本放置位置的选择方法与上文中讨论过的类似。此外，master必须删除一个已有副本。通常，master会选择删除空闲磁盘空间低于平均的chunkserver上的副本，以均衡磁盘空间的使用。</p>
+<h2 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h2><p>被链接到应用程序中的GFS client的代码实现了文件系统API并与master和chunkserver通信，代表应用程序来读写数据。</p>
+<p>GFS支持如创建（create）、删除（delete）、打开（open）、关闭（close）、读（read）、写（write）文件等常用操作。此外，GFS还支持快照（snapshot）和追加记录（record append）操作。</p>
+<h2 id="垃圾回收"><a href="#垃圾回收" class="headerlink" title="垃圾回收"></a>垃圾回收</h2><p>在文件被删除后，GFS不会立刻回收可用的物理存储空间。master仅在周期性执行懒式垃圾回收时回收物理存储空间，其中垃圾回收分为文件级垃圾回收和chunk级垃圾回收。</p>
+<h3 id="文件级垃圾回收"><a href="#文件级垃圾回收" class="headerlink" title="文件级垃圾回收"></a>文件级垃圾回收</h3><p>当一个文件被应用程序删除时，master会像执行其他操作时一样立刻将删除操作写入日志。但是master不会立刻对资源进行回收，而是将待删除的文件重命名为一个带有删除时间戳的隐藏文件名。当master周期性地扫描文件系统命名空间时，它会删除已经存在超过三天（用户可以配置这个间隔时间）的这种隐藏文件。在文件被彻底删除之前，仍可通过该文件被重命名后的特殊的新文件名对其进行访问，也可以通过将其重命名为正常文件的方式撤销删除。当隐藏文件被从命名空间中移除时，其在内存中的元数据也会被删除。这种方式可以有效地切断文件和其对应的chunk的链接。</p>
+<h3 id="chunk级垃圾回收"><a href="#chunk级垃圾回收" class="headerlink" title="chunk级垃圾回收"></a>chunk级垃圾回收</h3><p>chunk成为无法被任何文件访问到的孤儿chunk的原因可能是chunk的创建可能仅在部分chunkserver上成功而在其他chunkserver上失败，或者chunk在进行删除时某些chunk server没有收到相应的消息。</p>
+<p>在进行chunk级垃圾回收时，master会周期性扫描chunk命名空间，并找出孤儿chunk，删除这些chunk的元数据。在chunkserver周期性地与master进行心跳消息交换时，chunkserver会报告其拥有的chunk的子集，而master会回复这些chunk中元数据已经不存在的chunk的标识。chunkserver可以自由地删除这些元数据已经不存在的chunk的副本。</p>
+<p>该垃圾回收机制的优点：</p>
+<ol>
+<li>这种方法在设备经常出现故障的大规模可伸缩分布式系统中非常简单可靠。chunk的创建可能仅在部分chunkserver上成功而在其他chunkserver上失败，这样会导致系统中出现master不知道的副本。且副本删除消息可能会丢失，这样master在其自身和chunkserver故障时都必须重新发送该消息。垃圾回收机制为清理那些不知道是否有用的副本提供了一个统一且可靠的方法。</li>
+<li>垃圾回收机制将对存储空间的回收操作合并为master的后台活动，如周期性扫描命名空间和周期性地与chunkserver握手。因此，垃圾回收机制可以分批回收存储空间并平摊回收的开销。另外，垃圾回收仅在master相对空闲时执行。这样，master可以更迅速的相应需要及时响应的来自client的请求。</li>
+<li>延迟回收存储空间可以防止意外的不可逆删除操作。</li>
+</ol>
+<p>该垃圾回收机制的缺点：</p>
+<ol>
+<li>当用户存储空间紧张时，延迟回收会让用户难以释放存储空间。</li>
+<li>快速创建并删除临时文件的应用程序可能无法立刻重用存储空间。</li>
+</ol>
+<p>为了解决这个问题，用户可以再次显示删除已删除文件时，加快了对存储空间的回收。同时，允许用户对不同的命名空间应用不同的副本与回收策略。例如，用户可以指定某个目录树下的所有文件都不需要副本，且当这个目录树下的文件被删除时立刻且无法撤销地将其从文件系统中移除。</p>
+<h1 id="读操作"><a href="#读操作" class="headerlink" title="读操作"></a>读操作</h1><p>如图1所示，具体读操作在流程如下：</p>
+<ol>
+<li>client会将读取的文件名，读取的是第几个chunk发送给master</li>
+<li>master返回给client该chunk的chunk handle以及其所在的所有chunkserver</li>
+<li>client接收信息，并进行缓存，然后选择距离其最近的chunkserver（可以直接通过ip规律决定）来发起询问，请求对应chunk handle中byte范围的内容</li>
+<li>被询问的chunkserver根据自己保存的chunk handle与具体linux文件的对应关系来读取文件（实际应该就是以chunk handle命名的文件），并返回对应的内容</li>
+<li>client获取到对应的内容，如果还需要接着读取，可以依据缓存信息直接向client发起读取请求</li>
+</ol>
+<h1 id="写操作"><a href="#写操作" class="headerlink" title="写操作"></a>写操作</h1><p><img src="/2023/12/05/TheGoogleFileSystemPaperRead/write.png" srcset="/img/loading.gif" lazyload alt="图2 写操作"></p>
+<h2 id="租约"><a href="#租约" class="headerlink" title="租约"></a>租约</h2><p>虽然每个chunk有多个副本，但是为了保证副本间变更的一致性，master向其中一份副本授权一个变更的租约，称这个副本为primary（有时也可代指primary副本所在的chunkserver），其余的副本称为Secondary。租约的时间为60秒。然而，一旦chunk被变更，primary就可以向master请求延长租约时间，或者（通常为）接受来自master的租约时间延长操作。这些租约延长请求和租约授权请求依赖master与chunkserver间周期性地心跳消息来实现。即使master与一个primary的通信丢失，master仍可以在旧租约过期后安全地向另一个副本授权新的租约，以此来避免同时产生多个primary。</p>
+<h2 id="数据流"><a href="#数据流" class="headerlink" title="数据流"></a>数据流</h2><p>在进行写时，需要将数据传递给每个chunk server，为了高效地利用网络，其对数据流与控制流进行了解耦。为了充分利用机器的网络带宽，数据会沿着chunkserver链线性地推送。假设client正准备将数据推送给S1~S4。client会将数据发送给最近的chunkserver，比如S1。S1会将数据传递给S2至S4中离它最近的chunkserver，比如S2。同样，S2会将数据传递给S3至S4中离它最近的chunkserver，以此类推。由于其网络拓扑非常简单，所以可以通过IP地址来准确地估算出网络拓扑中的“距离”。</p>
+<p>当chunkserver收到一部分数据时，它会立刻开始将数据传递给其他chunkserver。因为我们使用全双工的交换网络，所以流水线可以大幅减少时延。发送数据不会减少接受数据的速度。如果没有网络拥塞，理论上将$B$个字节传输给$R$个副本所需的时间为$B&#x2F;T+RL$，其中$T$是网络的吞吐量，$L$是两台机器间的传输时延。通常，我们的网络连接吐吞量$T$为$100Mbps$，传输时延$L$远小于$1ms$。</p>
+<h2 id="写流程"><a href="#写流程" class="headerlink" title="写流程"></a>写流程</h2><p>如图2所示，写流程如下：</p>
+<ol>
+<li>client向master询问哪个chunkserver持有指定chunk的租约及该chunk的其他副本的位置。如果没有chunkserver持有租约，那么master会选择一个副本对其授权（这一步在图中没有展示）</li>
+<li>master回复primary副本的标识符和其他副本（也称secondary）的位置。client也对其进行缓存</li>
+<li>client将数据通过数据流的方式推送到所有副本</li>
+<li>一旦所有副本都确认收到了数据，client会向primary发送一个write请求。primary会为其收到的所有的变更（可能来自多个client）分配连续的编号，这一步提供了重要的顺序。primary对在本地按照该顺序应用变更</li>
+<li>primary将write请求继续传递给其他secondary副本。每个secondary副本都按照primary分配的顺序来应用变更。</li>
+<li>所有的secondary副本通知primary其完成了变更操作。</li>
+<li>primary回复client。任意副本遇到的任何错误都会被报告给client。即使错误发生，write操作可能已经在primary或secondary的任意子集中被成功执行。（如果错误在primary中发生，那么操作将不会被分配顺序，也不会被继续下发到其他副本。）只要错误发生，该请求都会被认为是失败的，且被修改的区域的状态为inconsistent。client中的代码会通过重试失败的变更来处理这种错误。首先它会重试几次步骤（3）到步骤（7），如果还没有成功，再从write请求的初始操作开始重试。成功后该区域会被修正为consistent状态</li>
+</ol>
+<p>如果应用程序发出的一次write请求过大或跨多个chunk，GFS的client代码会将其拆分成多个write操作。拆分后的write请求都按照上文中的控制流执行，但是可能存在与其他client的并发的请求交叉或被其他client的并发请求覆盖的情况。因此，共享的文件区域最终可能包含来自不同client的片段。但共享的文件区域中的内容最终是相同的，因为每个操作在所有副本上都会以相同的顺序被成功执行。</p>
+<h2 id="原子性record-append"><a href="#原子性record-append" class="headerlink" title="原子性record append"></a>原子性record append</h2><p>在传统的write操作中，client会指定数据写入的偏移量。然而在record append中，client仅需指定待追加的数据。GFS会为其选择一个偏移量，在该偏移量处至少一次地原子性地将数据作为一个连续的字节序列追加到文件，并将该偏移量返回给client。</p>
+<p>record append被大量应用在的有多个来自不同机器的client向同一个文件并发append数据的分布式应用程序中。如果通过传统的write操作，那么client还需要额外的复杂且开销很高的同步操作（例如分布式锁管理）。</p>
+<p>record append仅在primary端稍有点额外的逻辑。在client将数据推送到文件中最后一个chunk的所有chunk server之后，client会向primary发送一个请求。primary会检查当新记录追加到该chunk之后，是否会导致该chunk超过其最大大小限制（64MB）。如果会超，primary会将该chunk填充到最大的大小，并通知secondary也做相同的填充操作，再回复客户端，使其在下一个chunk上重试该操作。record append操作限制了每次最多写入最大chunk大小的四分之一的数据，以保证在最坏的情况下产生的碎片在可接受的范围内。在一般情况下，添加的记录大小都在不会超过chunk的最大限制，这样primary会向数据追加到它的副本中，并通知secondary在与其追加的偏移量相同的位置处写入数据，并将最终成功操作的结果返回给client。</p>
+<p>如果record append操作在任何一个副本中失败，就会返回失败，使得client会重试操作。这样会导致同一个chunk的<strong>不同副本中可能包含不同的数据</strong>，这些数据可能是同一条记录的部分或完整的副本。GFS不保证所有副本在字节级别一致，其只保证record append的数据<strong>作为一个单元被原子性地至少写入一次</strong>。这一点很容易证明，因为数据必须在某个chunk的所有副本的相同偏移位置处写入。此外，在record append之后，每个副本都至少与最后一条记录一样长。这样，任何未来的新记录都会被分配到一个更高的偏移位置或者一个新chunk，即使另一个副本成为了primary也能保证这个性质。这样，被record append操作<strong>成功写入的区域</strong>在一致性方面都将是<strong>defined状态</strong>（因此也是consistent的），而这些<strong>defined区域间的文件区域是inconsistent的（因此也是undefined的）</strong>。我们应用程序会通过章节2.7.2中讨论的方式处理inconsistent的区域。</p>
+<h2 id="一致性"><a href="#一致性" class="headerlink" title="一致性"></a>一致性</h2><p><img src="/2023/12/05/TheGoogleFileSystemPaperRead/consistent.jpg" srcset="/img/loading.gif" lazyload alt="图3 一致性"></p>
+<p><strong>一致性：</strong>一个文件区域的任意一个副本被任何client读取总能得到相同的数据<br><strong>确定性：</strong>client总能读取到其写入的信息</p>
+<p>在没有并发的情况下写入成功时，写入的内容是一致且确定的<br>在有并发的情况下写入成功时，写入的内容是一致但非确定的，因为写入的内容可能混合了多个请求</p>
+<p>写入操作操作可能为write或record append，其中对于record append，GFS可能会在记录的中间插入填充（padding）和或重复的记录。它们占用的区域状态为inconsistent的，通常情况下，它们的数量远少于用户数据。</p>
+<p>GFS会保证被写入成功的的区域各个副本都是一致的，主要通过以下手段：</p>
+<ol>
+<li>chunk执行变更时，其所有副本按照相同的顺序应用变更</li>
+<li>使用chunk版本号（chunk version）来检测因chunkserver宕机而错过了变更的陈旧的chunk副本。陈旧的chunk副本永远不会在执行变更时被使用，也不会在master返回client请求的chunk的位置时被使用。它们会尽早地被作为垃圾回收。</li>
+<li>即使在变更被成功应用的很长时间后，设备故障仍然可以损坏（corrupt）会销毁（destroy）数据。GFS通过master和所有chunkserver周期性握手的方式来确定故障的chunkserver，并通过校验和（checksunmming）的方式检测数据损坏。一旦出现问题，数据会尽快地从一个合法的副本恢复。一个chunk只有在GFS作出反应前（通常在几分钟内）失去了所有的副本，chunk才会不可逆地丢失。即使在这种情况下，chunk也仅变得不可用而非返回错误的数据。</li>
+</ol>
+<h3 id="应用程序影响"><a href="#应用程序影响" class="headerlink" title="应用程序影响"></a>应用程序影响</h3><p>GFS应用程序可以通过一些简单的技术来使用其宽松的一致性模型，且这些技术已经因其他目标而被使用。</p>
+<p>在实际使用中，我们所有的应用程序都通过append而不是overwrite的方式对文件进行变更。其中一个典型的引用场景是：一个write从头到尾地生成一个文件。它会周期性地为已经写入的文件数据创建检查点，并在所有数据都被写入文件后自动将其重命名为一个永久的文件名。检查点可能包含应用程序级别的校验和。reader会验证文件仅处理跟上最新的检查点的文件区域，这些区域的状态一定的“defined”的。尽管这种方法有一致性和并发问题，它仍很好地满足了我们的需求。append的效率远高于随机写入，且在应用程序故障时更容易恢复。检查点机制允许writer在重启时增量写入，并能够防止reader处理那些虽然已经被成功写入文件但是从应用程序的角度看仍然不完整的文件数据。</p>
+<p>另一种典型的用途是，许多write并发地向同一个文件append数据以获得合并后的结果或文件作为生产者-消费者队列使用。record append的“至少一次追加（append-at-least-once）”语义保证了每个write的输出。</p>
+<p>而reader偶尔需要<strong>处理填充和重复的数据</strong>。每条被writer准备好的记录包含如校验和的额外信息，这样，记录的合法性就可被校验。一个reader通过校验和来识别并丢弃额外的填充和记录。如果rearder无法容忍偶尔发生的重复（如果重复的记录可能触发非幂等（non-idempotent）运算），它可以使用记录中的唯一标识符来对齐进行过滤。通常，在命名应用程序相关的实体时（如web文档），总会使用唯一的标识符。这些记录I &#x2F; O (除去重复)的功能在我们的应用程序共享的库代码中，并适用于Google的其他文件接口实现。通过这些库，带有极少的重复的记录，总会被以相同顺序交付给reader。</p>
+<h1 id="容错处理"><a href="#容错处理" class="headerlink" title="容错处理"></a>容错处理</h1><h2 id="chunk副本"><a href="#chunk副本" class="headerlink" title="chunk副本"></a>chunk副本</h2><p>每个chunk会在不同机架的多个chunkserver上存有副本。用户可以为不同命名空间的文件制定不同的副本级别。副本级别默认为3。当有chunkserver脱机或通过校验和检测到损坏的副本时，master根据需求克隆现有的副本以保证每个chunk的副本数都是饱和的。</p>
+<h2 id="master副本"><a href="#master副本" class="headerlink" title="master副本"></a>master副本</h2><p>master的状态同样有副本，master的操作日志和检查点被<strong>在多台机器上复制</strong>。只有当变更在被日志记录并被写入，master本地和所有master副本的磁盘中后，这个变更才被认为是已提交的。为了简单起见，一个master进程既要负责处理所有变更又要负责处理后台活动，如垃圾回收等从内部改变系统的活动。当master故障时，其几乎可以立刻重启。如果运行master进程的机器故障或其磁盘故障，在GFS之外的负责监控的基础架构会在其它持有master的操作日志副本的机器上启动一个新的master进程。client仅通过一个规范的命名来访问master结点（例如gfs-test），这个规范的命名是一个DNS别名，其可以在master重新被分配到另一台机器时被修改为目标机器。</p>
+<p>此外，“影子”master节点（“shadow” master）<strong>可以提供只读的文件系统访问</strong>，即使在主master结点脱机时它们也可以提供服务。因为这些服务器可能稍稍滞后于主master服务器（通常滞后几分之一秒），所以这些服务器是影子服务器而非镜像服务器。这些影子master服务器增强了那些非正在被变更的文件和不介意读到稍旧数据的应用程序的可用性。实际上，由于文件内容是从chunkserver上读取的，所以应用程序不会读取到陈旧的文件内容。能够在一个很短的时间窗口内被读取到的陈旧的数据只有文件元数据，如目录内容和访问控制信息。</p>
+<p>为了让自己的元数据跟随主master变化，影子master服务器会持续读取不断增长的操作日志副本，并像主master一样按照相同的顺序对其数据结构应用变更。像主master一样，影子master服务器也会在启动时从chunkserver拉取数据来获取chunk副本的位置（启动后便很少拉取数据），并频繁地与chunkserver交换握手信息来监控它们的状态。<strong>只有因主master决定创建或删除副本时，影子master服务器上的副本位置才取决于主master服务器</strong>。</p>
+<h2 id="数据完整性"><a href="#数据完整性" class="headerlink" title="数据完整性"></a>数据完整性</h2><p>每个chunkserver都<strong>使用校验和来检测存储的数据是否损坏</strong>。由于GFS集群通常在数百台机器上有数千chunk磁盘，所以集群中经常会出现磁盘故障，从而导致数据损坏或丢失。我们可以<strong>通过chunk的其他副本来修复损坏的chunk</strong>，但不能通过比较chunkserver间的副本来检测chunk是否损坏。除此之外，即使内容不同的副本中的数据也可能都是合法的：GFS中变更的语义（特别是前文中讨论过的record append）不会保证副本完全相同。因此，<strong>每个chunkserver必须能够通过维护校验和的方式独立的验证副本中数据的完整性</strong>。</p>
+<p><strong>一个chunk被划分为64KB的block</strong>。<strong>每个block有其对应的32位校验和</strong>。就像其他元数据一样，校验和也在内存中保存且会被通过日志的方式<strong>持久化存储</strong>。校验和与用户数据是分开存储的。</p>
+<p>对于读取操作，无论请求来自client还是其他chunkserver，<strong>chunkserver都会在返回任何数据前校验所有包含待读取数据的block的校验和</strong>。因此，chunkserver不会将损坏的数据传给其他机器。如果一个block中数据和记录中低的校验和不匹配，那么chunkserver会给请求者返回一个错误，<strong>并向master报告校验和不匹配</strong>。随后，请求者会从其他副本读取数据，<strong>而master会从该chunk的其他副本克隆这个chunk</strong>。当该chunk新的合法的副本被安置后，master会通知报告了校验和不匹配的chunkserver删除那份损坏的副本。</p>
+<p>校验和对读取性能的影响很小。因为我们的大部分读操作至少会读跨几个block的内容，我们只需要读取并校验相对少量的额外数据。GFS客户端代码通过尝试将读取的数据与需要校验的block边界对其的方式，进一步地减小了校验开销。除此之外，chunkserver上校验和的查找与比较不需要I&#x2F;O操作，且校验和计算操作经常与其他操作在I&#x2F;O上重叠，因此几乎不存在额外的I&#x2F;O开销。</p>
+<p>因为向chunk末尾append数据的操作在我们的工作负载中占主要地位，所以我们对这种写入场景的校验和计算做了大量优化。在<strong>append操作</strong>时，<strong>我们仅增量更新上一个block剩余部分的校验和，并为append的新block计算新校验和</strong>。即使最后一个block已经损坏且目前没被检测到，增量更新后的该block的新校验和也不会与block中存储的数据匹配。在下一次读取该block时，GFS会像往常一样检测到数据损坏。</p>
+<p>相反，如果<strong>write操作</strong>覆盖了一个chunk已存在的范围，那么我们<strong>必须读取并验证这个范围的头一个和最后一个block</strong>，再执行write操作，最后计算并记录新的校验和。如果我们没有在写入前校验头一个和最后一个block，新的校验和可能会掩盖这两个block中没被覆写的区域中存在的数据损坏问题。因为写入会修改头一个和后一个block的部分内容，且会重新计算校验和，如果该内容以损坏，然后又重新计算了校验和，就会掩盖损坏内容。</p>
+<p>chunkserver可以<strong>在空闲期间扫描并验证非活动的chunk的内容</strong>。这样可以让我们检测到很少被读取的chunk中的数据损坏。一旦检测到数据损坏，master可以创建一个新的未损坏的副本并删除损坏的副本。这样可以防止master将chunk的非活动的但是已损坏的副本识别成数据合法的副本。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>总体而言GFS提供了一个大规模分布式存储的一个良好的解决方案，也让我对分布式存储有了更深的影响，其中其数据流与控制流解耦，租约设计，弱一致性换取高性能，具体的分布式读写操作，分布式数据容错方案都给我留下了深刻的印象。</p>
+<p>但是GFS也被提出具有一定的问题，其问题主要来自于master节点保存的内容过多，master节点的容错率不强等。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://research.google.com/archive/gfs.html">http://research.google.com/archive/gfs.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.824/schedule.html">https://pdos.csail.mit.edu/6.824/schedule.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.mrcroxx.com/posts/paper-reading/gfs-sosp2003/">https://blog.mrcroxx.com/posts/paper-reading/gfs-sosp2003/</a></li>
+<li><a target="_blank" rel="noopener" href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-03-gfs/3.1">https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-03-gfs/3.1</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=WLad7CCexo8&ab_channel=BitTiger%E5%AE%98%E6%96%B9%E9%A2%91%E9%81%93BitTigerOfficialChannel">https://www.youtube.com/watch?v=WLad7CCexo8&ab_channel&#x3D;BitTiger%E5%AE%98%E6%96%B9%E9%A2%91%E9%81%93BitTigerOfficialChannel</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="category-chain-item">分布式</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/" class="print-no-link">#原创</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【论文阅读】The Google file System</div>
+      <div>http://example.com/2023/12/05/TheGoogleFileSystemPaperRead/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>John Doe</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年12月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/12/01/IDEA%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91%E9%80%89%E9%A1%B9%E4%B8%A2%E5%A4%B1%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95/" title="IDEA远程开发选项丢失修复方法">
+                        <span class="hidden-mobile">IDEA远程开发选项丢失修复方法</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
