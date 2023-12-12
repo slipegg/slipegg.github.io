@@ -16,17 +16,17 @@
   <meta name="author" content="John Doe">
   <meta name="keywords" content="">
   
-    <meta name="description" content="为了更有效的做论文阅读笔记，之后都打算将每篇论文笔记的内容控制在较少的字数范围内，毕竟原论文摆在那里，将其翻译照抄过来也没什么意思，将论文读薄才是最重要的。( •̀ ω •́ )✧  “The Design of a Practical System for Fault-Tolerant Virtual Machines”是MIT6.824推荐阅读的论文之一，它介绍了一种通过主备机制来进行单核虚拟">
+    <meta name="description" content="为了更有效的做论文阅读笔记，之后都打算将每篇论文笔记的内容控制在较少的字数范围内，毕竟原论文摆在那里，将其翻译照抄过来也没什么意思，将论文读薄才是最重要的。( •̀ ω •́ )✧ “The Design of a Practical System for Fault-Tolerant Virtual Machines”是MIT6.824推荐阅读的论文之一，它介绍了一种通过主备机制来进行单核虚拟机">
 <meta property="og:type" content="article">
 <meta property="og:title" content="【论文阅读】The Design of a Practical System for Fault-Tolerant Virtual Machines">
 <meta property="og:url" content="http://example.com/2023/12/12/Fault-TolerantVirtualMachinesPaperRead/index.html">
 <meta property="og:site_name" content="滑滑蛋的个人博客">
-<meta property="og:description" content="为了更有效的做论文阅读笔记，之后都打算将每篇论文笔记的内容控制在较少的字数范围内，毕竟原论文摆在那里，将其翻译照抄过来也没什么意思，将论文读薄才是最重要的。( •̀ ω •́ )✧  “The Design of a Practical System for Fault-Tolerant Virtual Machines”是MIT6.824推荐阅读的论文之一，它介绍了一种通过主备机制来进行单核虚拟">
+<meta property="og:description" content="为了更有效的做论文阅读笔记，之后都打算将每篇论文笔记的内容控制在较少的字数范围内，毕竟原论文摆在那里，将其翻译照抄过来也没什么意思，将论文读薄才是最重要的。( •̀ ω •́ )✧ “The Design of a Practical System for Fault-Tolerant Virtual Machines”是MIT6.824推荐阅读的论文之一，它介绍了一种通过主备机制来进行单核虚拟机">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/2023/12/12/Fault-TolerantVirtualMachinesPaperRead/arc.jpg">
 <meta property="og:image" content="http://example.com/2023/12/12/Fault-TolerantVirtualMachinesPaperRead/output.jpg">
 <meta property="article:published_time" content="2023-12-12T08:40:19.000Z">
-<meta property="article:modified_time" content="2023-12-12T12:19:55.535Z">
+<meta property="article:modified_time" content="2023-12-12T12:23:22.663Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="原创">
 <meta name="twitter:card" content="summary_large_image">
@@ -326,8 +326,7 @@
             
               <div class="markdown-body">
                 
-                <pre><code class="hljs">为了更有效的做论文阅读笔记，之后都打算将每篇论文笔记的内容控制在较少的字数范围内，毕竟原论文摆在那里，将其翻译照抄过来也没什么意思，将论文读薄才是最重要的。( •̀ ω •́ )✧
-</code></pre>
+                <p><code>为了更有效的做论文阅读笔记，之后都打算将每篇论文笔记的内容控制在较少的字数范围内，毕竟原论文摆在那里，将其翻译照抄过来也没什么意思，将论文读薄才是最重要的。( •̀ ω •́ )✧</code></p>
 <p>“The Design of a Practical System for Fault-Tolerant Virtual Machines”是MIT6.824推荐阅读的论文之一，它介绍了一种通过主备机制来进行单核虚拟机级别的容错方法。</p>
 <h1 id="相关背景"><a href="#相关背景" class="headerlink" title="相关背景"></a>相关背景</h1><p>本文考虑的主要是fail-stop故障，例如电源线拔掉了，爆炸了，网络离线了等情况，而这也才能用复制的方法容错，普通的程序错误导致的故障也无法通过复制来解决。</p>
 <p>容错一般有两种方法：</p>
