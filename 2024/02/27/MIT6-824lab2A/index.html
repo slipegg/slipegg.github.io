@@ -1,0 +1,818 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="引言实现了MIT6.824中的lab2A，即leader选举的部分。 Raft结构及初始化为一个Raft中的节点增加的变量主要有：  currentTerm: 当前任期 votedFor: 为谁投票, -1表示没有投票，注意一个任期只能投一次票 state: 当前节点的状态 heartbeatTimeout: 心跳超时计数器 electionTimeout: 选举超时计数器  1234567891">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【MIT6.824】lab2A实现笔记">
+<meta property="og:url" content="http://example.com/2024/02/27/MIT6-824lab2A/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="引言实现了MIT6.824中的lab2A，即leader选举的部分。 Raft结构及初始化为一个Raft中的节点增加的变量主要有：  currentTerm: 当前任期 votedFor: 为谁投票, -1表示没有投票，注意一个任期只能投一次票 state: 当前节点的状态 heartbeatTimeout: 心跳超时计数器 electionTimeout: 选举超时计数器  1234567891">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2024/02/27/MIT6-824lab2A/result.jpg">
+<meta property="article:published_time" content="2024-02-27T14:54:54.000Z">
+<meta property="article:modified_time" content="2024-02-27T15:35:53.597Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="原创">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2024/02/27/MIT6-824lab2A/result.jpg">
+  
+  
+  
+  <title>【MIT6.824】lab2A实现笔记 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【MIT6.824】lab2A实现笔记"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-02-27 22:54" pubdate>
+          2024年2月27日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【MIT6.824】lab2A实现笔记</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>实现了MIT6.824中的lab2A，即leader选举的部分。</p>
+<h1 id="Raft结构及初始化"><a href="#Raft结构及初始化" class="headerlink" title="Raft结构及初始化"></a>Raft结构及初始化</h1><p>为一个Raft中的节点增加的变量主要有：</p>
+<ul>
+<li>currentTerm: 当前任期</li>
+<li>votedFor: 为谁投票, -1表示没有投票，注意一个任期只能投一次票</li>
+<li>state: 当前节点的状态</li>
+<li>heartbeatTimeout: 心跳超时计数器</li>
+<li>electionTimeout: 选举超时计数器</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// A Go object implementing a single Raft peer.</span><br><span class="hljs-keyword">type</span> Raft <span class="hljs-keyword">struct</span> &#123;<br>	mu               sync.RWMutex        <span class="hljs-comment">// Lock to protect shared access to this peer&#x27;s state</span><br>	peers            []*labrpc.ClientEnd <span class="hljs-comment">// RPC end points of all peers</span><br>	persister        *Persister          <span class="hljs-comment">// Object to hold this peer&#x27;s persisted state</span><br>	me               <span class="hljs-type">int</span>                 <span class="hljs-comment">// this peer&#x27;s index into peers[]</span><br>	dead             <span class="hljs-type">int32</span>               <span class="hljs-comment">// set by Kill()</span><br>	currentTerm      <span class="hljs-type">int</span><br>	votedFor         <span class="hljs-type">int</span><br>	state            NodeState<br>	heartbeatTimeout *time.Timer<br>	electionTimeout  *time.Timer<br>&#125;<br><br><span class="hljs-comment">// NodeState represents the state of a node in the raft protocol</span><br><span class="hljs-keyword">type</span> NodeState <span class="hljs-type">uint8</span><br><br><span class="hljs-keyword">const</span> (<br>	Follower NodeState = <span class="hljs-literal">iota</span><br>	Candidate<br>	Leader<br>)<br></code></pre></td></tr></table></figure>
+
+<p>初始化Make函数如下，注意为新添加的变量进行初始化，可以看到初始化之后就会启动一个ticker的goroutine来让节点不断运行。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Make</span><span class="hljs-params">(peers []*labrpc.ClientEnd, me <span class="hljs-type">int</span>,</span></span><br><span class="hljs-params"><span class="hljs-function">	persister *Persister, applyCh <span class="hljs-keyword">chan</span> ApplyMsg)</span></span> *Raft &#123;<br>	rf := &amp;Raft&#123;<br>		peers:            peers,<br>		persister:        persister,<br>		me:               me,<br>		dead:             <span class="hljs-number">0</span>,<br>		currentTerm:      <span class="hljs-number">0</span>,<br>		votedFor:         <span class="hljs-number">-1</span>,<br>		state:            Follower,<br>		heartbeatTimeout: time.NewTimer(time.Duration(StableHeartbeatTimeout())),<br>		electionTimeout:  time.NewTimer(time.Duration(RandomizedElectionTimeout())),<br>	&#125;<br><br>	<span class="hljs-comment">// Your initialization code here (2A, 2B, 2C).</span><br><br>	<span class="hljs-comment">// initialize from state persisted before a crash</span><br>	rf.readPersist(persister.ReadRaftState())<br><br>	<span class="hljs-comment">// start ticker goroutine to start elections</span><br>	<span class="hljs-keyword">go</span> rf.ticker()<br><br>	<span class="hljs-keyword">return</span> rf<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="计时函数"><a href="#计时函数" class="headerlink" title="计时函数"></a>计时函数</h1><p>计时函数如上所述有两个：</p>
+<ul>
+<li>heartbeatTimeout: 倒计时结束时，需要向其他节点发送心跳，以维持自己的leader地位</li>
+<li>electionTimeout: 倒计时结束时，需要转化为candidate开始选举，如果在倒计时结束前收到了leader的心跳，则重置倒计时。</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rf *Raft)</span></span> ticker() &#123;<br>	<span class="hljs-keyword">for</span> rf.killed() == <span class="hljs-literal">false</span> &#123;<br>		<span class="hljs-keyword">select</span> &#123;<br>		<span class="hljs-keyword">case</span> &lt;-rf.heartbeatTimeout.C:<br>			rf.mu.Lock()<br>			<span class="hljs-keyword">if</span> rf.state == Leader &#123;<br>				rf.broadcastHeartbeat()<br>				rf.heartbeatTimeout.Reset(StableHeartbeatTimeout())<br>			&#125;<br>			rf.mu.Unlock()<br>		<span class="hljs-keyword">case</span> &lt;-rf.electionTimeout.C:<br>			rf.mu.Lock()<br>			rf.changeState(Candidate)<br>			rf.currentTerm++<br>			rf.startElection()<br>			rf.electionTimeout.Reset(RandomizedElectionTimeout())<br>			rf.mu.Unlock()<br>		&#125;<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="选举leader"><a href="#选举leader" class="headerlink" title="选举leader"></a>选举leader</h1><p>选举leader主要依靠发送RequestVote RPC来进行，选举的过程如下：</p>
+<ol>
+<li>electionTimeout计时器到期，节点转化为candidate状态，增加currentTerm并开始选举</li>
+<li>发送RequestVote RPC给其他节点，请求投票</li>
+<li>接收到其他节点的投票结果。</li>
+</ol>
+<p>按照Raft论文的描述可以将选举结果分为三种：</p>
+<ol>
+<li>得到了大多数节点的投票，成为leader</li>
+<li>有其他节点成为了leader，自己转化为follower。如何感知到其他节点成为了leader呢？有两种手段：<ol>
+<li>通过RequestVoteReply中的Term字段，如果Term比自己的大，则说明有其他节点成为了leader</li>
+<li>接受到了其他节点的心跳，说明有其他节点成为了leader</li>
+</ol>
+</li>
+<li>大家平分选票，没有leader产生，等待electionTimeout计时器到期，重新开始选举</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rf *Raft)</span></span> startElection() &#123;<br>	request := rf.genRequestVoteRequest()<br>	DPrintf(<span class="hljs-string">&quot;&#123;Node %v&#125; starts election with RequestVoteRequest %v&quot;</span>, rf.me, request)<br>	rf.votedFor = rf.me<br>	grantedVoteNum := <span class="hljs-number">1</span><br><br>	<span class="hljs-comment">// Your code here (2A, 2B).</span><br>	<span class="hljs-keyword">for</span> peer := <span class="hljs-keyword">range</span> rf.peers &#123;<br>		<span class="hljs-keyword">if</span> peer != rf.me &#123;<br>			<span class="hljs-keyword">if</span> peer == rf.me &#123;<br>				<span class="hljs-keyword">continue</span><br>			&#125;<br><br>			<span class="hljs-keyword">go</span> rf.electionRequestOnce(peer, &amp;grantedVoteNum, request)<br>		&#125;<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rf *Raft)</span></span> electionRequestOnce(peer <span class="hljs-type">int</span>, grantedVoteNum *<span class="hljs-type">int</span>, request *RequestVoteArgs) &#123;<br>	reply := <span class="hljs-built_in">new</span>(RequestVoteReply)<br>	<span class="hljs-keyword">if</span> rf.sendRequestVote(peer, request, reply) &#123;<br>		rf.mu.Lock()<br>		<span class="hljs-keyword">defer</span> rf.mu.Unlock()<br>		DPrintf(<span class="hljs-string">&quot;&#123;Node %v&#125; received RequestVoteReply &#123;%v&#125; from &#123;Node %v&#125;&quot;</span>, rf.me, reply, peer)<br>		<span class="hljs-keyword">if</span> rf.currentTerm == request.Term &amp;&amp; rf.state == Candidate &#123;<br>			<span class="hljs-keyword">if</span> reply.VoteGranted &#123;<br>				*grantedVoteNum++<br>				<span class="hljs-keyword">if</span> *grantedVoteNum &gt; <span class="hljs-built_in">len</span>(rf.peers)/<span class="hljs-number">2</span> &#123;<br>					rf.changeState(Leader)<br>					rf.broadcastHeartbeat()<br>				&#125;<br>			&#125;<br>		&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> reply.Term &gt; rf.currentTerm &#123;<br>			DPrintf(<span class="hljs-string">&quot;&#123;Node %v&#125; found higher term %v in RequestVoteReply %v from &#123;Node %v&#125;&quot;</span>, rf.me, reply.Term, reply, peer)<br>			rf.currentTerm = reply.Term<br>			rf.votedFor = <span class="hljs-number">-1</span><br>			rf.changeState(Follower)<br>		&#125;<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>节点在进行投票时的规则如下：</p>
+<ol>
+<li>如果自己的term比对方大，则拒绝投票</li>
+<li>如果在当前term中已经投过票给其他candidate，则拒绝投票</li>
+<li>其余情况下投票给对方，并更新自己的term与votedFor，并直接转化为follower状态</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rf *Raft)</span></span> RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) &#123;<br>	<span class="hljs-comment">// Your code here (2A, 2B).</span><br>	rf.mu.Lock()<br>	<span class="hljs-keyword">defer</span> rf.mu.Unlock()<br>	<span class="hljs-keyword">defer</span> DPrintf(<span class="hljs-string">&quot;&#123;Node %v&#125;&#x27;s state is &#123;state: %v, term: %v&#125;, the RequestVoteReply is &#123;%v&#125;&quot;</span>, rf.me, rf.state, rf.currentTerm, reply)<br><br>	<span class="hljs-keyword">if</span> args.Term &lt; rf.currentTerm || (args.Term == rf.currentTerm &amp;&amp; rf.votedFor != <span class="hljs-number">-1</span> &amp;&amp; rf.votedFor != args.CandidateId) &#123;<br>		reply.Term, reply.VoteGranted = rf.currentTerm, <span class="hljs-literal">false</span><br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	<span class="hljs-keyword">if</span> args.Term &gt; rf.currentTerm &#123;<br>		rf.currentTerm, rf.votedFor = args.Term, <span class="hljs-number">-1</span><br>		rf.changeState(Follower)<br>	&#125;<br>	<span class="hljs-keyword">if</span> !rf.isLogUpToDate(args.LastLogIndex, args.LastLogTerm) &#123;<br>		reply.Term, reply.VoteGranted = rf.currentTerm, <span class="hljs-literal">false</span><br>		<span class="hljs-keyword">return</span><br>	&#125;<br><br>	rf.votedFor = args.CandidateId<br>	<span class="hljs-comment">// now the term of the candidate must equal to the current term of the rf</span><br>	reply.Term, reply.VoteGranted = rf.currentTerm, <span class="hljs-literal">true</span><br>&#125;<br><br><span class="hljs-keyword">type</span> RequestVoteArgs <span class="hljs-keyword">struct</span> &#123;<br>	Term         <span class="hljs-type">int</span><br>	CandidateId  <span class="hljs-type">int</span><br>	LastLogIndex <span class="hljs-type">int</span><br>	LastLogTerm  <span class="hljs-type">int</span><br>&#125;<br><span class="hljs-keyword">type</span> RequestVoteReply <span class="hljs-keyword">struct</span> &#123;<br>	Term        <span class="hljs-type">int</span><br>	VoteGranted <span class="hljs-type">bool</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>注意在状态转化时需要对计时器进行相应的修改，如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rf *Raft)</span></span> changeState(newState NodeState) &#123;<br>	<span class="hljs-keyword">if</span> rf.state == newState &#123;<br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	DPrintf(<span class="hljs-string">&quot;&#123;Node %v&#125; changes state from %s to %s&quot;</span>, rf.me, rf.state, newState)<br>	rf.state = newState<br><br>	<span class="hljs-keyword">switch</span> newState &#123;<br>	<span class="hljs-keyword">case</span> Follower:<br>		rf.heartbeatTimeout.Stop()<br>		rf.electionTimeout.Reset(RandomizedElectionTimeout())<br>	<span class="hljs-keyword">case</span> Candidate:<br>	<span class="hljs-keyword">case</span> Leader:<br>		rf.broadcastHeartbeat()<br>		rf.heartbeatTimeout.Reset(StableHeartbeatTimeout())<br>		rf.electionTimeout.Stop()<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="心跳广播"><a href="#心跳广播" class="headerlink" title="心跳广播"></a>心跳广播</h1><p>理论上心跳发送应该与日志复制用的是同一种RPC，但是lab2A不需要实现日志复制，所以这里的日志复制进行了简化，能发送心跳来维持自己的leader地位即可。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rf *Raft)</span></span> replicateOneRound(peer <span class="hljs-type">int</span>) &#123;<br>	<span class="hljs-keyword">if</span> rf.state != Leader &#123;<br>		<span class="hljs-keyword">return</span><br>	&#125;<br><br>	request := rf.genAppendEntriesRequest(peer)<br>	reply := <span class="hljs-built_in">new</span>(AppendEntriesReply)<br>	<span class="hljs-keyword">if</span> rf.sendAppendEntries(peer, request, reply) &#123;<br>		DPrintf(<span class="hljs-string">&quot;&#123;Node %v&#125; received AppendEntriesReply &#123;%v&#125; from &#123;Node %v&#125;&quot;</span>, rf.me, reply, peer)<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rf *Raft)</span></span> AppendEntries(args *AppendEntriesRequest, reply *AppendEntriesReply) &#123;<br>	DPrintf(<span class="hljs-string">&quot;&#123;Node %v&#125; received AppendEntriesRequest &#123;%v&#125;&quot;</span>, rf.me, args)<br>	rf.changeState(Follower)<br>	rf.electionTimeout.Reset(RandomizedElectionTimeout())<br>	reply.Term, reply.Success = rf.currentTerm, <span class="hljs-literal">true</span><br>&#125;<br><br><span class="hljs-keyword">type</span> AppendEntriesRequest <span class="hljs-keyword">struct</span> &#123;<br>	Term     <span class="hljs-type">int</span><br>	LeaderId <span class="hljs-type">int</span><br>&#125;<br><span class="hljs-keyword">type</span> AppendEntriesReply <span class="hljs-keyword">struct</span> &#123;<br>	Term    <span class="hljs-type">int</span><br>	Success <span class="hljs-type">bool</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h1><p>运行结果如下，能通过所有测试：</p>
+<p><img src="/2024/02/27/MIT6-824lab2A/result.jpg" srcset="/img/loading.gif" lazyload alt="运行结果"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="category-chain-item">分布式</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/go/" class="category-chain-item">go</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/go/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/" class="print-no-link">#原创</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【MIT6.824】lab2A实现笔记</div>
+      <div>http://example.com/2024/02/27/MIT6-824lab2A/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>John Doe</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年2月27日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/02/25/%E3%80%90MIT6-824%E3%80%91lab2%E5%8E%9F%E4%BB%A3%E7%A0%81%E8%A7%A3%E6%9E%90/" title="【MIT6.824】lab2原代码解析">
+                        <span class="hidden-mobile">【MIT6.824】lab2原代码解析</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
