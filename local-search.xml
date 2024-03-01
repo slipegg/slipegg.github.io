@@ -4,6 +4,33 @@
   
   
   <entry>
+    <title>在CentOS上使用源码安装Python3.7，不与系统Python2.7冲突，同时支持pip3（脚本安装，亲测有效）</title>
+    <link href="/2024/03/01/centosInstallPython/"/>
+    <url>/2024/03/01/centosInstallPython/</url>
+    
+    <content type="html"><![CDATA[<p>该脚本主要是在Centos系统上使用源码安装Python3.7，安装后可以调用python3和pip3来进行使用，同时不与系统Python2.7冲突，还额外加入了腾讯的pip源来加速pip3下载包。</p><p>脚本使用方法如下：</p><ol><li>创建文件 <code>install_py37.sh</code>，写入以下 shell 脚本</li><li>赋予执行权限，<code>chmox +x install_py37.sh</code></li><li>执行脚本，<code>./install_py37.sh</code></li></ol><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-meta">#!/bin/env bash</span><br><br><span class="hljs-comment">## 下载 Python 源码，如果已下载源码在脚本当前目录下，可注释跳过下载步骤</span><br>wget https://www.python.org/ftp/python/3.7.12/Python-3.7.12.tgz<br><br><span class="hljs-comment">## 安装编译依赖组件</span><br>yum -y install wget zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gcc make libffi-devel xz-devel<br><br><span class="hljs-comment">## 解压安装</span><br><span class="hljs-comment"># 解压到/usr/local/src目录</span><br>tar zvxf Python-3.7.12.tgz -C /usr/local/src<br><span class="hljs-built_in">cd</span> /usr/local/src/Python-3.7.12<br><span class="hljs-comment"># 编译前配置</span><br>./configure prefix=/usr/local/python3 --enable-shared<br><span class="hljs-comment"># 编译构建</span><br>make -j8<br><span class="hljs-comment"># 安装Python</span><br>make install<br><span class="hljs-comment"># 清理编译产出的中间文件</span><br>make clean<br><span class="hljs-comment"># 链接构建产出的Python可执行文件到/usr/local/bin目录</span><br><span class="hljs-built_in">ln</span> -s /usr/local/python3/bin/python3 /usr/local/bin/python3<br><span class="hljs-comment"># 链接构建产出的pip3可执行文件到/usr/local/bin目录</span><br><span class="hljs-built_in">ln</span> -s /usr/local/python3/bin/pip3 /usr/local/bin/pip3<br><span class="hljs-comment"># 链接构建产出的Python动态库</span><br><span class="hljs-built_in">ln</span> -s /usr/local/python3/lib/libpython3.7m.so.1.0 /usr/lib/libpython3.7m.so.1.0<br><span class="hljs-comment"># 配置动态库</span><br>ldconfig<br><br><span class="hljs-comment">## 检查Python版本是否安装成功</span><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[1;42;37m[<span class="hljs-subst">$(date <span class="hljs-string">&quot;+%Y/%m/%d %H:%M:%S&quot;</span>)</span>] [Check]: 检查Python版本\033[0m&quot;</span><br>python3 --version<br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[1;42;37m[<span class="hljs-subst">$(date <span class="hljs-string">&quot;+%Y/%m/%d %H:%M:%S&quot;</span>)</span>] [Check]: 检查Python版本\033[0m&quot;</span><br><br><span class="hljs-comment">## pypi下载源配置</span><br><span class="hljs-built_in">mkdir</span> ~/.pip3/<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;extra-index-url = https://mirrors.cloud.tencent.com/pypi/simple&quot;</span> &gt;&gt; ~/.pip3/pip.conf<br></code></pre></td></tr></table></figure><p>主要是参考了这篇文章：<a href="https://tencent.github.io/CodeAnalysis/zh/advanced/install_python37_on_centos.html">CentOS 7 安装 Python 3.7</a><br>不同点在于将原本的链接路径和安装结果改为了python3和pip3。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Python</category>
+      
+      <category>脚本</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>转载</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>【MIT6.824】lab2A实现笔记</title>
     <link href="/2024/02/27/MIT6-824lab2A/"/>
     <url>/2024/02/27/MIT6-824lab2A/</url>
