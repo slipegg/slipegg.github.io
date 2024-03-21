@@ -1,0 +1,823 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="引言lab2B的实验要求如下： Implement the leader and follower code to append new log entries, so that the go test -run 2B tests pass.  Hint: Run git pull to get the latest lab software. Hint: Your first goal shou">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【MIT6.824】lab2B-log replication 实现笔记">
+<meta property="og:url" content="http://example.com/2024/03/19/MIT6-824lab2B/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="引言lab2B的实验要求如下： Implement the leader and follower code to append new log entries, so that the go test -run 2B tests pass.  Hint: Run git pull to get the latest lab software. Hint: Your first goal shou">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2024/03/19/MIT6-824lab2B/RaftStruct.jpg">
+<meta property="og:image" content="http://example.com/2024/03/19/MIT6-824lab2B/p1.jpg">
+<meta property="og:image" content="http://example.com/2024/03/19/MIT6-824lab2B/p2.jpg">
+<meta property="og:image" content="http://example.com/2024/03/19/MIT6-824lab2B/p3.jpg">
+<meta property="og:image" content="http://example.com/2024/03/19/MIT6-824lab2B/result.jpg">
+<meta property="og:image" content="http://example.com/2024/03/19/MIT6-824lab2B/p4.jpg">
+<meta property="article:published_time" content="2024-03-19T13:31:58.000Z">
+<meta property="article:modified_time" content="2024-03-21T02:47:00.723Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="原创">
+<meta property="article:tag" content="go">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="MIT6.824">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2024/03/19/MIT6-824lab2B/RaftStruct.jpg">
+  
+  
+  
+  <title>【MIT6.824】lab2B-log replication 实现笔记 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【MIT6.824】lab2B-log replication 实现笔记"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-03-19 21:31" pubdate>
+          2024年3月19日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          23 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【MIT6.824】lab2B-log replication 实现笔记</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>lab2B的实验要求如下：</p>
+<p>Implement the leader and follower code to append new log entries, so that the go test -run 2B tests pass.</p>
+<ul>
+<li><strong>Hint:</strong> Run git pull to get the latest lab software.</li>
+<li><strong>Hint:</strong> Your first goal should be to pass TestBasicAgree2B(). Start by implementing Start(), then write the code to send and receive new log entries via AppendEntries RPCs, following Figure 2. Send each newly committed entry on applyCh on each peer.</li>
+<li><strong>Hint:</strong> You will need to implement the election restriction (section 5.4.1 in the paper).</li>
+<li><strong>Hint:</strong> One way to fail to reach agreement in the early Lab 2B tests is to hold repeated elections even though the leader is alive. Look for bugs in election timer management, or not sending out heartbeats immediately after winning an election.</li>
+<li><strong>Hint:</strong> Your code may have loops that repeatedly check for certain events. Don’t have these loops execute continuously without pausing, since that will slow your implementation enough that it fails tests. Use Go’s condition variables, or insert a time.Sleep(10 * time.Millisecond) in each loop iteration.</li>
+<li><strong>Hint:</strong> Do yourself a favor for future labs and write (or re-write) code that’s clean and clear. For ideas, re-visit our the Guidance page with tips on how to develop and debug your code.</li>
+<li><strong>Hint:</strong> If you fail a test, look over the code for the test in config.go and test_test.go to get a better understanding what the test is testing. config.go also illustrates how the tester uses the Raft API.</li>
+</ul>
+<p>主要的要求就是在lab2A完成领导者选举的基础上实现日志的复制，代码可以在<a target="_blank" rel="noopener" href="https://github.com/slipegg/MIT6.824">https://github.com/slipegg/MIT6.824</a>中得到。</p>
+<h1 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a>测试环境</h1><p>由于整个lab是在模拟环境中进行的，所以我们需要先简单连接一下实验是如何测试和运行的。</p>
+<p>查看测试脚本可知，每次客户端提交用户请求都是通过调用leader的Start函数来实现的，故Start函数在接收到了日志后就需要主动开始日志复制的过程。</p>
+<p>而当leader将日志复制到大多数节点后，除了各个节点自己需要标定这个日志已经提交了外，还需要将这个日志已经提交了的信息返回给客户端，这个信息的结构为ApplyMsg，它通过applyCh这个channel来实现的，实际代码中我们可能需要启用一个go协程来在需要时进行异步执行，如下所示。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">type</span> ApplyMsg <span class="hljs-keyword">struct</span> &#123;<br>	CommandValid <span class="hljs-type">bool</span><br>	Command      <span class="hljs-keyword">interface</span>&#123;&#125;<br>	CommandIndex <span class="hljs-type">int</span><br><br>	<span class="hljs-comment">// For 2D:</span><br>	SnapshotValid <span class="hljs-type">bool</span><br>	Snapshot      []<span class="hljs-type">byte</span><br>	SnapshotTerm  <span class="hljs-type">int</span><br>	SnapshotIndex <span class="hljs-type">int</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rf *Raft)</span></span> applier() &#123;<br>	<span class="hljs-keyword">for</span> !rf.killed() &#123;<br>		rf.mu.Lock()<br>		<span class="hljs-keyword">for</span> rf.lastApplied &gt;= rf.commitIndex &#123;<br>			rf.applyCond.Wait()<br>		&#125;<br><br>		commitIndex, lastApplied := rf.commitIndex, rf.lastApplied<br>		entries := <span class="hljs-built_in">make</span>([]LogEntry, commitIndex-lastApplied)<br>		<span class="hljs-built_in">copy</span>(entries, rf.logs[lastApplied+<span class="hljs-number">1</span>:commitIndex+<span class="hljs-number">1</span>])<br>		Debug(dTest, <span class="hljs-string">&quot;S%v commitIndex: %v, lastApplied: %v, entries: %v&quot;</span>, rf.me, commitIndex, lastApplied, entries)<br>		rf.mu.Unlock()<br><br>		<span class="hljs-keyword">for</span> _, entry := <span class="hljs-keyword">range</span> entries &#123;<br>			<span class="hljs-comment">// entry: committed log entry</span><br>			rf.applyCh &lt;- ApplyMsg&#123;<br>				CommandValid: <span class="hljs-literal">true</span>,<br>				Command:      entry.Command,<br>				CommandIndex: entry.Index,<br>			&#125;<br>		&#125;<br><br>		rf.mu.Lock()<br>		Debug(dCommit, <span class="hljs-string">&quot;S%v applies log entries(startId: %v, length: %v)&quot;</span>, rf.me, lastApplied+<span class="hljs-number">1</span>, <span class="hljs-built_in">len</span>(entries))<br>		rf.lastApplied = commitIndex<br>		rf.mu.Unlock()<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="日志复制代码"><a href="#日志复制代码" class="headerlink" title="日志复制代码"></a>日志复制代码</h1><p>在具体实现时，发现Raft论文中的代码结构图对于编写整个代码非常有帮助，所以在这里也贴出来。</p>
+<p><img src="/2024/03/19/MIT6-824lab2B/RaftStruct.jpg" srcset="/img/loading.gif" lazyload alt="Raft论文中的代码结构图"></p>
+<p>项目的整体流程及思路我整理成了如下的过程.</p>
+<p><img src="/2024/03/19/MIT6-824lab2B/p1.jpg" srcset="/img/loading.gif" lazyload alt="客户端发送日志后触发日志复制"></p>
+<ul>
+<li><strong>Start:</strong> leader节点接受新的命令，将命令添加到自己的日志中，并向其他所有节点发送日志复制请求。</li>
+<li><strong>ReplicateLog:</strong> 由于日志复制可能会失败，所以需要一个循环来不断重试，直到日志复制成功。复制时通过RPC来调度其他节点的AppendEntires函数，并在得到返回结果后调用handleAppendResponse进行处理.</li>
+</ul>
+<p><img src="/2024/03/19/MIT6-824lab2B/p2.jpg" srcset="/img/loading.gif" lazyload alt="节点处理日志添加请求及处理日志添加返回结果"></p>
+<ul>
+<li><strong>AppendEntires:</strong> 节点接受到日志复制请求后，必须先要判定对方是不是term大于等于自己的term，如果不是就是过时的leader，直接拒绝。由于这个函数也会被当做心跳包来使用，所以收到后还需要自动转变为follower。然后再判断leader中记录的要复制的前一个日志preLog是不是和自己的一致，如果不一致，有两种可能：<ol>
+<li>自己的日志更短，都没复制到preLog这一步，所以直接拒绝，并主动在reply中返回自己的最后一个日志的id。</li>
+<li>有preLog，但是日志的term不一致，也就是自己有冗余的错误的日志，这里是可删可不删后面的日志，论文中采取的方法是返回错误，然后一个一个往前找对得上的日志，而由于这个速度太慢了，会导致测试不通过，所以这里采取的方法是返回本节点的preLog的term，这个term肯定是比leader更小的，然后等待leader找到这个term的最后一个日志，尝试全部复制过来，这样可以加速日志的复制。<br>如果都一致了，就加入到自己的日志中，然后再去对比参看leader有没有新commit日志，如果有就更新自己的commitIndex，并将他们apply，返回给客户端。</li>
+</ol>
+</li>
+<li><strong>handleAppendResponse:</strong> 这个函数是用来处理AppendEntires的返回结果的，首先需要判定自己还是不是leader，term有没有变，如果不是leader或者term变了，就不继续处理。如果返回成功，那么就更新自身记录的对应节点的matchId和nextId，如果返回失败,则对应有几种可能：<ol>
+<li>发现比自己term还高的节点，说明自己的term过时了，需要转变为follower。</li>
+<li>对方的日志比自己以为的要短，需要将该节点nextId往前移动到对应的位置。</li>
+<li>对方的preLog的term不一致，那么就需要找到perLog的term对应的最后一个日志，然后将nextId移动到这个位置的下一个位置。</li>
+</ol>
+</li>
+</ul>
+<p><img src="/2024/03/19/MIT6-824lab2B/p3.jpg" srcset="/img/loading.gif" lazyload alt="leader尝试更新日志及新的投票规则"></p>
+<ul>
+<li><strong>TryApplyForLeader:</strong> 这里把所有的matchId倒序排序，然后查看中间这个位置的matchId是不是变化了，如果变化了，就去查看这个最新的newCommitId对应的term是不是等于自己的term，如果不是，还是不处理，这对应了论文中的5.4.2节中的规则；如果是，就更新自己的commitIndex，并将这个日志apply。</li>
+<li><strong>Vote:</strong> 如果投票的请求的term比自己的term小，那么就是过时的请求，直接拒绝。如果相同，同时自己已经投票给了其他节点，那么也拒绝。如果请求的term比自己的term大，那么就转变为follower，并更新term。（这一步是为了处理有些时候有的节点进入了网络分区，term不断变大，新接入之后发起投票，这是否应该大伙都转为follower，但是可能受限于日志不符合，不能成为leader，然后大家在新的term中重新选举，统一得到一个leader。）然后检查请求的前一个日志是否是最新的，最新的规则是要么这个前一个日志的term比自己的term大，要么term相同但是index相同或者更大，如果不是，就拒绝。最后如果都通过了，就投票给对方。</li>
+</ul>
+<h1 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h1><p>使用了之前写的自动测试实验脚本的测试结果如下，可以看到它通过了1000次的测试。</p>
+<p><img src="/2024/03/19/MIT6-824lab2B/result.jpg" srcset="/img/loading.gif" lazyload alt="实验结果"></p>
+<h1 id="测试实例-TestBackup2B分享"><a href="#测试实例-TestBackup2B分享" class="headerlink" title="测试实例-TestBackup2B分享"></a>测试实例-TestBackup2B分享</h1><p>测试过程中被TestBackup2B困扰了很久这里分享一下这个测试示例。</p>
+<p><img src="/2024/03/19/MIT6-824lab2B/p4.jpg" srcset="/img/loading.gif" lazyload alt="TestBackup2B"></p>
+<p>可以看到测试主要是通过网络中断来进行测试的。一开始这个测试没通过，经过查看日志得知是在T5时刻没有选举出正确的leader，两个原因：</p>
+<ol>
+<li>在选举时判断每个节点最后的日志是不是最新的时候写错了，只比较自己的最后的日志相较于Candidate的最后的日志是不是一样长，而没有比较Candidate的最后的日志的term是不是比自己的大，这就导致了在T5时刻本来应该只有S2才能被选举出来，但是我确认S0和S1也可以被选举出来。</li>
+<li>在比较最后的日志前没有提前先判断对方的term是不是比自己的term大，由于S1在disconnect阶段一直在尝试重新选举，所以其term会很大，如果其他节点在接收到S1投票请求后没有转变为follower，并更新term会导致S1一直拒绝其他人的选举投票，而自己又由于日志不够新，被S2拒绝，导致选举一直无法完成。</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/MIT6-824/lab2/" class="category-chain-item">lab2</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%8E%9F%E5%88%9B/" class="print-no-link">#原创</a>
+      
+        <a href="/tags/go/" class="print-no-link">#go</a>
+      
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" class="print-no-link">#分布式</a>
+      
+        <a href="/tags/MIT6-824/" class="print-no-link">#MIT6.824</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【MIT6.824】lab2B-log replication 实现笔记</div>
+      <div>http://example.com/2024/03/19/MIT6-824lab2B/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>John Doe</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年3月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/03/14/ShadowResources/" title="【论文阅读】Not All Resources are Visible:Exploiting Fragmented Shadow Resources in Shared-State Scheduler Architecture">
+                        <span class="hidden-mobile">【论文阅读】Not All Resources are Visible:Exploiting Fragmented Shadow Resources in Shared-State Scheduler Architecture</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

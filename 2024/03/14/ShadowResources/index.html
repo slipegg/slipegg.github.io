@@ -39,7 +39,7 @@
 <meta property="og:image" content="http://example.com/2024/03/14/ShadowResources/fig13.jpg">
 <meta property="og:image" content="http://example.com/2024/03/14/ShadowResources/fig14.jpg">
 <meta property="article:published_time" content="2024-03-14T07:34:19.000Z">
-<meta property="article:modified_time" content="2024-03-18T08:36:47.404Z">
+<meta property="article:modified_time" content="2024-03-20T11:43:51.159Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="原创">
 <meta name="twitter:card" content="summary_large_image">
@@ -349,7 +349,7 @@
 <p><img src="/2024/03/14/ShadowResources/scheduleArc.png" srcset="/img/loading.gif" lazyload alt="图2. a为单体式架构，b为两级式架构，c为共享状态调度架构"></p>
 <p>共享状态架构的具体介绍：</p>
 <ul>
-<li>有一个管理员维护了中央状态视图CSV，它包含了集群资源的最新信息。</li>
+<li>有一个管理员维护了中央状态视图CSV。</li>
 <li>存在多个并行调度器，调度范围是全局，调度依据是本地状态视图LSV，并将调度决策提交到CSV中，以避免与其他调度器发生冲突。</li>
 <li>CSV 定期更新每个调度器拥有的本地状态视图 (LSV)，并具有固定的更新延迟。</li>
 <li>最初的共享状态设计会在每次成功的资源分配操作时更新，但在实际集群中，更新延迟通常为秒级，以减少更新带来的系统开销。</li>
@@ -374,10 +374,10 @@
 <li>提出了RMiner机制，对影子资源进行了利用。</li>
 <li>构建了RMiner的模拟器，实验证明了RMiner可以以较小的开销极大地提高集群性能。</li>
 </ol>
-<h1 id="理论分析"><a href="#理论分析" class="headerlink" title="理论分析"></a>理论分析</h1><p>经过理论分析，本文得出了影子资源的期望式：</p>
+<h1 id="理论分析"><a href="#理论分析" class="headerlink" title="理论分析"></a>理论分析</h1><p>经过理论分析，本文得出了瞬时影子资源的期望式：</p>
 <p><img src="/2024/03/14/ShadowResources/expectation.jpg" srcset="/img/loading.gif" lazyload alt="影子资源期望式"></p>
 <p>即影子资源总量主要与状态更新延迟d<sub>u</sub>和集群中分配的资源数量r<sub>run</sub>成正比，而与任务的平均执行时间η成反比。</p>
-<p>根据谷歌数据集、fuxi2.0、Borg的数据，假设任务的执行时间为4s<del>5s,状态更新延迟为0.3</del>1.0s，那么影子资源占已分配资源的3~12.5%。<br>这是值得被考虑的，同时随着轻量云任务的增多，影子资源的利用也会变得更加重要。</p>
+<p>根据谷歌数据集、fuxi2.0、Borg的数据，假设任务的执行时间为4s<del>5s,状态更新延迟为0.3\</del>1.0s，那么影子资源占已分配资源的3~12.5%。<br>这是值得被考虑的，同时随着轻量云任务的增多，影子资源的利用也会变得更加重要。</p>
 <p>通过对阿里巴巴集群数据集的随机采样，并进行了10中不同配置的实验，记录了影子资源的分布情况，与实验分析基本一致，如图3所示。</p>
 <p><img src="/2024/03/14/ShadowResources/fig3.jpg" srcset="/img/loading.gif" lazyload alt="图3. 影子资源理论与实验结果对比"></p>
 <h1 id="RMiner机制设计"><a href="#RMiner机制设计" class="headerlink" title="RMiner机制设计"></a>RMiner机制设计</h1><p><img src="/2024/03/14/ShadowResources/fig4.jpg" srcset="/img/loading.gif" lazyload alt="图4. RMiner机制"></p>
@@ -385,7 +385,7 @@
 <ol>
 <li>Shadow Resource Manager 通过新设计的索引，探测并管理最新的影子资源。</li>
 <li>RM Filter选择适合影子资源的任务（RM Tasks）到任务队列中</li>
-<li>RM Scheduler负责灵活地将影子资源分配给RM任务。根据特点</li>
+<li>RM Scheduler负责灵活地将影子资源分配给RM任务。</li>
 </ol>
 <p>RMiner的两大设计原则：</p>
 <ol>
@@ -402,6 +402,7 @@
 <li>Occupied Resource: 用于标识影子资源的已占用资源。</li>
 <li>Allocated Tasks: 用于标识影子资源已分配的任务。</li>
 </ol>
+<p>当中央状态视图同步集群状态并监控资源R的释放时，影子状态视图立即通过Echo State机制感知到该信息，并通过Echo State机制将新发现的影子资源合并到影子状态视图中。</p>
 <p>注意在每次状态更新时，Shadow Resource Manager 会将所有空闲的影子资源释放，而只会继续管理已经被占用了的影子资源。</p>
 <p>RM任务分配和运行结束释放都不用更新CSV，即CSV还是会一直认为这时候这些资源是空闲的，这样做是为了不影响原本的整个系统。</p>
 <p>具体来说，它通过Echo State机制来迅速侦测新的影子资源，这种机制使得影子资源视图能够与CSV同步，但是主机影子资源的状态更新信息会被CSV忽略，而只会被Shadow Resource Manager处理，以避免影响原本的系统</p>
@@ -410,7 +411,7 @@
 <h2 id="RM-Filter"><a href="#RM-Filter" class="headerlink" title="RM Filter"></a>RM Filter</h2><p>RM Filter 是会在任务分配给各个调度器之前提前进行，任务选取有以下3个原则：</p>
 <ol>
 <li>过滤的任务应该与影子资源的短暂和碎片化属性相匹配。</li>
-<li>其次，过滤后的任务应该被抢先杀死或迁移，因为为了避免入侵，我们优先执行普通任务而不是 RM 任务，这样可以避免影响原始调度系统。</li>
+<li>其次，过滤后的任务应该能被抢先杀死或迁移，因为为了避免入侵，我们优先执行普通任务而不是 RM 任务，这样可以避免影响原始调度系统。</li>
 <li>不选取太多任务，以免形成性能瓶颈。具体来说会考虑5个因素：<ol>
 <li>RM任务队列的长度，表示RM调度器的工作负载；（负相关）</li>
 <li>来自影子资源管理器的当前影子资源量； （正相关）</li>
@@ -443,7 +444,7 @@
 <p><img src="/2024/03/14/ShadowResources/fig8.jpg" srcset="/img/loading.gif" lazyload alt="图8. RMiner的两种资源挖掘模式对比"></p>
 <h3 id="SafeRM-Mode"><a href="#SafeRM-Mode" class="headerlink" title="SafeRM Mode"></a>SafeRM Mode</h3><p>RMiner只在影子资源的存在时间对其进行利用，而不再等待延迟时间内对其进行利用，以最大程度避免冲突。在SafeRM模式下，RM Filter会优先考虑任务运行时间短的任务。RM调度器主要将短任务给小的影子资源。</p>
 <p>当然由于RM任务的工作时长难以确定，所以RM任务也可能会超过影子资源存活时间，这是会尝试先迁移，如果不行再杀死。</p>
-<h3 id="SmartRM-Mode"><a href="#SmartRM-Mode" class="headerlink" title="SmartRM Mode."></a>SmartRM Mode.</h3><p>在影子资源的存在时间和等待延迟时间内对其进行利用，以最大程度提高资源利用率。在SmartRM模式下，RM Filter首先考虑任务的资源需求和驱逐成本，并优先考虑低优先的任务。RM调度器主要讲资源需求大的任务分配给尽量多空闲资源的合适的影子资源。</p>
+<h3 id="SmartRM-Mode"><a href="#SmartRM-Mode" class="headerlink" title="SmartRM Mode"></a>SmartRM Mode</h3><p>在影子资源的存在时间和等待延迟时间内对其进行利用，以最大程度提高资源利用率。在SmartRM模式下，RM Filter首先考虑任务的资源需求和驱逐成本，并优先考虑低优先的任务。RM调度器主要讲资源需求大的任务分配给尽量多空闲资源的合适的影子资源。</p>
 <p>当冲突发生时，RM调度器会先杀死低优先级的RM任务，然后再尝试为其迁移。</p>
 <h1 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h1><p>实验时，在谷歌集群模拟系统上添加了RM相关的组件。实验任务为2k+。模拟的节点为1500个同构节点，每个节点64个CPU，16个内存。</p>
 <p>实验的任务主要来自阿里巴巴集群数据集。更新延迟为0.5s，调度器调度速率为每秒1000个任务，调度器数量分别设置为8和16，任务平均执行时间为5s，指数分布，平均一个作业包含12个任务，任务达到速率有1.43和0.7，前者在300秒内生成了200多个作业，即约2400个任务。</p>
@@ -465,7 +466,7 @@
 <p>我们在图 11 中展示了作业等待时间的结果。它表明 RMiner 在较低工作负载下的表现与 NoRM 类似，因为在这种情况下任务不需要在队列中等待。然而，在更高的工作负载（1.75x和2x）下，并行提交的任务更多，普通调度器几乎已经达到了调度能力。 RMiner 的表现非常出色，因为它利用了更多短期任务来减少整体排队延迟。 RMiner 在 8 个调度程序下将作业等待时间缩短高达 25.4%，在 16 个调度程序下将作业等待时间缩短高达 10.4%。更多的调度器减少了并发调度任务的压力，但会导致更多的调度冲突。此外，我们进一步在 Google 的跟踪上验证了改进，发现 RMiner 在 8 个调度器下实现了 59.9% 的改进，在 16 个调度器下实现了 24.9% 的改进。</p>
 <h2 id="任务冲突"><a href="#任务冲突" class="headerlink" title="任务冲突"></a>任务冲突</h2><p><img src="/2024/03/14/ShadowResources/fig12.jpg" srcset="/img/loading.gif" lazyload alt="图12. 任务冲突"></p>
 <p>我们记录了 16 个调度程序设置的不同工作负载级别下的冲突。图 12 报告了性能改进和引发的冲突之间的关系。图 12（a）显示了基线和 SafeRM 之间的比较，这表明 SafeRM 在最坏情况下导致冲突增加不到 3%，从而将资源利用率和任务吞吐量提高了 4%。平均而言，与当前的共享状态调度程序相比，SafeRM 造成的冲突多了 0.5%，这与性能收益相比是可以接受的。</p>
-<p>此外，我们在图 14 (b) 中报告了 SmartRM 的结果。同样，SmartRM 在最坏的情况下会导致冲突增加 3%，资源利用率提高 6%，吞吐量提高 13%。 SmartRM 的平均冲突成本为 0.73%，由于挖矿策略更加激进，比 SafeRM 略高。我们还发现，在较高工作负载下，冲突成本更加严重，因为更多并发任务提交使 SmartRM 更容易与正常调度程序发生冲突。综上所述，从工作冲突的角度来看，成本与绩效的提升相比可以忽略不计。</p>
+<p>此外，我们在图 12 (b) 中报告了 SmartRM 的结果。同样，SmartRM 在最坏的情况下会导致冲突增加 3%，资源利用率提高 6%，吞吐量提高 13%。 SmartRM 的平均冲突成本为 0.73%，由于挖矿策略更加激进，比 SafeRM 略高。我们还发现，在较高工作负载下，冲突成本更加严重，因为更多并发任务提交使 SmartRM 更容易与正常调度程序发生冲突。综上所述，从工作冲突的角度来看，成本与绩效的提升相比可以忽略不计。</p>
 <h2 id="总体分析"><a href="#总体分析" class="headerlink" title="总体分析"></a>总体分析</h2><p>RMiner 的额外开销也是回答问题 3 的一个重要方面。不幸的是，工业模拟器没有对调度开销进行建模，因此我们进行了全面的理论分析。 RMiner的开销包括影子资源管理开销和RM调度开销。影子资源管理器占用额外的内存空间来存储和更新影子资源状态索引，大约是CSV空间的3%-12.5%。在较高工作负载下，管理算法的频率很频繁，但通过哈希映射，操作的复杂度为 O(1)，从而导致可接受的计算开销。总体而言，影子资源的管理所产生的开销可以忽略不计。</p>
 <p>至于额外的调度开销，当前的共享状态调度器设计配备了数十个具有全局状态视图的并行分布式调度器。 RMiner 增加了一个 RM 调度器，大大增强了当前设计的可见性，并且 RM 调度器的调度成本比传统的并行调度器要低，因为调度范围和实体都比以前更小。因此，RMiner 的调度开销比当前共享状态设计大约增加了个位数。总体而言，与集群性能的显着提升相比，在当前共享状态调度器中采用 RMiner 的成本可以忽略不计。</p>
 <h2 id="RM模式对比"><a href="#RM模式对比" class="headerlink" title="RM模式对比"></a>RM模式对比</h2><p>实验中，SafeRM保留更新延迟的过滤阈值以保证最小化冲突。 SmartRM的默认阈值也是更新延迟，我们将过滤器阈值调整为2x更新延迟和4x更新延迟来比较性能。前者发生冲突的可能性较低，被定义为保守派SmartRM（SmartRM-C）。相反，后者被定义为激进的SmartRM（SmartRM-A）。此外，我们改变了 0.5 秒的默认更新延迟来调查对结果的影响。实验在 1x 工作负载级别和 16 个并行调度器下进行。</p>
@@ -562,6 +563,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2024/03/19/MIT6-824lab2B/" title="【MIT6.824】lab2B-log replication 实现笔记">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">【MIT6.824】lab2B-log replication 实现笔记</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
