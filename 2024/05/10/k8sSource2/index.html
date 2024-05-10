@@ -1,0 +1,858 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本次分析参考的K8s版本是v1.27.0。 调度队列简介这里是官方对于K8s中调度队列的介绍，很值得一看：Scheduling queue in kube-scheduler。整体的架构如下图所示。  简单来说K8s中的调度队列主要有3种：  ActiveQ（heap结构）：在每个调度周期开始时都会从这里取出一个Pod尝试调度。一开始提交的所有没有指定.spec.nodeName的Pod都会发送到">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8s源码分析（二）-K8s调度队列介绍">
+<meta property="og:url" content="http://example.com/2024/05/10/k8sSource2/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="本次分析参考的K8s版本是v1.27.0。 调度队列简介这里是官方对于K8s中调度队列的介绍，很值得一看：Scheduling queue in kube-scheduler。整体的架构如下图所示。  简单来说K8s中的调度队列主要有3种：  ActiveQ（heap结构）：在每个调度周期开始时都会从这里取出一个Pod尝试调度。一开始提交的所有没有指定.spec.nodeName的Pod都会发送到">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2024/05/10/k8sSource2/scheduling_queues.png">
+<meta property="og:image" content="http://example.com/2024/05/10/k8sSource2/summary.png">
+<meta property="article:published_time" content="2024-05-10T08:33:27.000Z">
+<meta property="article:modified_time" content="2024-05-10T08:36:37.609Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="k8s">
+<meta property="article:tag" content="源码分析">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2024/05/10/k8sSource2/scheduling_queues.png">
+  
+  
+  
+  <title>K8s源码分析（二）-K8s调度队列介绍 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8s源码分析（二）-K8s调度队列介绍"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-10 16:33" pubdate>
+          2024年5月10日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          23k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          114 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8s源码分析（二）-K8s调度队列介绍</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本次分析参考的K8s版本是<a target="_blank" rel="noopener" href="https://github.com/kubernetes/kubernetes/tree/release-1.27">v1.27.0</a>。</p>
+<h1 id="调度队列简介"><a href="#调度队列简介" class="headerlink" title="调度队列简介"></a>调度队列简介</h1><p>这里是官方对于K8s中调度队列的介绍，很值得一看：<a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/f03b6d5692bd979f07dd472e7b6836b2dad0fd9b/contributors/devel/sig-scheduling/scheduler_queues.md">Scheduling queue in kube-scheduler</a>。整体的架构如下图所示。</p>
+<p><img src="/2024/05/10/k8sSource2/scheduling_queues.png" srcset="/img/loading.gif" lazyload alt="调度队列"></p>
+<p>简单来说K8s中的调度队列主要有3种：</p>
+<ul>
+<li><strong>ActiveQ</strong>（heap结构）：在每个调度周期开始时都会从这里取出一个Pod尝试调度。一开始提交的所有没有指定<code>.spec.nodeName</code>的Pod都会发送到这里，也会接收来自unschedulableQ和BackoffQ刷新来的pod。默认的排序规则是按照优先级进行排列，高优先级的Pod在前面。</li>
+<li><strong>UnschedulableQ</strong>（Map结构）：存储调度失败的Pod，以等待资源更新、其他相关Pod调度成功等事件，从而将其的Pod其进行重调度。</li>
+<li><strong>BackoffQ</strong>（heap结构）：用来暂时退避的队列，默认的排列规则是按退避时间的长度进行排序，需要退避的时间短的Pod在前面。为了防止Pod频繁的重调度，每个Pod都会记录自己的重调度次数，退避时间随着每次失败的调度尝试呈指数增长，直到达到最大值，例如尝试失败 3 次的 Pod 的目标退避超时设置为 curTime + 2s^3 (8s)。注意有两种情况下Pod会进入到BackoffQ队列中：<ul>
+<li>unscheduleableQ会定时对其中的所有pod进行重调度，那么就需要计算各个pod是否退避了足够的时间，如果没有就放入到BackoffQ中再退避一段时间。</li>
+<li>如果一个Pod调度失败时，正好这时又异步地发生了资源变更事件（<code>p.moveRequestCycle **&gt;=** podSchedulingCycle</code> ）(<code>schedulingCycle</code> 是当前调度的周期，ActiveQ队列每pop一个pod，就加1，<code>moveRequestCycle</code>是事件发生时<code>schedulingCycle</code> 的值），那么就不会放入UnschedulableQ中，而是会直接放入到BackoffQ中。</li>
+</ul>
+</li>
+</ul>
+<p>调度队列机制有两个在后台运行的定期刷新 go协程，负责将 pod 移动到活动队列，后续也将详细介绍相关代码：</p>
+<ul>
+<li><strong>flushUnschedulablePodsLeftover：</strong>每 30 秒运行一次，将 Pod 从UnschedulableQ中移动，以允许未由任何事件移动的不可调度的 Pod 再次重试。</li>
+<li><strong>flushBackoffQCompleted：</strong>每1秒运行一次，将BackoffQ中已经回避了足够久的Pod移动到ActiveQ队列中</li>
+</ul>
+<p>移动请求（move request）会触发一个事件，该事件负责将 Pod 从UnschedulableQ移动到ActiveQ或BackoffQ。集群中许多事件可以触发移动请求的发生，包括了 Pod、节点、服务、PV、PVC、存储类和 CSI 节点的更改。例如当某些pod被调度时，UnschedulableQ中与其具有亲和性要求而导致之前无法调度的pod就会被移动出去，或者当某个新node加入时，原本因为资源不够导致无法调度的Pod也会被移动出去。</p>
+<h1 id="调度队列源代码分析"><a href="#调度队列源代码分析" class="headerlink" title="调度队列源代码分析"></a>调度队列源代码分析</h1><h2 id="队列初始化"><a href="#队列初始化" class="headerlink" title="队列初始化"></a>队列初始化</h2><p>Scheduler中的调度队列<code>SchedulingQueue</code>为<code>internalqueue.SchedulingQueue</code>类型，该类型的实现在pkg&#x2F;scheduler&#x2F;internal&#x2F;queue&#x2F;scheduling_queue.go:92，如下。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// SchedulingQueue is an interface for a queue to store pods waiting to be scheduled.</span><br><span class="hljs-comment">// The interface follows a pattern similar to cache.FIFO and cache.Heap and</span><br><span class="hljs-comment">// makes it easy to use those data structures as a SchedulingQueue.</span><br><span class="hljs-keyword">type</span> SchedulingQueue <span class="hljs-keyword">interface</span> &#123;<br>	framework.PodNominator<br>	Add(pod *v1.Pod) <span class="hljs-type">error</span><br>	<span class="hljs-comment">// Activate moves the given pods to activeQ iff they&#x27;re in unschedulablePods or backoffQ.</span><br>	<span class="hljs-comment">// The passed-in pods are originally compiled from plugins that want to activate Pods,</span><br>	<span class="hljs-comment">// by injecting the pods through a reserved CycleState struct (PodsToActivate).</span><br>	Activate(pods <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*v1.Pod)<br>	<span class="hljs-comment">// AddUnschedulableIfNotPresent adds an unschedulable pod back to scheduling queue.</span><br>	<span class="hljs-comment">// The podSchedulingCycle represents the current scheduling cycle number which can be</span><br>	<span class="hljs-comment">// returned by calling SchedulingCycle().</span><br>	AddUnschedulableIfNotPresent(pod *framework.QueuedPodInfo, podSchedulingCycle <span class="hljs-type">int64</span>) <span class="hljs-type">error</span><br>	<span class="hljs-comment">// SchedulingCycle returns the current number of scheduling cycle which is</span><br>	<span class="hljs-comment">// cached by scheduling queue. Normally, incrementing this number whenever</span><br>	<span class="hljs-comment">// a pod is popped (e.g. called Pop()) is enough.</span><br>	SchedulingCycle() <span class="hljs-type">int64</span><br>	<span class="hljs-comment">// Pop removes the head of the queue and returns it. It blocks if the</span><br>	<span class="hljs-comment">// queue is empty and waits until a new item is added to the queue.</span><br>	Pop() (*framework.QueuedPodInfo, <span class="hljs-type">error</span>)<br>	Update(oldPod, newPod *v1.Pod) <span class="hljs-type">error</span><br>	Delete(pod *v1.Pod) <span class="hljs-type">error</span><br>	MoveAllToActiveOrBackoffQueue(event framework.ClusterEvent, preCheck PreEnqueueCheck)<br>	AssignedPodAdded(pod *v1.Pod)<br>	AssignedPodUpdated(pod *v1.Pod)<br>	PendingPods() ([]*v1.Pod, <span class="hljs-type">string</span>)<br>	<span class="hljs-comment">// Close closes the SchedulingQueue so that the goroutine which is</span><br>	<span class="hljs-comment">// waiting to pop items can exit gracefully.</span><br>	Close()<br>	<span class="hljs-comment">// Run starts the goroutines managing the queue.</span><br>	Run()<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>上述代码定义了其需要的对队列中的元素添加、删除、更新、获取、运行等方法。而其标准实现<code>PriorityQueue</code> 在</p>
+<p> <code>pkg/scheduler/internal/queue/scheduling_queue.go:145</code> 中，首先查看其需要的变量：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// PriorityQueue implements a scheduling queue.</span><br><span class="hljs-comment">// The head of PriorityQueue is the highest priority pending pod. This structure</span><br><span class="hljs-comment">// has two sub queues and a additional data structure, namely: activeQ,</span><br><span class="hljs-comment">// backoffQ and unschedulablePods.</span><br><span class="hljs-comment">//   - activeQ holds pods that are being considered for scheduling.</span><br><span class="hljs-comment">//   - backoffQ holds pods that moved from unschedulablePods and will move to</span><br><span class="hljs-comment">//     activeQ when their backoff periods complete.</span><br><span class="hljs-comment">//   - unschedulablePods holds pods that were already attempted for scheduling and</span><br><span class="hljs-comment">//     are currently determined to be unschedulable.</span><br><span class="hljs-keyword">type</span> PriorityQueue <span class="hljs-keyword">struct</span> &#123;<br>	*nominator<br><br>	stop  <span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;<br>	clock clock.Clock<br><br>	<span class="hljs-comment">// pod initial backoff duration.</span><br>	podInitialBackoffDuration time.Duration<br>	<span class="hljs-comment">// pod maximum backoff duration.</span><br>	podMaxBackoffDuration time.Duration<br>	<span class="hljs-comment">// the maximum time a pod can stay in the unschedulablePods.</span><br>	podMaxInUnschedulablePodsDuration time.Duration<br><br>	cond sync.Cond<br><br>	<span class="hljs-comment">// activeQ is heap structure that scheduler actively looks at to find pods to</span><br>	<span class="hljs-comment">// schedule. Head of heap is the highest priority pod.</span><br>	activeQ *heap.Heap<br>	<span class="hljs-comment">// podBackoffQ is a heap ordered by backoff expiry. Pods which have completed backoff</span><br>	<span class="hljs-comment">// are popped from this heap before the scheduler looks at activeQ</span><br>	podBackoffQ *heap.Heap<br>	<span class="hljs-comment">// unschedulablePods holds pods that have been tried and determined unschedulable.</span><br>	unschedulablePods *UnschedulablePods<br>	<span class="hljs-comment">// schedulingCycle represents sequence number of scheduling cycle and is incremented</span><br>	<span class="hljs-comment">// when a pod is popped.</span><br>	schedulingCycle <span class="hljs-type">int64</span><br>	<span class="hljs-comment">// moveRequestCycle caches the sequence number of scheduling cycle when we</span><br>	<span class="hljs-comment">// received a move request. Unschedulable pods in and before this scheduling</span><br>	<span class="hljs-comment">// cycle will be put back to activeQueue if we were trying to schedule them</span><br>	<span class="hljs-comment">// when we received move request.</span><br>	moveRequestCycle <span class="hljs-type">int64</span><br><br>	clusterEventMap <span class="hljs-keyword">map</span>[framework.ClusterEvent]sets.String<br>	<span class="hljs-comment">// preEnqueuePluginMap is keyed with profile name, valued with registered preEnqueue plugins.</span><br>	preEnqueuePluginMap <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>][]framework.PreEnqueuePlugin<br><br>	<span class="hljs-comment">// closed indicates that the queue is closed.</span><br>	<span class="hljs-comment">// It is mainly used to let Pop() exit its control loop while waiting for an item.</span><br>	closed <span class="hljs-type">bool</span><br><br>	nsLister listersv1.NamespaceLister<br><br>	metricsRecorder metrics.MetricAsyncRecorder<br>	<span class="hljs-comment">// pluginMetricsSamplePercent is the percentage of plugin metrics to be sampled.</span><br>	pluginMetricsSamplePercent <span class="hljs-type">int</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>在<code>pkg/scheduler/internal/queue/scheduling_queue.go:291</code>  中给出了生成了该队列的初始化方法</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// NewPriorityQueue creates a PriorityQueue object.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewPriorityQueue</span><span class="hljs-params">(</span></span><br><span class="hljs-params"><span class="hljs-function">	lessFn framework.LessFunc,</span></span><br><span class="hljs-params"><span class="hljs-function">	informerFactory informers.SharedInformerFactory,</span></span><br><span class="hljs-params"><span class="hljs-function">	opts ...Option,</span></span><br><span class="hljs-params"><span class="hljs-function">)</span></span> *PriorityQueue &#123;<br>	options := defaultPriorityQueueOptions<br>	<span class="hljs-keyword">if</span> options.podLister == <span class="hljs-literal">nil</span> &#123;<br>		options.podLister = informerFactory.Core().V1().Pods().Lister()<br>	&#125;<br>	<span class="hljs-keyword">for</span> _, opt := <span class="hljs-keyword">range</span> opts &#123;<br>		opt(&amp;options)<br>	&#125;<br><br>	comp := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(podInfo1, podInfo2 <span class="hljs-keyword">interface</span>&#123;&#125;)</span></span> <span class="hljs-type">bool</span> &#123;<br>		pInfo1 := podInfo1.(*framework.QueuedPodInfo)<br>		pInfo2 := podInfo2.(*framework.QueuedPodInfo)<br>		<span class="hljs-keyword">return</span> lessFn(pInfo1, pInfo2)<br>	&#125;<br><br>	pq := &amp;PriorityQueue&#123;<br>		nominator:                         newPodNominator(options.podLister),<br>		clock:                             options.clock,<br>		stop:                              <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;),<br>		podInitialBackoffDuration:         options.podInitialBackoffDuration,<br>		podMaxBackoffDuration:             options.podMaxBackoffDuration,<br>		podMaxInUnschedulablePodsDuration: options.podMaxInUnschedulablePodsDuration,<br>		activeQ:                           heap.NewWithRecorder(podInfoKeyFunc, comp, metrics.NewActivePodsRecorder()),<br>		unschedulablePods:                 newUnschedulablePods(metrics.NewUnschedulablePodsRecorder(), metrics.NewGatedPodsRecorder()),<br>		moveRequestCycle:                  <span class="hljs-number">-1</span>,<br>		clusterEventMap:                   options.clusterEventMap,<br>		preEnqueuePluginMap:               options.preEnqueuePluginMap,<br>		metricsRecorder:                   options.metricsRecorder,<br>		pluginMetricsSamplePercent:        options.pluginMetricsSamplePercent,<br>	&#125;<br>	pq.cond.L = &amp;pq.lock<br>	pq.podBackoffQ = heap.NewWithRecorder(podInfoKeyFunc, pq.podsCompareBackoffCompleted, metrics.NewBackoffPodsRecorder())<br>	pq.nsLister = informerFactory.Core().V1().Namespaces().Lister()<br><br>	<span class="hljs-keyword">return</span> pq<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到其包含了许多我们上面介绍的概念，包括<code>activeQ</code> 、<code>unschedulablePods</code> 、<code>podBackoffQ</code> 、<code>schedulingCycle</code> 、<code>moveRequestCycle</code>  。</p>
+<h2 id="QueuedPodInfo元素介绍"><a href="#QueuedPodInfo元素介绍" class="headerlink" title="QueuedPodInfo元素介绍"></a>QueuedPodInfo元素介绍</h2><p>这里也多次出现了<code>QueuedPodInfo</code>这个关键的数据结构，它是Pod中的基础元素，在此进行介绍，其定义在<code>pkg/scheduler/framework/types.go:98</code> 中，包括了PodInfo、添加时间、尝试次数等</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// QueuedPodInfo is a Pod wrapper with additional information related to</span><br><span class="hljs-comment">// the pod&#x27;s status in the scheduling queue, such as the timestamp when</span><br><span class="hljs-comment">// it&#x27;s added to the queue.</span><br><span class="hljs-keyword">type</span> QueuedPodInfo <span class="hljs-keyword">struct</span> &#123;<br>	*PodInfo<br>	<span class="hljs-comment">// The time pod added to the scheduling queue.</span><br>	Timestamp time.Time<br>	<span class="hljs-comment">// Number of schedule attempts before successfully scheduled.</span><br>	<span class="hljs-comment">// It&#x27;s used to record the # attempts metric.</span><br>	Attempts <span class="hljs-type">int</span><br>	<span class="hljs-comment">// The time when the pod is added to the queue for the first time. The pod may be added</span><br>	<span class="hljs-comment">// back to the queue multiple times before it&#x27;s successfully scheduled.</span><br>	<span class="hljs-comment">// It shouldn&#x27;t be updated once initialized. It&#x27;s used to record the e2e scheduling</span><br>	<span class="hljs-comment">// latency for a pod.</span><br>	InitialAttemptTimestamp time.Time<br>	<span class="hljs-comment">// If a Pod failed in a scheduling cycle, record the plugin names it failed by.</span><br>	UnschedulablePlugins sets.String<br>	<span class="hljs-comment">// Whether the Pod is scheduling gated (by PreEnqueuePlugins) or not.</span><br>	Gated <span class="hljs-type">bool</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>PodInfo的定义在<code>pkg/scheduler/framework/types.go:131</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// PodInfo is a wrapper to a Pod with additional pre-computed information to</span><br><span class="hljs-comment">// accelerate processing. This information is typically immutable (e.g., pre-processed</span><br><span class="hljs-comment">// inter-pod affinity selectors).</span><br><span class="hljs-keyword">type</span> PodInfo <span class="hljs-keyword">struct</span> &#123;<br>	Pod                        *v1.Pod<br>	RequiredAffinityTerms      []AffinityTerm<br>	RequiredAntiAffinityTerms  []AffinityTerm<br>	PreferredAffinityTerms     []WeightedAffinityTerm<br>	PreferredAntiAffinityTerms []WeightedAffinityTerm<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>Pod的定义在<code>staging/src/k8s.io/api/core/v1/types.go:4202</code>中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Pod is a collection of containers that can run on a host. This resource is created</span><br><span class="hljs-comment">// by clients and scheduled onto hosts.</span><br><span class="hljs-keyword">type</span> Pod <span class="hljs-keyword">struct</span> &#123;<br>	metav1.TypeMeta <span class="hljs-string">`json:&quot;,inline&quot;`</span><br>	<span class="hljs-comment">// Standard object&#x27;s metadata.</span><br>	<span class="hljs-comment">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata</span><br>	<span class="hljs-comment">// +optional</span><br>	metav1.ObjectMeta <span class="hljs-string">`json:&quot;metadata,omitempty&quot; protobuf:&quot;bytes,1,opt,name=metadata&quot;`</span><br><br>	<span class="hljs-comment">// Specification of the desired behavior of the pod.</span><br>	<span class="hljs-comment">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status</span><br>	<span class="hljs-comment">// +optional</span><br>	Spec PodSpec <span class="hljs-string">`json:&quot;spec,omitempty&quot; protobuf:&quot;bytes,2,opt,name=spec&quot;`</span><br><br>	<span class="hljs-comment">// Most recently observed status of the pod.</span><br>	<span class="hljs-comment">// This data may not be up to date.</span><br>	<span class="hljs-comment">// Populated by the system.</span><br>	<span class="hljs-comment">// Read-only.</span><br>	<span class="hljs-comment">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status</span><br>	<span class="hljs-comment">// +optional</span><br>	Status PodStatus <span class="hljs-string">`json:&quot;status,omitempty&quot; protobuf:&quot;bytes,3,opt,name=status&quot;`</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="ActiveQ源代码介绍"><a href="#ActiveQ源代码介绍" class="headerlink" title="ActiveQ源代码介绍"></a>ActiveQ源代码介绍</h2><p>从初始化代码中可以看到ActiveQ是一个heap，其相关定义在<code>pkg/scheduler/internal/heap/heap.go</code> 中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Heap is a producer/consumer queue that implements a heap data structure.</span><br><span class="hljs-comment">// It can be used to implement priority queues and similar data structures.</span><br><span class="hljs-keyword">type</span> Heap <span class="hljs-keyword">struct</span> &#123;<br>	<span class="hljs-comment">// data stores objects and has a queue that keeps their ordering according</span><br>	<span class="hljs-comment">// to the heap invariant.</span><br>	data *data<br>	<span class="hljs-comment">// metricRecorder updates the counter when elements of a heap get added or</span><br>	<span class="hljs-comment">// removed, and it does nothing if it&#x27;s nil</span><br>	metricRecorder metrics.MetricRecorder<br>&#125;<br><span class="hljs-comment">// data is an internal struct that implements the standard heap interface</span><br><span class="hljs-comment">// and keeps the data stored in the heap.</span><br><span class="hljs-keyword">type</span> data <span class="hljs-keyword">struct</span> &#123;<br>	<span class="hljs-comment">// items is a map from key of the objects to the objects and their index.</span><br>	<span class="hljs-comment">// We depend on the property that items in the map are in the queue and vice versa.</span><br>	items <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*heapItem<br>	<span class="hljs-comment">// queue implements a heap data structure and keeps the order of elements</span><br>	<span class="hljs-comment">// according to the heap invariant. The queue keeps the keys of objects stored</span><br>	<span class="hljs-comment">// in &quot;items&quot;.</span><br>	queue []<span class="hljs-type">string</span><br><br>	<span class="hljs-comment">// keyFunc is used to make the key used for queued item insertion and retrieval, and</span><br>	<span class="hljs-comment">// should be deterministic.</span><br>	keyFunc KeyFunc<br>	<span class="hljs-comment">// lessFunc is used to compare two objects in the heap.</span><br>	lessFunc lessFunc<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到他是用queue实现了一个heap。</p>
+<p>ActiveQ的默认排序代码在<code>pkg/scheduler/framework/plugins/queuesort/priority_sort.go:42</code>中,即按优先级进行排序，如果优先级相同就提交时间的早晚进行排序。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Less is the function used by the activeQ heap algorithm to sort pods.</span><br><span class="hljs-comment">// It sorts pods based on their priority. When priorities are equal, it uses</span><br><span class="hljs-comment">// PodQueueInfo.timestamp.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(pl *PrioritySort)</span></span> Less(pInfo1, pInfo2 *framework.QueuedPodInfo) <span class="hljs-type">bool</span> &#123;<br>	p1 := corev1helpers.PodPriority(pInfo1.Pod)<br>	p2 := corev1helpers.PodPriority(pInfo2.Pod)<br>	<span class="hljs-keyword">return</span> (p1 &gt; p2) || (p1 == p2 &amp;&amp; pInfo1.Timestamp.Before(pInfo2.Timestamp))<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="UnschedulableQ源代码介绍"><a href="#UnschedulableQ源代码介绍" class="headerlink" title="UnschedulableQ源代码介绍"></a>UnschedulableQ源代码介绍</h2><p>UnschedulableQ进行初始化的具体代码在<code>pkg/scheduler/internal/queue/scheduling_queue.go:998</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// newUnschedulablePods initializes a new object of UnschedulablePods.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">newUnschedulablePods</span><span class="hljs-params">(unschedulableRecorder, gatedRecorder metrics.MetricRecorder)</span></span> *UnschedulablePods &#123;<br>	<span class="hljs-keyword">return</span> &amp;UnschedulablePods&#123;<br>		podInfoMap:            <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*framework.QueuedPodInfo),<br>		keyFunc:               util.GetPodFullName,<br>		unschedulableRecorder: unschedulableRecorder,<br>		gatedRecorder:         gatedRecorder,<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>其具体的定义代码在<code>pkg/scheduler/internal/queue/scheduling_queue.go:939</code> ,</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// UnschedulablePods holds pods that cannot be scheduled. This data structure</span><br><span class="hljs-comment">// is used to implement unschedulablePods.</span><br><span class="hljs-keyword">type</span> UnschedulablePods <span class="hljs-keyword">struct</span> &#123;<br>	<span class="hljs-comment">// podInfoMap is a map key by a pod&#x27;s full-name and the value is a pointer to the QueuedPodInfo.</span><br>	podInfoMap <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*framework.QueuedPodInfo<br>	keyFunc    <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*v1.Pod)</span></span> <span class="hljs-type">string</span><br>	<span class="hljs-comment">// unschedulableRecorder/gatedRecorder updates the counter when elements of an unschedulablePodsMap</span><br>	<span class="hljs-comment">// get added or removed, and it does nothing if it&#x27;s nil.</span><br>	unschedulableRecorder, gatedRecorder metrics.MetricRecorder<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到他没有进行heap的包装，而是直接采用Map结构进行保存。</p>
+<h2 id="BackoffQ源代码介绍"><a href="#BackoffQ源代码介绍" class="headerlink" title="BackoffQ源代码介绍"></a><strong>BackoffQ</strong>源代码介绍</h2><p>BackoffQ也是一个heap，与ActiveQ不同的一点在于排序函数不同，其排序函数的定义在<code>pkg/scheduler/internal/queue/scheduling_queue.go:888</code> </p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> podsCompareBackoffCompleted(podInfo1, podInfo2 <span class="hljs-keyword">interface</span>&#123;&#125;) <span class="hljs-type">bool</span> &#123;<br>	pInfo1 := podInfo1.(*framework.QueuedPodInfo)<br>	pInfo2 := podInfo2.(*framework.QueuedPodInfo)<br>	bo1 := p.getBackoffTime(pInfo1)<br>	bo2 := p.getBackoffTime(pInfo2)<br>	<span class="hljs-keyword">return</span> bo1.Before(bo2)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>getBackoffTime</code>的定义在<code>pkg/scheduler/internal/queue/scheduling_queue.go:911</code>中，即计算完成避让的时间</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// getBackoffTime returns the time that podInfo completes backoff</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> getBackoffTime(podInfo *framework.QueuedPodInfo) time.Time &#123;<br>	duration := p.calculateBackoffDuration(podInfo)<br>	backoffTime := podInfo.Timestamp.Add(duration)<br>	<span class="hljs-keyword">return</span> backoffTime<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到队列排序时会将完成避让最早的pod放在前面。</p>
+<p>然后再看其是如何计算避让时间的，在<code>pkg/scheduler/internal/queue/scheduling_queue.go</code> 中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// calculateBackoffDuration is a helper function for calculating the backoffDuration</span><br><span class="hljs-comment">// based on the number of attempts the pod has made.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> calculateBackoffDuration(podInfo *framework.QueuedPodInfo) time.Duration &#123;<br>	duration := p.podInitialBackoffDuration<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">1</span>; i &lt; podInfo.Attempts; i++ &#123;<br>		<span class="hljs-comment">// Use subtraction instead of addition or multiplication to avoid overflow.</span><br>		<span class="hljs-keyword">if</span> duration &gt; p.podMaxBackoffDuration-duration &#123;<br>			<span class="hljs-keyword">return</span> p.podMaxBackoffDuration<br>		&#125;<br>		duration += duration<br>	&#125;<br>	<span class="hljs-keyword">return</span> duration<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>其计算可以理解为初次为<code>p.podInitialBackoffDuration</code>，每次需要的避让时间都是前一次的两倍，如果计算得到的避让时间大于<code>p.podMaxBackoffDuration/2</code> ，就将避让时间设置为<code>p.podMaxBackoffDuration</code> 。</p>
+<h2 id="队列弹出待调度的Pod"><a href="#队列弹出待调度的Pod" class="headerlink" title="队列弹出待调度的Pod"></a>队列弹出待调度的Pod</h2><p>其代码在<code>pkg/scheduler/internal/queue/scheduling_queue.go:593</code> 中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Pop removes the head of the active queue and returns it. It blocks if the</span><br><span class="hljs-comment">// activeQ is empty and waits until a new item is added to the queue. It</span><br><span class="hljs-comment">// increments scheduling cycle when a pod is popped.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> Pop() (*framework.QueuedPodInfo, <span class="hljs-type">error</span>) &#123;<br>	p.lock.Lock()<br>	<span class="hljs-keyword">defer</span> p.lock.Unlock()<br>	<span class="hljs-keyword">for</span> p.activeQ.Len() == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-comment">// When the queue is empty, invocation of Pop() is blocked until new item is enqueued.</span><br>		<span class="hljs-comment">// When Close() is called, the p.closed is set and the condition is broadcast,</span><br>		<span class="hljs-comment">// which causes this loop to continue and return from the Pop().</span><br>		<span class="hljs-keyword">if</span> p.closed &#123;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(queueClosed)<br>		&#125;<br>		p.cond.Wait()<br>	&#125;<br>	obj, err := p.activeQ.Pop()<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err<br>	&#125;<br>	pInfo := obj.(*framework.QueuedPodInfo)<br>	pInfo.Attempts++<br>	p.schedulingCycle++<br>	<span class="hljs-keyword">return</span> pInfo, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到如果activeQ中没有需要调度的Pod了那么就会使用<code>p.cond.Wait</code>来进行等待，否则就冲<code>activeQ</code>中Pop一个元素<code>QueuedPodInfo</code>，同时这个<code>QueuedPodInfo</code> 的Attempts会+1，整个队列中的schedulingCycle也会增加。</p>
+<h2 id="队列增加新的待调度的Pod"><a href="#队列增加新的待调度的Pod" class="headerlink" title="队列增加新的待调度的Pod"></a>队列增加新的待调度的Pod</h2><p>其代码在<code>pkg/scheduler/internal/queue/scheduling_queue.go:398</code>中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Add adds a pod to the active queue. It should be called only when a new pod</span><br><span class="hljs-comment">// is added so there is no chance the pod is already in active/unschedulable/backoff queues</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> Add(pod *v1.Pod) <span class="hljs-type">error</span> &#123;<br>	p.lock.Lock()<br>	<span class="hljs-keyword">defer</span> p.lock.Unlock()<br><br>	pInfo := p.newQueuedPodInfo(pod)<br>	gated := pInfo.Gated<br>	<span class="hljs-keyword">if</span> added, err := p.addToActiveQ(pInfo); !added &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-keyword">if</span> p.unschedulablePods.get(pod) != <span class="hljs-literal">nil</span> &#123;<br>		klog.ErrorS(<span class="hljs-literal">nil</span>, <span class="hljs-string">&quot;Error: pod is already in the unschedulable queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>		p.unschedulablePods.<span class="hljs-built_in">delete</span>(pod, gated)<br>	&#125;<br>	<span class="hljs-comment">// Delete pod from backoffQ if it is backing off</span><br>	<span class="hljs-keyword">if</span> err := p.podBackoffQ.Delete(pInfo); err == <span class="hljs-literal">nil</span> &#123;<br>		klog.ErrorS(<span class="hljs-literal">nil</span>, <span class="hljs-string">&quot;Error: pod is already in the podBackoff queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>	&#125;<br>	klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Pod moved to an internal scheduling queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;event&quot;</span>, PodAdd, <span class="hljs-string">&quot;queue&quot;</span>, activeQName)<br>	metrics.SchedulerQueueIncomingPods.WithLabelValues(<span class="hljs-string">&quot;active&quot;</span>, PodAdd).Inc()<br>	p.addNominatedPodUnlocked(pInfo.PodInfo, <span class="hljs-literal">nil</span>)<br>	p.cond.Broadcast()<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>主要是将要加入的<code>pod</code>转化为<code>QueuedPodInfo</code>类型，然后添加到<code>activeQ</code>队列中，还需要检查其他队列中是否有这个pod，如果有就删除，同时做一些日志相关记录，然后还会调用<code>p.cond.Broadcast()</code>来解除上述提到的<code>p.cond.Wait</code> 的等待。</p>
+<h2 id="pod调度失败返回队列的处理"><a href="#pod调度失败返回队列的处理" class="headerlink" title="pod调度失败返回队列的处理"></a>pod调度失败返回队列的处理</h2><p>当Pod调度失败后，会调用来<code>AddUnschedulableIfNotPresent</code>函数来进行处理，其代码位置在<code>pkg/scheduler/internal/queue/scheduling_queue.go</code> 中。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// AddUnschedulableIfNotPresent inserts a pod that cannot be scheduled into</span><br><span class="hljs-comment">// the queue, unless it is already in the queue. Normally, PriorityQueue puts</span><br><span class="hljs-comment">// unschedulable pods in `unschedulablePods`. But if there has been a recent move</span><br><span class="hljs-comment">// request, then the pod is put in `podBackoffQ`.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> AddUnschedulableIfNotPresent(pInfo *framework.QueuedPodInfo, podSchedulingCycle <span class="hljs-type">int64</span>) <span class="hljs-type">error</span> &#123;<br>	p.lock.Lock()<br>	<span class="hljs-keyword">defer</span> p.lock.Unlock()<br>	pod := pInfo.Pod<br>	<span class="hljs-keyword">if</span> p.unschedulablePods.get(pod) != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;Pod %v is already present in unschedulable queue&quot;</span>, klog.KObj(pod))<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> _, exists, _ := p.activeQ.Get(pInfo); exists &#123;<br>		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;Pod %v is already present in the active queue&quot;</span>, klog.KObj(pod))<br>	&#125;<br>	<span class="hljs-keyword">if</span> _, exists, _ := p.podBackoffQ.Get(pInfo); exists &#123;<br>		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;Pod %v is already present in the backoff queue&quot;</span>, klog.KObj(pod))<br>	&#125;<br><br>	<span class="hljs-comment">// Refresh the timestamp since the pod is re-added.</span><br>	pInfo.Timestamp = p.clock.Now()<br><br>	<span class="hljs-comment">// If a move request has been received, move it to the BackoffQ, otherwise move</span><br>	<span class="hljs-comment">// it to unschedulablePods.</span><br>	<span class="hljs-keyword">for</span> plugin := <span class="hljs-keyword">range</span> pInfo.UnschedulablePlugins &#123;<br>		metrics.UnschedulableReason(plugin, pInfo.Pod.Spec.SchedulerName).Inc()<br>	&#125;<br>	<span class="hljs-keyword">if</span> p.moveRequestCycle &gt;= podSchedulingCycle &#123;<br>		<span class="hljs-keyword">if</span> err := p.podBackoffQ.Add(pInfo); err != <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;error adding pod %v to the backoff queue: %v&quot;</span>, klog.KObj(pod), err)<br>		&#125;<br>		klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Pod moved to an internal scheduling queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;event&quot;</span>, ScheduleAttemptFailure, <span class="hljs-string">&quot;queue&quot;</span>, backoffQName)<br>		metrics.SchedulerQueueIncomingPods.WithLabelValues(<span class="hljs-string">&quot;backoff&quot;</span>, ScheduleAttemptFailure).Inc()<br>	&#125; <span class="hljs-keyword">else</span> &#123;<br>		p.unschedulablePods.addOrUpdate(pInfo)<br>		klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Pod moved to an internal scheduling queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;event&quot;</span>, ScheduleAttemptFailure, <span class="hljs-string">&quot;queue&quot;</span>, unschedulablePods)<br>		metrics.SchedulerQueueIncomingPods.WithLabelValues(<span class="hljs-string">&quot;unschedulable&quot;</span>, ScheduleAttemptFailure).Inc()<br><br>	&#125;<br><br>	p.addNominatedPodUnlocked(pInfo.PodInfo, <span class="hljs-literal">nil</span>)<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里首先检查了其他队列中是否含有该pod，如果有就返回错误，然后比较<code>moveRequestCycle</code> 和<code>podSchedulingCycle</code> ，如果<code>p.moveRequestCycle &gt;= podSchedulingCycle</code>  那就说明在刚刚调度这个pod的时候集群发生了变化，可能现在可以成功调度这个pod了，将其转入backoffQ中，不然就正常加入unschedulableQ中。</p>
+<h2 id="flushBackoffQCompleted"><a href="#flushBackoffQCompleted" class="headerlink" title="flushBackoffQCompleted"></a>flushBackoffQCompleted</h2><p>在队列运行时会初始化两个go协程，来分别不停检查<code>backoffQ</code>和<code>unschedulableQ</code>，以及时将相关的Pod移出。代码在<code>pkg/scheduler/internal/queue/scheduling_queue.go:333</code> 中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Run starts the goroutine to pump from podBackoffQ to activeQ</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> Run() &#123;<br>	<span class="hljs-keyword">go</span> wait.Until(p.flushBackoffQCompleted, <span class="hljs-number">1.0</span>*time.Second, p.stop)<br>	<span class="hljs-keyword">go</span> wait.Until(p.flushUnschedulablePodsLeftover, <span class="hljs-number">30</span>*time.Second, p.stop)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>对于<code>flushBackoffQCompleted</code>即是每1s运行一次，直到接收到<code>p.stop</code>信息。对<code>flushBackoffQCompleted</code> 函数的具体定义在<code>pkg/scheduler/internal/queue/scheduling_queue.go:537</code>中，如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// flushBackoffQCompleted Moves all pods from backoffQ which have completed backoff in to activeQ</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> flushBackoffQCompleted() &#123;<br>	p.lock.Lock()<br>	<span class="hljs-keyword">defer</span> p.lock.Unlock()<br>	activated := <span class="hljs-literal">false</span><br>	<span class="hljs-keyword">for</span> &#123;<br>		rawPodInfo := p.podBackoffQ.Peek()<br>		<span class="hljs-keyword">if</span> rawPodInfo == <span class="hljs-literal">nil</span> &#123;<br>			<span class="hljs-keyword">break</span><br>		&#125;<br>		pInfo := rawPodInfo.(*framework.QueuedPodInfo)<br>		pod := pInfo.Pod<br>		<span class="hljs-keyword">if</span> p.isPodBackingoff(pInfo) &#123;<br>			<span class="hljs-keyword">break</span><br>		&#125;<br>		_, err := p.podBackoffQ.Pop()<br>		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>			klog.ErrorS(err, <span class="hljs-string">&quot;Unable to pop pod from backoff queue despite backoff completion&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>			<span class="hljs-keyword">break</span><br>		&#125;<br>		<span class="hljs-keyword">if</span> err := p.activeQ.Add(pInfo); err != <span class="hljs-literal">nil</span> &#123;<br>			klog.ErrorS(err, <span class="hljs-string">&quot;Error adding pod to the active queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pInfo.Pod))<br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Pod moved to an internal scheduling queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;event&quot;</span>, BackoffComplete, <span class="hljs-string">&quot;queue&quot;</span>, activeQName)<br>			metrics.SchedulerQueueIncomingPods.WithLabelValues(<span class="hljs-string">&quot;active&quot;</span>, BackoffComplete).Inc()<br>			activated = <span class="hljs-literal">true</span><br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> activated &#123;<br>		p.cond.Broadcast()<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>其主要内容就是从<code>backOffQ</code>的首个元素开始查看，检查器是否已经过了避让时间，如果过了就将其放入到<code>activeQ</code>队列中，直到首个元素没有达到避让时间或者队列为空。</p>
+<h2 id="flushUnschedulablePodsLeftover"><a href="#flushUnschedulablePodsLeftover" class="headerlink" title="flushUnschedulablePodsLeftover"></a>flushUnschedulablePodsLeftover</h2><p><code>flushUnschedulablePodsLeftover</code>每30s运行一次，这部分的代码在<code>pkg/scheduler/internal/queue/scheduling_queue.go:572</code>中，如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// flushUnschedulablePodsLeftover moves pods which stay in unschedulablePods</span><br><span class="hljs-comment">// longer than podMaxInUnschedulablePodsDuration to backoffQ or activeQ.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> flushUnschedulablePodsLeftover() &#123;<br>	p.lock.Lock()<br>	<span class="hljs-keyword">defer</span> p.lock.Unlock()<br><br>	<span class="hljs-keyword">var</span> podsToMove []*framework.QueuedPodInfo<br>	currentTime := p.clock.Now()<br>	<span class="hljs-keyword">for</span> _, pInfo := <span class="hljs-keyword">range</span> p.unschedulablePods.podInfoMap &#123;<br>		lastScheduleTime := pInfo.Timestamp<br>		<span class="hljs-keyword">if</span> currentTime.Sub(lastScheduleTime) &gt; p.podMaxInUnschedulablePodsDuration &#123;<br>			podsToMove = <span class="hljs-built_in">append</span>(podsToMove, pInfo)<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(podsToMove) &gt; <span class="hljs-number">0</span> &#123;<br>		p.movePodsToActiveOrBackoffQueue(podsToMove, UnschedulableTimeout)<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到其主要作用是遍历所有的pod，如果其在unschedulableQ中呆的时间如果超过了最大的p.podMaxInUnschedulablePodsDuration时间，就会将其移出去，至于是移动到activeQ中还是移动到backoffQ中，取决于movePodsToActiveOrBackoffQueue函数，在<code>pkg/scheduler/internal/queue/scheduling_queue.go:771</code>中，如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// <span class="hljs-doctag">NOTE:</span> this function assumes lock has been acquired in caller</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *PriorityQueue)</span></span> movePodsToActiveOrBackoffQueue(podInfoList []*framework.QueuedPodInfo, event framework.ClusterEvent) &#123;<br>	activated := <span class="hljs-literal">false</span><br>	<span class="hljs-keyword">for</span> _, pInfo := <span class="hljs-keyword">range</span> podInfoList &#123;<br>		<span class="hljs-comment">// If the event doesn&#x27;t help making the Pod schedulable, continue.</span><br>		<span class="hljs-comment">// Note: we don&#x27;t run the check if pInfo.UnschedulablePlugins is nil, which denotes</span><br>		<span class="hljs-comment">// either there is some abnormal error, or scheduling the pod failed by plugins other than PreFilter, Filter and Permit.</span><br>		<span class="hljs-comment">// In that case, it&#x27;s desired to move it anyways.</span><br>		<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(pInfo.UnschedulablePlugins) != <span class="hljs-number">0</span> &amp;&amp; !p.podMatchesEvent(pInfo, event) &#123;<br>			<span class="hljs-keyword">continue</span><br>		&#125;<br>		pod := pInfo.Pod<br>		<span class="hljs-keyword">if</span> p.isPodBackingoff(pInfo) &#123;<br>			<span class="hljs-keyword">if</span> err := p.podBackoffQ.Add(pInfo); err != <span class="hljs-literal">nil</span> &#123;<br>				klog.ErrorS(err, <span class="hljs-string">&quot;Error adding pod to the backoff queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>			&#125; <span class="hljs-keyword">else</span> &#123;<br>				klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Pod moved to an internal scheduling queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pInfo.Pod), <span class="hljs-string">&quot;event&quot;</span>, event, <span class="hljs-string">&quot;queue&quot;</span>, backoffQName)<br>				metrics.SchedulerQueueIncomingPods.WithLabelValues(<span class="hljs-string">&quot;backoff&quot;</span>, event.Label).Inc()<br>				p.unschedulablePods.<span class="hljs-built_in">delete</span>(pod, pInfo.Gated)<br>			&#125;<br>		&#125; <span class="hljs-keyword">else</span> &#123;<br>			gated := pInfo.Gated<br>			<span class="hljs-keyword">if</span> added, _ := p.addToActiveQ(pInfo); added &#123;<br>				klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Pod moved to an internal scheduling queue&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pInfo.Pod), <span class="hljs-string">&quot;event&quot;</span>, event, <span class="hljs-string">&quot;queue&quot;</span>, activeQName)<br>				activated = <span class="hljs-literal">true</span><br>				metrics.SchedulerQueueIncomingPods.WithLabelValues(<span class="hljs-string">&quot;active&quot;</span>, event.Label).Inc()<br>				p.unschedulablePods.<span class="hljs-built_in">delete</span>(pod, gated)<br>			&#125;<br>		&#125;<br>	&#125;<br>	p.moveRequestCycle = p.schedulingCycle<br>	<span class="hljs-keyword">if</span> activated &#123;<br>		p.cond.Broadcast()<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>注意这个函数不仅仅是在<code>flushUnschedulablePodsLeftover</code>中被调用，还会在处理其他移动请求时触发，只不过这里的移动请求是<code>UnschedulableTimeout</code> ，判断到底是如何移动也很容易从代码中看出，如果已经到达了避让时间，就加入到<code>activeQ</code>中，如果没有就加入到<code>backoffQ</code>中，注意到如果有移动进<code>activeQ</code>中，也是需要执行<code>p.cond.Broadcast()</code>，同时注意到这里更新了<code>moveRequestCycle</code>为<code>schedulingCycle</code>，这也是其统一更新<code>moveRequestCycle</code> 的地方。</p>
+<h1 id="调度队列总结"><a href="#调度队列总结" class="headerlink" title="调度队列总结"></a>调度队列总结</h1><p>考虑到调度队列的细节，我们可以用下图来对其进行归纳回顾。</p>
+<p><img src="/2024/05/10/k8sSource2/summary.png" srcset="/img/loading.gif" lazyload alt="调度队列总结"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/k8s/" class="print-no-link">#k8s</a>
+      
+        <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="print-no-link">#源码分析</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8s源码分析（二）-K8s调度队列介绍</div>
+      <div>http://example.com/2024/05/10/k8sSource2/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>John Doe</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/05/10/k8sSource3/" title="K8s源码分析（三）-K8s调度器调度周期介绍">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8s源码分析（三）-K8s调度器调度周期介绍</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/10/k8sSource1/" title="K8s源码分析（一）-K8s调度框架及调度器初始化介绍">
+                        <span class="hidden-mobile">K8s源码分析（一）-K8s调度框架及调度器初始化介绍</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

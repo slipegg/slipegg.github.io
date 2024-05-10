@@ -1,0 +1,831 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本次分析参考的K8s版本是v1.27.0。 调度框架介绍这是官方对于v1.27调度框架的介绍文档：https:&#x2F;&#x2F;v1-27.docs.kubernetes.io&#x2F;docs&#x2F;concepts&#x2F;scheduling-eviction&#x2F;scheduling-framework&#x2F; 将调度器的实现转化为插件的形式有助于加强调度器的拓展性、灵活性，同时也使得调度核心的实现更加的轻量、可维护。 下图展示了Po">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8s源码分析（一）-K8s调度框架及调度器初始化介绍">
+<meta property="og:url" content="http://example.com/2024/05/10/k8sSource1/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="本次分析参考的K8s版本是v1.27.0。 调度框架介绍这是官方对于v1.27调度框架的介绍文档：https:&#x2F;&#x2F;v1-27.docs.kubernetes.io&#x2F;docs&#x2F;concepts&#x2F;scheduling-eviction&#x2F;scheduling-framework&#x2F; 将调度器的实现转化为插件的形式有助于加强调度器的拓展性、灵活性，同时也使得调度核心的实现更加的轻量、可维护。 下图展示了Po">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2024/05/10/k8sSource1/scheduling-framework-extensions.png">
+<meta property="article:published_time" content="2024-05-10T08:18:07.000Z">
+<meta property="article:modified_time" content="2024-05-10T08:32:53.402Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="k8s">
+<meta property="article:tag" content="源码分析">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2024/05/10/k8sSource1/scheduling-framework-extensions.png">
+  
+  
+  
+  <title>K8s源码分析（一）-K8s调度框架及调度器初始化介绍 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8s源码分析（一）-K8s调度框架及调度器初始化介绍"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-10 16:18" pubdate>
+          2024年5月10日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          13k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          67 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8s源码分析（一）-K8s调度框架及调度器初始化介绍</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本次分析参考的K8s版本是<a target="_blank" rel="noopener" href="https://github.com/kubernetes/kubernetes/tree/release-1.27">v1.27.0</a>。</p>
+<h1 id="调度框架介绍"><a href="#调度框架介绍" class="headerlink" title="调度框架介绍"></a>调度框架介绍</h1><p>这是官方对于<strong>v1.27</strong>调度框架的介绍文档：<a target="_blank" rel="noopener" href="https://v1-27.docs.kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/">https://v1-27.docs.kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/</a></p>
+<p>将调度器的实现转化为插件的形式有助于加强调度器的拓展性、灵活性，同时也使得调度核心的实现更加的轻量、可维护。</p>
+<p>下图展示了Pod的调度上下文以及调度框架暴露的扩展点。图中“Filter”相当于“Predicate”，“Scoring”相当于“Priority function”。</p>
+<p><img src="/2024/05/10/k8sSource1/scheduling-framework-extensions.png" srcset="/img/loading.gif" lazyload alt="Scheduling framework extension points"></p>
+<p>总体而言，首先新创建的Pod或还没有调度的Pod会存在队列中，然后经过调度周期的筛选得到符合条件的Node，然后在调度周期内再对各个符合条件的Node进行打分，最高分的Node就是需要调度到的Node，然后经过绑定周期将Pod放置到Node上。</p>
+<p>各个拓展点的具体介绍建议参考上面提到的官方介绍文档，这里不再赘述。</p>
+<h1 id="K8s-scheduler-介绍"><a href="#K8s-scheduler-介绍" class="headerlink" title="K8s scheduler 介绍"></a>K8s scheduler 介绍</h1><p>首先需要明确的一个点，K8s中的scheduler是以pod的形式运行在系统中的，通过如下的命令能找到其对应的pod。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># kubectl get pod -n kube-system</span><br>NAME                                       READY   STATUS             RESTARTS         AGE<br>...<br>kube-scheduler-master                      1/1     Running            0                2d4h<br>...<br></code></pre></td></tr></table></figure>
+
+<p>Pod中的容器会存在一个scheduler程序并一直在前台运行，接收要调度的pod并给出调度结果。本文主要分析的也就是这个scheduler程序所对应的源代码。</p>
+<p>这是官方对K8s scheduler代码层次结构的介绍文档：<a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-scheduling/scheduling_code_hierarchy_overview.md">Scheduler code hierarchy overview</a>。也很推荐观看！</p>
+<p>整体的关键代码的结构如下所示：</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm">.<br>├── cmd<br>│   └── kube-<span class="hljs-keyword">scheduler</span><br><span class="hljs-keyword"></span>│       └── app - 控制器代码位置以及命令行接口参数定义（遵循所有Kubernetes控制器的标准设置）<br>├── pkg<br>│   └── <span class="hljs-keyword">scheduler </span>- 默认调度器代码库的根目录<br>│       ├── core - 默认调度算法的位置<br>│       ├── framework - 调度框架及其插件<br>│       └── internal - 缓存、队列和其他内部元素的实现<br>├── staging<br>│   └── src<br>│       └── k8s.io<br>│           └── kube-<span class="hljs-keyword">scheduler </span>- ComponentConfig API类型的所在位置<br>└── test<br>    ├── e2e<br>    │   └── <span class="hljs-keyword">scheduling </span>- 端到端调度测试<br>    │<br>    ├── integration<br>        ├── <span class="hljs-keyword">scheduler </span>- 调度器集成测试<br>        └── <span class="hljs-keyword">scheduler_perf </span>- 调度性能基准测试<br></code></pre></td></tr></table></figure>
+
+<h1 id="K8s-scheduler的初始化"><a href="#K8s-scheduler的初始化" class="headerlink" title="K8s scheduler的初始化"></a>K8s scheduler的初始化</h1><h2 id="Cobra介绍"><a href="#Cobra介绍" class="headerlink" title="Cobra介绍"></a>Cobra介绍</h2><p>K8s中大部分组件其实都采用的是<a target="_blank" rel="noopener" href="https://github.com/spf13/cobra">Cobra</a>结构。Cobra是一个用于创建现代命令行应用程序的库，云原生中很多项目都采用了它，包括<a target="_blank" rel="noopener" href="https://kubernetes.io/">Kubernetes</a>、<a target="_blank" rel="noopener" href="https://gohugo.io/">Hugo、</a><a target="_blank" rel="noopener" href="https://github.com/cli/cli">GitHub CLI</a>等，目前都有36.2k个start了。而K8s中的scheduler实际上也是通过Cobra构建的。</p>
+<p>Cobra的具体介绍可以参见<a target="_blank" rel="noopener" href="https://xie.infoq.cn/article/915006cf3760c99ad0028d895">万字长文——Go 语言现代命令行框架 Cobra 详解</a>。</p>
+<p>这边以一个小demo为例进行简单介绍。一个demo项目定义了一个名为hugo的命令行工具，代码如下所示：</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs maxima">.<br>├── cmd<br>│   ├── root.<span class="hljs-built_in">go</span><br>│   └── version.<span class="hljs-built_in">go</span><br>├── <span class="hljs-built_in">go</span>.<span class="hljs-built_in">mod</span><br>├── <span class="hljs-built_in">go</span>.<span class="hljs-built_in">sum</span><br>└── main.<span class="hljs-built_in">go</span><br></code></pre></td></tr></table></figure>
+
+<p><code>main.go</code>的内容如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> main<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;hugo/cmd&quot;</span><br>)<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	cmd.Execute()<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>root.go</code>的内容如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> cmd<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br>	<span class="hljs-string">&quot;os&quot;</span><br><br>	<span class="hljs-string">&quot;github.com/spf13/cobra&quot;</span><br>)<br><br><span class="hljs-keyword">var</span> rootCmd = &amp;cobra.Command&#123;<br>	Use:   <span class="hljs-string">&quot;hugo&quot;</span>,<br>	Short: <span class="hljs-string">&quot;Hugo is a very fast static site generator&quot;</span>,<br>	Long: <span class="hljs-string">`A Fast and Flexible Static Site Generator built with</span><br><span class="hljs-string">				  love by spf13 and friends in Go.</span><br><span class="hljs-string">				  Complete documentation is available at https://gohugo.io`</span>,<br>	RunE: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(cmd *cobra.Command, args []<span class="hljs-type">string</span>)</span></span> <span class="hljs-type">error</span> &#123;<br>		fmt.Println(<span class="hljs-string">&quot;run hugo...&quot;</span>)<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;,<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Execute</span><span class="hljs-params">()</span></span> &#123;<br>	<span class="hljs-keyword">if</span> err := rootCmd.Execute(); err != <span class="hljs-literal">nil</span> &#123;<br>		fmt.Println(err)<br>		os.Exit(<span class="hljs-number">1</span>)<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>version.go</code>的内容如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">package</span> cmd<br><br><span class="hljs-keyword">import</span> (<br>	<span class="hljs-string">&quot;fmt&quot;</span><br><br>	<span class="hljs-string">&quot;github.com/spf13/cobra&quot;</span><br>)<br><br><span class="hljs-keyword">var</span> versionCmd = &amp;cobra.Command&#123;<br>	Use:   <span class="hljs-string">&quot;version&quot;</span>,<br>	Short: <span class="hljs-string">&quot;Print the version number of Hugo&quot;</span>,<br>	Long:  <span class="hljs-string">`All software has versions. This is Hugo&#x27;s`</span>,<br>	RunE: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(cmd *cobra.Command, args []<span class="hljs-type">string</span>)</span></span> <span class="hljs-type">error</span> &#123;<br>		fmt.Println(<span class="hljs-string">&quot;Hugo Static Site Generator v0.9 -- HEAD&quot;</span>)<br>		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>	&#125;,<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">init</span><span class="hljs-params">()</span></span> &#123;<br>	rootCmd.AddCommand(versionCmd)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到<code>main.go</code>的主要内容就是调用<code>root.go</code>中的<code>Execute()</code>函数，然后这个函数又是调用cobra定义的<code>rootCmd</code>对其进行执行。<code>rootCmd</code>是一个<code>cobra.Command</code>类，它定义时写了自己的说明文本，然后Run函数是最关键的，定义了自己的运行内容，也就是打印一句字符，这就是单独在命令行中输入hugo后需要执行的程序。如果想要进行命令嵌套，那么就得像<code>version.go</code>文件中的处理方法一样再定义另一个cobra的cmd变量<code>versionCmd</code> ，然后通过<code>AddCommand</code>函数就可以加入进去，如此之后就可以通过<code>hugo version</code>来运行<code>versionCmd</code> 中的<code>Run</code>对应的函数。</p>
+<p>项目build之后得到执行文件<code>hugo</code>，运行结果如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># ./hugo </span><br>run hugo..<br><span class="hljs-comment"># ./hugo -h</span><br>A Fast and Flexible Static Site Generator built with<br>                                  love by spf13 and friends <span class="hljs-keyword">in</span> Go.<br>                                  Complete documentation is available at https://gohugo.io<br><br>Usage:<br>  hugo [flags]<br>  hugo [<span class="hljs-built_in">command</span>]<br><br>Available Commands:<br>  completion  Generate the autocompletion script <span class="hljs-keyword">for</span> the specified shell<br>  <span class="hljs-built_in">help</span>        Help about any <span class="hljs-built_in">command</span><br>  version     Print the version number of Hugo<br><br>Flags:<br>  -h, --<span class="hljs-built_in">help</span>   <span class="hljs-built_in">help</span> <span class="hljs-keyword">for</span> hugo<br><br>Use <span class="hljs-string">&quot;hugo [command] --help&quot;</span> <span class="hljs-keyword">for</span> more information about a <span class="hljs-built_in">command</span>.<br><span class="hljs-comment"># ./hugo version</span><br>Hugo Static Site Generator v0.9 -- HEAD<br></code></pre></td></tr></table></figure>
+
+<h2 id="K8s-scheduler中初始化的源代码解析"><a href="#K8s-scheduler中初始化的源代码解析" class="headerlink" title="K8s scheduler中初始化的源代码解析"></a>K8s scheduler中初始化的源代码解析</h2><p>K8s的scheduler也是类似于上面的hugo程序，只不过更加复杂。</p>
+<p>首先在<code>cmd/kube-scheduler/scheduler.go:29</code>中我们能看见scheduler的入口函数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> &#123;<br>	command := app.NewSchedulerCommand()<br>	code := cli.Run(command)<br>	os.Exit(code)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里也是通过<code>app.NewSchedulerCommand</code>得到了一个<code>cobra.Command</code> 类，然后让这个类运行起来。</p>
+<p>具体看<code>cmd/kube-scheduler/app/server.go:76</code> </p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// NewSchedulerCommand creates a *cobra.Command object with default parameters and registryOptions</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewSchedulerCommand</span><span class="hljs-params">(registryOptions ...Option)</span></span> *cobra.Command &#123;<br>	opts := options.NewOptions()<br><br>	cmd := &amp;cobra.Command&#123;<br>		Use: <span class="hljs-string">&quot;kube-scheduler&quot;</span>,<br>		Long: <span class="hljs-string">`The Kubernetes scheduler is a control plane process which assigns</span><br><span class="hljs-string">Pods to Nodes. The scheduler determines which Nodes are valid placements for</span><br><span class="hljs-string">each Pod in the scheduling queue according to constraints and available</span><br><span class="hljs-string">resources. The scheduler then ranks each valid Node and binds the Pod to a</span><br><span class="hljs-string">suitable Node. Multiple different schedulers may be used within a cluster;</span><br><span class="hljs-string">kube-scheduler is the reference implementation.</span><br><span class="hljs-string">See [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/)</span><br><span class="hljs-string">for more information about scheduling and the kube-scheduler component.`</span>,<br>		RunE: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(cmd *cobra.Command, args []<span class="hljs-type">string</span>)</span></span> <span class="hljs-type">error</span> &#123;<br>			<span class="hljs-keyword">return</span> runCommand(cmd, opts, registryOptions...)<br>		&#125;,<br>		Args: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(cmd *cobra.Command, args []<span class="hljs-type">string</span>)</span></span> <span class="hljs-type">error</span> &#123;<br>			<span class="hljs-keyword">for</span> _, arg := <span class="hljs-keyword">range</span> args &#123;<br>				<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(arg) &gt; <span class="hljs-number">0</span> &#123;<br>					<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;%q does not take any arguments, got %q&quot;</span>, cmd.CommandPath(), args)<br>				&#125;<br>			&#125;<br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>		&#125;,<br>	&#125;<br>	<br>	<span class="hljs-comment">//...</span><br>	<br>	<span class="hljs-keyword">return</span> cmd<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里定义了一个<code>cobra.Command</code>，与之前的示例类似，主要的内容还是在<code>runCommand</code>中。</p>
+<p>查看其对应的内容，<code>cmd/kube-scheduler/app/server.go:121</code> </p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// runCommand runs the scheduler.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">runCommand</span><span class="hljs-params">(cmd *cobra.Command, opts *options.Options, registryOptions ...Option)</span></span> <span class="hljs-type">error</span> &#123;<br>	verflag.PrintAndExitIfRequested()<br><br>	<span class="hljs-comment">// Activate logging as soon as possible, after that</span><br>	<span class="hljs-comment">// show flags with the final logging configuration.</span><br>	<span class="hljs-keyword">if</span> err := logsapi.ValidateAndApply(opts.Logs, utilfeature.DefaultFeatureGate); err != <span class="hljs-literal">nil</span> &#123;<br>		fmt.Fprintf(os.Stderr, <span class="hljs-string">&quot;%v\n&quot;</span>, err)<br>		os.Exit(<span class="hljs-number">1</span>)<br>	&#125;<br>	cliflag.PrintFlags(cmd.Flags())<br><br>	ctx, cancel := context.WithCancel(context.Background())<br>	<span class="hljs-keyword">defer</span> cancel()<br>	<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		stopCh := server.SetupSignalHandler()<br>		&lt;-stopCh<br>		cancel()<br>	&#125;()<br><br>	cc, sched, err := Setup(ctx, opts, registryOptions...)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> err<br>	&#125;<br>	<span class="hljs-comment">// add feature enablement metrics</span><br>	utilfeature.DefaultMutableFeatureGate.AddMetrics()<br>	<span class="hljs-keyword">return</span> Run(ctx, cc, sched)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>前面的内容主要是一些配置文件，其中最主要的初始化配置函数是<code>Setup(ctx, opts, registryOptions...)</code> ，初始化完毕后就会返回一个scheduler。</p>
+<p>具体的内容在<code>cmd/kube-scheduler/app/server.go:309</code> ，对这部分代码的一些解释放在了注释里。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Setup creates a completed config and a scheduler based on the command args and options</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Setup</span><span class="hljs-params">(ctx context.Context, opts *options.Options, outOfTreeRegistryOptions ...Option)</span></span> (*schedulerserverconfig.CompletedConfig, *scheduler.Scheduler, <span class="hljs-type">error</span>) &#123;<br>    <span class="hljs-comment">// 尝试获取默认的调度器配置</span><br>    <span class="hljs-keyword">if</span> cfg, err := latest.Default(); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, err<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        opts.ComponentConfig = cfg <span class="hljs-comment">// 如果没有错误，将配置赋值给opts</span><br>    &#125;<br><br>    <span class="hljs-comment">// 验证opts中的选项是否有效</span><br>    <span class="hljs-keyword">if</span> errs := opts.Validate(); <span class="hljs-built_in">len</span>(errs) &gt; <span class="hljs-number">0</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, utilerrors.NewAggregate(errs) <span class="hljs-comment">// 如果有验证错误，返回它们</span><br>    &#125;<br><br>    <span class="hljs-comment">// 从opts创建一个调度器的配置对象</span><br>    c, err := opts.Config(ctx)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, err<br>    &#125;<br><br>    <span class="hljs-comment">// 从调度器配置对象中获取完整的配置</span><br>    cc := c.Complete()<br><br>    <span class="hljs-comment">// 创建一个用于存放外部插件的注册表</span><br>    outOfTreeRegistry := <span class="hljs-built_in">make</span>(runtime.Registry)<br>    <span class="hljs-keyword">for</span> _, option := <span class="hljs-keyword">range</span> outOfTreeRegistryOptions &#123;<br>        <span class="hljs-keyword">if</span> err := option(outOfTreeRegistry); err != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, err<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 获取事件记录器工厂</span><br>    recorderFactory := getRecorderFactory(&amp;cc)<br><br>    <span class="hljs-comment">// 创建一个空的调度器配置概要切片</span><br>    completedProfiles := <span class="hljs-built_in">make</span>([]kubeschedulerconfig.KubeSchedulerProfile, <span class="hljs-number">0</span>)<br><br>    <span class="hljs-comment">// 使用一系列参数和配置选项创建一个新的调度器实例</span><br>    sched, err := scheduler.New(<br>        cc.Client,                                 <span class="hljs-comment">// 客户端对象</span><br>        cc.InformerFactory,                       <span class="hljs-comment">// Informer工厂</span><br>        cc.DynInformerFactory,                    <span class="hljs-comment">// 动态Informer工厂</span><br>        recorderFactory,                          <span class="hljs-comment">// 事件记录器工厂</span><br>        ctx.Done(),                               <span class="hljs-comment">// 上下文取消通道</span><br>        scheduler.WithComponentConfigVersion(cc.ComponentConfig.TypeMeta.APIVersion),  <span class="hljs-comment">// 组件配置版本</span><br>        scheduler.WithKubeConfig(cc.KubeConfig),                                      <span class="hljs-comment">// Kube配置</span><br>        scheduler.WithProfiles(cc.ComponentConfig.Profiles...),                       <span class="hljs-comment">// 调度器配置概要</span><br>        scheduler.WithPercentageOfNodesToScore(cc.ComponentConfig.PercentageOfNodesToScore), <span class="hljs-comment">// 节点评分百分比</span><br>        scheduler.WithFrameworkOutOfTreeRegistry(outOfTreeRegistry),                <span class="hljs-comment">// 外部插件注册表</span><br>        scheduler.WithPodMaxBackoffSeconds(cc.ComponentConfig.PodMaxBackoffSeconds),  <span class="hljs-comment">// Pod最大退避秒数</span><br>        scheduler.WithPodInitialBackoffSeconds(cc.ComponentConfig.PodInitialBackoffSeconds),  <span class="hljs-comment">// Pod初始退避秒数</span><br>        scheduler.WithPodMaxInUnschedulablePodsDuration(cc.PodMaxInUnschedulablePodsDuration), <span class="hljs-comment">// Pod在不可调度Pod列表中的最大持续时间</span><br>        scheduler.WithExtenders(cc.ComponentConfig.Extenders...),  <span class="hljs-comment">// 扩展器</span><br>        scheduler.WithParallelism(cc.ComponentConfig.Parallelism),  <span class="hljs-comment">// 并行度</span><br>        scheduler.WithBuildFrameworkCapturer(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(profile kubeschedulerconfig.KubeSchedulerProfile)</span></span> &#123;<br>            <span class="hljs-comment">// 在框架实例化期间处理概要以设置默认插件和配置，并捕获它们以记录日志</span><br>            completedProfiles = <span class="hljs-built_in">append</span>(completedProfiles, profile)<br>        &#125;),<br>    )<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, err<br>    &#125;<br><br>    <span class="hljs-comment">// 记录或写入配置和概要信息</span><br>    <span class="hljs-keyword">if</span> err := options.LogOrWriteConfig(klog.FromContext(ctx), opts.WriteConfigTo, &amp;cc.ComponentConfig, completedProfiles); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>, err<br>    &#125;<br><br>    <span class="hljs-comment">// 返回完整的配置和调度器实例</span><br>    <span class="hljs-keyword">return</span> &amp;cc, sched, <span class="hljs-literal">nil</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>得到scheduler后运行的函数还是在后面的<code>Run(ctx, cc, sched)</code>里。</p>
+<p>查看其对应的内容，<code>cmd/kube-scheduler/app/server.go:150</code> ，补充了一部分解释放在代码的注释里。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Run executes the scheduler based on the given configuration. It only returns on error or when context is done.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Run</span><span class="hljs-params">(ctx context.Context, cc *schedulerserverconfig.CompletedConfig, sched *scheduler.Scheduler)</span></span> <span class="hljs-type">error</span> &#123;<br>    logger := klog.FromContext(ctx) <span class="hljs-comment">// 从上下文中获取日志记录器</span><br><br>    <span class="hljs-comment">// 为了帮助调试，立即记录版本信息</span><br>    logger.Info(<span class="hljs-string">&quot;Starting Kubernetes Scheduler&quot;</span>, <span class="hljs-string">&quot;version&quot;</span>, version.Get())<br><br>    <span class="hljs-comment">// 记录 Golang 的设置，这些环境变量会影响 Go 运行时的行为</span><br>    logger.Info(<span class="hljs-string">&quot;Golang settings&quot;</span>, <span class="hljs-string">&quot;GOGC&quot;</span>, os.Getenv(<span class="hljs-string">&quot;GOGC&quot;</span>), <span class="hljs-string">&quot;GOMAXPROCS&quot;</span>, os.Getenv(<span class="hljs-string">&quot;GOMAXPROCS&quot;</span>), <span class="hljs-string">&quot;GOTRACEBACK&quot;</span>, os.Getenv(<span class="hljs-string">&quot;GOTRACEBACK&quot;</span>))<br><br>    <span class="hljs-comment">// Configz 注册，Configz 允许通过 HTTP 端点公开当前的配置</span><br>    <span class="hljs-keyword">if</span> cz, err := configz.New(<span class="hljs-string">&quot;componentconfig&quot;</span>); err == <span class="hljs-literal">nil</span> &#123;<br>        cz.Set(cc.ComponentConfig) <span class="hljs-comment">// 设置调度器的组件配置</span><br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;unable to register configz: %s&quot;</span>, err) <span class="hljs-comment">// 如果注册失败，返回错误</span><br>    &#125;<br><br>    <span class="hljs-comment">// 启动事件处理流水线</span><br>    cc.EventBroadcaster.StartRecordingToSink(ctx.Done()) <span class="hljs-comment">// 开始录制事件</span><br>    <span class="hljs-keyword">defer</span> cc.EventBroadcaster.Shutdown()                   <span class="hljs-comment">// 延后关闭事件广播</span><br><br>    <span class="hljs-comment">// 设置健康检查</span><br>    <span class="hljs-keyword">var</span> checks []healthz.HealthChecker<br>    <span class="hljs-keyword">if</span> cc.ComponentConfig.LeaderElection.LeaderElect &#123;<br>        checks = <span class="hljs-built_in">append</span>(checks, cc.LeaderElection.WatchDog) <span class="hljs-comment">// 如果启用了领导者选举，添加 WatchDog 健康检查</span><br>    &#125;<br><br>    <span class="hljs-comment">// 等待领导者选举的通道</span><br>    waitingForLeader := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)<br>    isLeader := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> <span class="hljs-type">bool</span> &#123;<br>        <span class="hljs-keyword">select</span> &#123;<br>        <span class="hljs-keyword">case</span> _, ok := &lt;-waitingForLeader:<br>            <span class="hljs-comment">// 如果通道关闭，我们是领导者</span><br>            <span class="hljs-keyword">return</span> !ok<br>        <span class="hljs-keyword">default</span>:<br>            <span class="hljs-comment">// 通道是打开的，我们正在等待领导者</span><br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 启动健康检查服务器</span><br>    <span class="hljs-keyword">if</span> cc.SecureServing != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-comment">// 构建处理函数链</span><br>        handler := buildHandlerChain(newHealthzAndMetricsHandler(&amp;cc.ComponentConfig, cc.InformerFactory, isLeader, checks...), cc.Authentication.Authenticator, cc.Authorization.Authorizer)<br>        <span class="hljs-comment">// 启动安全服务器，注意处理返回的 stoppedCh 和 listenerStoppedCh</span><br>        <span class="hljs-keyword">if</span> _, _, err := cc.SecureServing.Serve(handler, <span class="hljs-number">0</span>, ctx.Done()); err != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;failed to start secure server: %v&quot;</span>, err) <span class="hljs-comment">// 如果启动失败，返回错误</span><br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 启动所有的 informer</span><br>    cc.InformerFactory.Start(ctx.Done()) <span class="hljs-comment">// 启动 informer 工厂</span><br>    <span class="hljs-comment">// DynInformerFactory 可以在测试中为 nil</span><br>    <span class="hljs-keyword">if</span> cc.DynInformerFactory != <span class="hljs-literal">nil</span> &#123;<br>        cc.DynInformerFactory.Start(ctx.Done()) <span class="hljs-comment">// 启动动态 informer 工厂</span><br>    &#125;<br><br>    <span class="hljs-comment">// 等待所有缓存同步后再进行调度</span><br>    cc.InformerFactory.WaitForCacheSync(ctx.Done()) <span class="hljs-comment">// 等待 informer 工厂的缓存同步</span><br>    <span class="hljs-keyword">if</span> cc.DynInformerFactory != <span class="hljs-literal">nil</span> &#123;<br>        cc.DynInformerFactory.WaitForCacheSync(ctx.Done()) <span class="hljs-comment">// 等待动态 informer 工厂的缓存同步</span><br>    &#125;<br><br>    <span class="hljs-comment">// 如果启用了领导者选举，通过 LeaderElector 运行直到完成并退出</span><br>    <span class="hljs-keyword">if</span> cc.LeaderElection != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-comment">// 设置领导者选举的回调</span><br>        cc.LeaderElection.Callbacks = leaderelection.LeaderCallbacks&#123;<br>            OnStartedLeading: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(ctx context.Context)</span></span> &#123;<br>                <span class="hljs-built_in">close</span>(waitingForLeader) <span class="hljs-comment">// 关闭等待领导者的通道，表示我们现在是领导者</span><br>                sched.Run(ctx)           <span class="hljs-comment">// 运行调度器</span><br>            &#125;,<br>            OnStoppedLeading: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>                <span class="hljs-keyword">select</span> &#123;<br>                <span class="hljs-keyword">case</span> &lt;-ctx.Done():<br>                    <span class="hljs-comment">// 我们被请求终止。退出 0。</span><br>                    logger.Info(<span class="hljs-string">&quot;Requested to terminate, exiting&quot;</span>)<br>                    os.Exit(<span class="hljs-number">0</span>)<br>                <span class="hljs-keyword">default</span>:<br>                    <span class="hljs-comment">// 我们失去了锁。</span><br>                    logger.Error(<span class="hljs-literal">nil</span>, <span class="hljs-string">&quot;Leaderelection lost&quot;</span>)<br>                    klog.FlushAndExit(klog.ExitFlushTimeout, <span class="hljs-number">1</span>)<br>                &#125;<br>            &#125;,<br>        &#125;<br>        <span class="hljs-comment">// 创建新的领导者选举</span><br>        leaderElector, err := leaderelection.NewLeaderElector(*cc.LeaderElection)<br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;couldn&#x27;t create leader elector: %v&quot;</span>, err) <span class="hljs-comment">// 如果创建失败，返回错误</span><br>        &#125;<br><br>        leaderElector.Run(ctx) <span class="hljs-comment">// 运行领导者选举</span><br><br>        <span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;lost lease&quot;</span>) <span class="hljs-comment">// 如果失去租约，返回错误</span><br>    &#125;<br><br>    <span class="hljs-comment">// 领导者选举被禁用，因此内联运行直到完成</span><br>    <span class="hljs-built_in">close</span>(waitingForLeader) <span class="hljs-comment">// 关闭等待领导者的通道</span><br>    sched.Run(ctx)           <span class="hljs-comment">// 运行调度器</span><br>    <span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;finished without leader&quot;</span>) <span class="hljs-comment">// 如果没有领导者，返回错误</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这个函数首先设置日志记录器，记录版本和 Golang 环境设置，然后注册配置以供调试使用。接着，它启动事件处理流水线，并设置健康检查和健康检查服务器。之后，函数启动 informer 并等待缓存同步。如果配置了领导者选举，它会通过领导者选举器运行调度器，否则直接运行调度器。如果在任何步骤中出现错误，函数会返回该错误。</p>
+<p>查看<code>sched.Run(ctx)</code> 这部分调度器实际运行的内容，<code>pkg/scheduler/scheduler.go:355</code> ，补充了一部分解释放在代码的注释里。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Run begins watching and scheduling. It starts scheduling and blocked until the context is done.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(sched *Scheduler)</span></span> Run(ctx context.Context) &#123;<br>    <span class="hljs-comment">// 启动调度队列，这将允许调度器观察新的、需要调度的 Pods</span><br>    sched.SchedulingQueue.Run()<br><br>	  <span class="hljs-comment">// We need to start scheduleOne loop in a dedicated goroutine,</span><br>	  <span class="hljs-comment">// because scheduleOne function hangs on getting the next item</span><br>  	<span class="hljs-comment">// from the SchedulingQueue.</span><br>  	<span class="hljs-comment">// If there are no new pods to schedule, it will be hanging there</span><br>  	<span class="hljs-comment">// and if done in this goroutine it will be blocking closing</span><br>  	<span class="hljs-comment">// SchedulingQueue, in effect causing a deadlock on shutdown.</span><br>    <span class="hljs-comment">// 翻译：</span><br>    <span class="hljs-comment">// 我们需要在一个独立的 goroutine 中启动 scheduleOne 循环，</span><br>    <span class="hljs-comment">// 因为 scheduleOne 函数在从 SchedulingQueue 获取下一个项目时会挂起。</span><br>    <span class="hljs-comment">// 如果没有新的 Pods 需要调度，它会在那里挂起，</span><br>    <span class="hljs-comment">// 如果在这个 goroutine 中执行，它将阻止关闭 SchedulingQueue，</span><br>    <span class="hljs-comment">// 从而在关闭时造成死锁。</span><br>    <span class="hljs-keyword">go</span> wait.UntilWithContext(ctx, sched.scheduleOne, <span class="hljs-number">0</span>)<br><br>    <span class="hljs-comment">// 当上下文完成（即 ctx.Done() 通道关闭）时，阻塞直到收到信号</span><br>    &lt;-ctx.Done()<br><br>    <span class="hljs-comment">// 关闭调度队列，这将停止调度器的事件循环</span><br>    sched.SchedulingQueue.Close()<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到到了这里就剩下了两个主要的实体：调度队列和调度算法。</p>
+<ul>
+<li><p>调度队列收集需要调度的Pod，然后提交给scheduler调度，具体将在后面进行介绍。</p>
+</li>
+<li><p><code>go wait.UntilWithContext(ctx, sched.scheduleOne, 0)</code>启用了一个go协程，然后负责一个一个调度pod。注意一下<code>go wait.UntilWithContext</code> ，它 是 Kubernetes 项目中用于周期性运行函数的工具。它是一个包装了 <code>time.Ticker</code> 和 <code>context.Context</code> 的机制，允许在给定的时间间隔内重复执行某个函数，直到提供的上下文被取消。函数的基本签名如下：</p>
+  <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">UntilWithContext</span><span class="hljs-params">(ctx context.Context, f <span class="hljs-keyword">func</span>(context.Context)</span></span>, period time.Duration)<br></code></pre></td></tr></table></figure>
+<p>  当 <code>ctx.Done()</code> 通道关闭时，<code>wait.UntilWithContext</code> 将停止执行其周期性的任务<code>sched.scheduleOne</code>，<code>0</code> 表示两次迭代之间没有间隔，<code>sched.scheduleOne</code> 将尽可能快地被调用。具体<code>sched.scheduleOne</code>的介绍将在后面进行。</p>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/k8s/" class="print-no-link">#k8s</a>
+      
+        <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="print-no-link">#源码分析</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8s源码分析（一）-K8s调度框架及调度器初始化介绍</div>
+      <div>http://example.com/2024/05/10/k8sSource1/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>John Doe</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/05/10/k8sSource2/" title="K8s源码分析（二）-K8s调度队列介绍">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8s源码分析（二）-K8s调度队列介绍</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/01/godelPaperRead/" title="【论文阅读】Gödel:Unified Large-Scale Resource Management and Scheduling at ByteDance">
+                        <span class="hidden-mobile">【论文阅读】Gödel:Unified Large-Scale Resource Management and Scheduling at ByteDance</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

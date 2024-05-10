@@ -1,0 +1,888 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="本次分析参考的K8s版本是v1.27.0。 K8s的整体调度框架如下图所示。  调度框架顶层函数K8s调度器调度的核心函数schedulerone在pkg&#x2F;scheduler&#x2F;schedule_one.go:62，如下，这里将一些解释写在了注释里 1234567891011121314151617181920212223242526272829303132333435363738394041424">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K8s源码分析（三）-K8s调度器调度周期介绍">
+<meta property="og:url" content="http://example.com/2024/05/10/k8sSource3/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="本次分析参考的K8s版本是v1.27.0。 K8s的整体调度框架如下图所示。  调度框架顶层函数K8s调度器调度的核心函数schedulerone在pkg&#x2F;scheduler&#x2F;schedule_one.go:62，如下，这里将一些解释写在了注释里 1234567891011121314151617181920212223242526272829303132333435363738394041424">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2024/05/10/k8sSource3/scheduling-framework-extensions.png">
+<meta property="article:published_time" content="2024-05-10T08:37:11.000Z">
+<meta property="article:modified_time" content="2024-05-10T08:39:19.545Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="k8s">
+<meta property="article:tag" content="源码分析">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2024/05/10/k8sSource3/scheduling-framework-extensions.png">
+  
+  
+  
+  <title>K8s源码分析（三）-K8s调度器调度周期介绍 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="K8s源码分析（三）-K8s调度器调度周期介绍"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-10 16:37" pubdate>
+          2024年5月10日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          37k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          185 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">K8s源码分析（三）-K8s调度器调度周期介绍</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本次分析参考的K8s版本是<a target="_blank" rel="noopener" href="https://github.com/kubernetes/kubernetes/tree/release-1.27">v1.27.0</a>。</p>
+<p>K8s的整体调度框架如下图所示。</p>
+<p><img src="/2024/05/10/k8sSource3/scheduling-framework-extensions.png" srcset="/img/loading.gif" lazyload alt="Scheduling framework extension points"></p>
+<h1 id="调度框架顶层函数"><a href="#调度框架顶层函数" class="headerlink" title="调度框架顶层函数"></a>调度框架顶层函数</h1><p>K8s调度器调度的核心函数<code>schedulerone</code>在<code>pkg/scheduler/schedule_one.go:62</code>，如下，这里将一些解释写在了注释里</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// scheduleOne does the entire scheduling workflow for a single pod. It is serialized on the scheduling algorithm&#x27;s host fitting.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(sched *Scheduler)</span></span> scheduleOne(ctx context.Context) &#123;<br>    <span class="hljs-comment">// 获取调度队列中的下一个 Pod 信息</span><br>    podInfo := sched.NextPod()<br>    <span class="hljs-comment">// 如果 podInfo 或者其包含的 Pod 为 nil，说明调度队列关闭或者没有 Pod 需要调度，直接返回</span><br>    <span class="hljs-keyword">if</span> podInfo == <span class="hljs-literal">nil</span> || podInfo.Pod == <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span><br>    &#125;<br>    <span class="hljs-comment">// 获取 Pod 对象</span><br>    pod := podInfo.Pod<br>    <span class="hljs-comment">// 为当前 Pod 选择一个调度框架（scheduler framework）</span><br>    fwk, err := sched.frameworkForPod(pod)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-comment">// 这种情况不应该发生，因为我们只接受那些指定了匹配调度器名称的 Pod 进行调度</span><br>        klog.ErrorS(err, <span class="hljs-string">&quot;Error occurred&quot;</span>)<br>        <span class="hljs-keyword">return</span><br>    &#125;<br>    <span class="hljs-comment">// 如果跳过调度，则直接返回</span><br>    <span class="hljs-keyword">if</span> sched.skipPodSchedule(fwk, pod) &#123;<br>        <span class="hljs-keyword">return</span><br>    &#125;<br><br>    <span class="hljs-comment">// 记录尝试调度 Pod 的日志</span><br>    klog.V(<span class="hljs-number">3</span>).InfoS(<span class="hljs-string">&quot;Attempting to schedule pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br><br>    <span class="hljs-comment">// 开始计时，尝试为 Pod 找到合适的宿主机</span><br>    start := time.Now()<br>    <span class="hljs-comment">// 初始化调度周期状态</span><br>    state := framework.NewCycleState()<br>    <span class="hljs-comment">// 设置是否记录插件指标的随机概率</span><br>    state.SetRecordPluginMetrics(rand.Intn(<span class="hljs-number">100</span>) &lt; pluginMetricsSamplePercent)<br><br>    <span class="hljs-comment">// 初始化一个空的 podsToActivate 结构，这个结构将由插件填充或者保持为空</span><br>    podsToActivate := framework.NewPodsToActivate()<br>    <span class="hljs-comment">// 将 podsToActivate 写入状态中</span><br>    state.Write(framework.PodsToActivateKey, podsToActivate)<br><br>    <span class="hljs-comment">// 创建一个新的带有取消功能的上下文，用于调度周期</span><br>    schedulingCycleCtx, cancel := context.WithCancel(ctx)<br>    <span class="hljs-keyword">defer</span> cancel()<br><br>    <span class="hljs-comment">// 执行调度周期，尝试为 Pod 找到合适的宿主机</span><br>    scheduleResult, assumedPodInfo, status := sched.schedulingCycle(schedulingCycleCtx, state, fwk, podInfo, start, podsToActivate)<br>    <span class="hljs-comment">// 如果调度失败，则调用失败处理器</span><br>    <span class="hljs-keyword">if</span> !status.IsSuccess() &#123;<br>        sched.FailureHandler(schedulingCycleCtx, fwk, assumedPodInfo, status, scheduleResult.nominatingInfo, start)<br>        <span class="hljs-keyword">return</span><br>    &#125;<br><br>    <span class="hljs-comment">// 异步绑定 Pod 到其宿主机（可以这样做是因为上面的假设步骤）</span><br>    <span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        <span class="hljs-comment">// 创建一个新的带有取消功能的上下文，用于绑定周期</span><br>        bindingCycleCtx, cancel := context.WithCancel(ctx)<br>        <span class="hljs-keyword">defer</span> cancel()<br><br>        <span class="hljs-comment">// 增加绑定阶段的 goroutine 指标</span><br>        metrics.SchedulerGoroutines.WithLabelValues(metrics.Binding).Inc()<br>        <span class="hljs-keyword">defer</span> metrics.SchedulerGoroutines.WithLabelValues(metrics.Binding).Dec()<br>        metrics.Goroutines.WithLabelValues(metrics.Binding).Inc()<br>        <span class="hljs-keyword">defer</span> metrics.Goroutines.WithLabelValues(metrics.Binding).Dec()<br><br>        <span class="hljs-comment">// 执行绑定周期，尝试将 Pod 绑定到宿主机</span><br>        status := sched.bindingCycle(bindingCycleCtx, state, fwk, scheduleResult, assumedPodInfo, start, podsToActivate)<br>        <span class="hljs-comment">// 如果绑定失败，则处理绑定周期错误</span><br>        <span class="hljs-keyword">if</span> !status.IsSuccess() &#123;<br>            sched.handleBindingCycleError(bindingCycleCtx, state, fwk, assumedPodInfo, start, scheduleResult, status)<br>        &#125;<br>    &#125;()<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这段代码的主要功能是：</p>
+<ol>
+<li>从调度队列中获取下一个要调度的 Pod。</li>
+<li>为 Pod 选择一个调度框架。</li>
+<li>如果配置允许，跳过调度。</li>
+<li>记录日志并开始调度周期。</li>
+<li>如果调度成功，异步地尝试将 Pod 绑定到选定的宿主机。</li>
+<li>如果调度或绑定失败，执行相应的错误处理逻辑。</li>
+</ol>
+<p>此处也指明了两个周期，分别为调度周期<code>schedulingCycle</code>和绑定周期<code>bindingCycle</code>，绑定周期会在后面一节进行介绍，这里主要关注<code>schedulingCycle</code> 。</p>
+<p>查看关键的<code>schedulingCycle</code>函数，在<code>pkg/scheduler/schedule_one.go:120</code>中,补充了部分注释。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// schedulingCycle tries to schedule a single Pod.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(sched *Scheduler)</span></span> schedulingCycle(<br>    ctx context.Context, <span class="hljs-comment">// 调度上下文</span><br>    state *framework.CycleState, <span class="hljs-comment">// 调度周期状态</span><br>    fwk framework.Framework, <span class="hljs-comment">// 调度框架</span><br>    podInfo *framework.QueuedPodInfo, <span class="hljs-comment">// 待调度的 Pod 信息</span><br>    start time.Time, <span class="hljs-comment">// 调度开始时间</span><br>    podsToActivate *framework.PodsToActivate, <span class="hljs-comment">// 待激活的 Pods</span><br>) (ScheduleResult, *framework.QueuedPodInfo, *framework.Status) &#123;<br>    <span class="hljs-comment">// 获取待调度的 Pod</span><br>    pod := podInfo.Pod<br>    <span class="hljs-comment">// 调用调度器的 SchedulePod 方法尝试调度 Pod</span><br>    scheduleResult, err := sched.SchedulePod(ctx, fwk, state, pod)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-comment">// 如果没有可用节点，则返回错误状态</span><br>        <span class="hljs-keyword">if</span> err == ErrNoNodesAvailable &#123;<br>            status := framework.NewStatus(framework.UnschedulableAndUnresolvable).WithError(err)<br>            <span class="hljs-keyword">return</span> ScheduleResult&#123;nominatingInfo: clearNominatedNode&#125;, podInfo, status<br>        &#125;<br><br>        <span class="hljs-comment">// 如果错误是 FitError 类型，则说明 Pod 无法适应任何节点</span><br>        fitError, ok := err.(*framework.FitError)<br>        <span class="hljs-keyword">if</span> !ok &#123;<br>            klog.ErrorS(err, <span class="hljs-string">&quot;Error selecting node for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>            <span class="hljs-keyword">return</span> ScheduleResult&#123;nominatingInfo: clearNominatedNode&#125;, podInfo, framework.AsStatus(err)<br>        &#125;<br><br>        <span class="hljs-comment">// 如果没有 PostFilter 插件，则不执行抢占</span><br>        <span class="hljs-keyword">if</span> !fwk.HasPostFilterPlugins() &#123;<br>            klog.V(<span class="hljs-number">3</span>).InfoS(<span class="hljs-string">&quot;No PostFilter plugins are registered, so no preemption will be performed&quot;</span>)<br>            <span class="hljs-keyword">return</span> ScheduleResult&#123;&#125;, podInfo, framework.NewStatus(framework.Unschedulable).WithError(err)<br>        &#125;<br><br>        <span class="hljs-comment">// 运行 PostFilter 插件，尝试使 Pod 在未来的调度周期中可调度</span><br>        result, status := fwk.RunPostFilterPlugins(ctx, state, pod, fitError.Diagnosis.NodeToStatusMap)<br>        msg := status.Message()<br>        fitError.Diagnosis.PostFilterMsg = msg<br>        <span class="hljs-keyword">if</span> status.Code() == framework.Error &#123;<br>            klog.ErrorS(<span class="hljs-literal">nil</span>, <span class="hljs-string">&quot;Status after running PostFilter plugins for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;status&quot;</span>, msg)<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Status after running PostFilter plugins for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;status&quot;</span>, msg)<br>        &#125;<br><br>        <span class="hljs-comment">// 获取 PostFilter 插件返回的 NominatingInfo</span><br>        <span class="hljs-keyword">var</span> nominatingInfo *framework.NominatingInfo<br>        <span class="hljs-keyword">if</span> result != <span class="hljs-literal">nil</span> &#123;<br>            nominatingInfo = result.NominatingInfo<br>        &#125;<br>        <span class="hljs-keyword">return</span> ScheduleResult&#123;nominatingInfo: nominatingInfo&#125;, podInfo, framework.NewStatus(framework.Unschedulable).WithError(err)<br>    &#125;<br><br>    <span class="hljs-comment">// 计算并记录调度算法的延迟</span><br>    metrics.SchedulingAlgorithmLatency.Observe(metrics.SinceInSeconds(start))<br>    <span class="hljs-comment">// 假设 Pod 已经在给定节点上运行，这样子就不用等它实际绑定就可以执行后续的操作了</span><br>    assumedPodInfo := podInfo.DeepCopy()<br>    assumedPod := assumedPodInfo.Pod<br>    <span class="hljs-comment">// 假设操作，设置 Pod 的 NodeName 为调度结果推荐的宿主机</span><br>    err = sched.assume(assumedPod, scheduleResult.SuggestedHost)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-comment">// 如果假设操作失败，这可能是重试逻辑中的一个 BUG</span><br>        <span class="hljs-comment">// 报告错误以便重新调度 Pod</span><br>        <span class="hljs-keyword">return</span> ScheduleResult&#123;nominatingInfo: clearNominatedNode&#125;,<br>            assumedPodInfo,<br>            framework.AsStatus(err)<br>    &#125;<br><br>    <span class="hljs-comment">// 运行预留插件的 Reserve 方法</span><br>    <span class="hljs-keyword">if</span> sts := fwk.RunReservePluginsReserve(ctx, state, assumedPod, scheduleResult.SuggestedHost); !sts.IsSuccess() &#123;<br>        <span class="hljs-comment">// 如果预留失败，触发取消预留以清理与预留 Pod 相关的资源</span><br>        fwk.RunReservePluginsUnreserve(ctx, state, assumedPod, scheduleResult.SuggestedHost)<br>        <span class="hljs-keyword">if</span> forgetErr := sched.Cache.ForgetPod(assumedPod); forgetErr != <span class="hljs-literal">nil</span> &#123;<br>            klog.ErrorS(forgetErr, <span class="hljs-string">&quot;Scheduler cache ForgetPod failed&quot;</span>)<br>        &#125;<br><br>        <span class="hljs-keyword">return</span> ScheduleResult&#123;nominatingInfo: clearNominatedNode&#125;,<br>            assumedPodInfo,<br>            sts<br>    &#125;<br><br>    <span class="hljs-comment">// 运行 &quot;permit&quot; 插件</span><br>    runPermitStatus := fwk.RunPermitPlugins(ctx, state, assumedPod, scheduleResult.SuggestedHost)<br>    <span class="hljs-keyword">if</span> !runPermitStatus.IsWait() &amp;&amp; !runPermitStatus.IsSuccess() &#123;<br>        <span class="hljs-comment">// 如果许可检查失败，触发取消预留以清理与预留 Pod 相关的资源</span><br>        fwk.RunReservePluginsUnreserve(ctx, state, assumedPod, scheduleResult.SuggestedHost)<br>        <span class="hljs-keyword">if</span> forgetErr := sched.Cache.ForgetPod(assumedPod); forgetErr != <span class="hljs-literal">nil</span> &#123;<br>            klog.ErrorS(forgetErr, <span class="hljs-string">&quot;Scheduler cache ForgetPod failed&quot;</span>)<br>        &#125;<br><br>        <span class="hljs-keyword">return</span> ScheduleResult&#123;nominatingInfo: clearNominatedNode&#125;,<br>            assumedPodInfo,<br>            runPermitStatus<br>    &#125;<br><br>    <span class="hljs-comment">// 成功调度周期结束后，查看是否有必要设置一些pod为可调度的状态</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(podsToActivate.Map) != <span class="hljs-number">0</span> &#123;<br>        sched.SchedulingQueue.Activate(podsToActivate.Map)<br>        <span class="hljs-comment">// 激活后清空条目</span><br>        podsToActivate.Map = <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*v1.Pod)<br>    &#125;<br><br>    <span class="hljs-comment">// 返回调度结果</span><br>    <span class="hljs-keyword">return</span> scheduleResult, assumedPodInfo, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>主要流程包括：</p>
+<ol>
+<li>尝试调度 Pod，并处理可能出现的错误。</li>
+<li>如果调度失败，根据错误类型执行不同的逻辑，如处理节点不可用或 Pod 不适应任何节点的情况。</li>
+<li>如果调度成功，记录调度算法的延迟，并提前假设 Pod 已经在推荐的节点上运行。</li>
+<li>运行预留插件的 Reserve 方法，并处理预留成功或失败的情况。</li>
+<li>运行抢占插件，并根据结果进行相应的处理。</li>
+<li>如果有待转为active的 Pods，执行激活操作。</li>
+<li>返回调度结果。</li>
+</ol>
+<h1 id="一般调度"><a href="#一般调度" class="headerlink" title="一般调度"></a>一般调度</h1><p>这里最关键的是<code>SchedulePod</code>函数，在<code>pkg/scheduler/schedule_one.go:334</code>中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// schedulePod tries to schedule the given pod to one of the nodes in the node list.</span><br><span class="hljs-comment">// If it succeeds, it will return the name of the node.</span><br><span class="hljs-comment">// If it fails, it will return a FitError with reasons.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(sched *Scheduler)</span></span> schedulePod(ctx context.Context, fwk framework.Framework, state *framework.CycleState, pod *v1.Pod) (result ScheduleResult, err <span class="hljs-type">error</span>) &#123;<br>	trace := utiltrace.New(<span class="hljs-string">&quot;Scheduling&quot;</span>, utiltrace.Field&#123;Key: <span class="hljs-string">&quot;namespace&quot;</span>, Value: pod.Namespace&#125;, utiltrace.Field&#123;Key: <span class="hljs-string">&quot;name&quot;</span>, Value: pod.Name&#125;)<br>	<span class="hljs-keyword">defer</span> trace.LogIfLong(<span class="hljs-number">100</span> * time.Millisecond)<br><br>	<span class="hljs-keyword">if</span> err := sched.Cache.UpdateSnapshot(sched.nodeInfoSnapshot); err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> result, err<br>	&#125;<br>	trace.Step(<span class="hljs-string">&quot;Snapshotting scheduler cache and node infos done&quot;</span>)<br><br>	<span class="hljs-keyword">if</span> sched.nodeInfoSnapshot.NumNodes() == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> result, ErrNoNodesAvailable<br>	&#125;<br><br>	feasibleNodes, diagnosis, err := sched.findNodesThatFitPod(ctx, fwk, state, pod)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> result, err<br>	&#125;<br>	trace.Step(<span class="hljs-string">&quot;Computing predicates done&quot;</span>)<br><br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(feasibleNodes) == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span> result, &amp;framework.FitError&#123;<br>			Pod:         pod,<br>			NumAllNodes: sched.nodeInfoSnapshot.NumNodes(),<br>			Diagnosis:   diagnosis,<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-comment">// When only one node after predicate, just use it.</span><br>	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(feasibleNodes) == <span class="hljs-number">1</span> &#123;<br>		<span class="hljs-keyword">return</span> ScheduleResult&#123;<br>			SuggestedHost:  feasibleNodes[<span class="hljs-number">0</span>].Name,<br>			EvaluatedNodes: <span class="hljs-number">1</span> + <span class="hljs-built_in">len</span>(diagnosis.NodeToStatusMap),<br>			FeasibleNodes:  <span class="hljs-number">1</span>,<br>		&#125;, <span class="hljs-literal">nil</span><br>	&#125;<br><br>	priorityList, err := prioritizeNodes(ctx, sched.Extenders, fwk, state, pod, feasibleNodes)<br>	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>		<span class="hljs-keyword">return</span> result, err<br>	&#125;<br><br>	host, err := selectHost(priorityList)<br>	trace.Step(<span class="hljs-string">&quot;Prioritizing done&quot;</span>)<br><br>	<span class="hljs-keyword">return</span> ScheduleResult&#123;<br>		SuggestedHost:  host,<br>		EvaluatedNodes: <span class="hljs-built_in">len</span>(feasibleNodes) + <span class="hljs-built_in">len</span>(diagnosis.NodeToStatusMap),<br>		FeasibleNodes:  <span class="hljs-built_in">len</span>(feasibleNodes),<br>	&#125;, err<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>在这里我们就能具体的看到predicates筛选过程和Prioritizing打分过程，整体的逻辑也比较简单，首先是筛选出合适的node，如果只有一个node了，那么就直接返回这个node，如果有多个就进行打分，然后选择评分最高的node返回回去。</p>
+<h2 id="筛选过程"><a href="#筛选过程" class="headerlink" title="筛选过程"></a>筛选过程</h2><p>然后我们查看predicates筛选过程，其代码在<code>pkg/scheduler/schedule_one.go:387</code>中，如下，补充了一些注释</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Filters the nodes to find the ones that fit the pod based on the framework</span><br><span class="hljs-comment">// filter plugins and filter extenders.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(sched *Scheduler)</span></span> findNodesThatFitPod(ctx context.Context, fwk framework.Framework, state *framework.CycleState, pod *v1.Pod) ([]*v1.Node, framework.Diagnosis, <span class="hljs-type">error</span>) &#123;<br>    <span class="hljs-comment">// 初始化诊断信息，用于记录调度过程中的详细信息</span><br>    diagnosis := framework.Diagnosis&#123;<br>        NodeToStatusMap:      <span class="hljs-built_in">make</span>(framework.NodeToStatusMap),<br>        UnschedulablePlugins: sets.NewString(),<br>    &#125;<br><br>    <span class="hljs-comment">// 获取所有节点的信息</span><br>    allNodes, err := sched.nodeInfoSnapshot.NodeInfos().List()<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, diagnosis, err<br>    &#125;<br>    <span class="hljs-comment">// 运行 &quot;prefilter&quot; 插件</span><br>    preRes, s := fwk.RunPreFilterPlugins(ctx, state, pod)<br>    <span class="hljs-keyword">if</span> !s.IsSuccess() &#123;<br>        <span class="hljs-keyword">if</span> !s.IsUnschedulable() &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, diagnosis, s.AsError()<br>        &#125;<br>        <span class="hljs-comment">// 如果 PreFilter 插件返回的状态是不可调度的，记录相关信息</span><br>        msg := s.Message()<br>        diagnosis.PreFilterMsg = msg<br>        klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Status after running PreFilter plugins for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;status&quot;</span>, msg)<br>        <span class="hljs-comment">// 如果有插件失败，记录失败的插件名称</span><br>        <span class="hljs-keyword">if</span> s.FailedPlugin() != <span class="hljs-string">&quot;&quot;</span> &#123;<br>            diagnosis.UnschedulablePlugins.Insert(s.FailedPlugin())<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, diagnosis, <span class="hljs-literal">nil</span><br>    &#125;<br><br>    <span class="hljs-comment">// 如果 Pod 已经被提名到一个节点上（可能由于之前的抢占操作），</span><br>    <span class="hljs-comment">// 这个节点很可能是唯一一个合适的节点，所以首先评估这个节点</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(pod.Status.NominatedNodeName) &gt; <span class="hljs-number">0</span> &#123;<br>        feasibleNodes, err := sched.evaluateNominatedNode(ctx, pod, fwk, state, diagnosis)<br>        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>            klog.ErrorS(err, <span class="hljs-string">&quot;Evaluation failed on nominated node&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;node&quot;</span>, pod.Status.NominatedNodeName)<br>        &#125;<br>        <span class="hljs-comment">// 如果提名的节点通过了所有的过滤，调度器可以决定将这个节点分配给 Pod</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(feasibleNodes) != <span class="hljs-number">0</span> &#123;<br>            <span class="hljs-keyword">return</span> feasibleNodes, diagnosis, <span class="hljs-literal">nil</span><br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 根据 PreFilter 插件的结果，可能需要过滤掉一些节点</span><br>    nodes := allNodes<br>    <span class="hljs-keyword">if</span> !preRes.AllNodes() &#123;<br>        nodes = <span class="hljs-built_in">make</span>([]*framework.NodeInfo, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(preRes.NodeNames))<br>        <span class="hljs-keyword">for</span> n := <span class="hljs-keyword">range</span> preRes.NodeNames &#123;<br>            nInfo, err := sched.nodeInfoSnapshot.NodeInfos().Get(n)<br>            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, diagnosis, err<br>            &#125;<br>            nodes = <span class="hljs-built_in">append</span>(nodes, nInfo)<br>        &#125;<br>    &#125;<br>    <span class="hljs-comment">// 寻找通过过滤的节点</span><br>    feasibleNodes, err := sched.findNodesThatPassFilters(ctx, fwk, state, pod, diagnosis, nodes)<br>    <span class="hljs-comment">// 无论是否发生错误，都尝试更新下一次开始搜索节点的索引</span><br>    processedNodes := <span class="hljs-built_in">len</span>(feasibleNodes) + <span class="hljs-built_in">len</span>(diagnosis.NodeToStatusMap)<br>    sched.nextStartNodeIndex = (sched.nextStartNodeIndex + processedNodes) % <span class="hljs-built_in">len</span>(nodes)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, diagnosis, err<br>    &#125;<br><br>    <span class="hljs-comment">// 检查过滤扩展器以找到更多通过过滤的节点</span><br>    feasibleNodes, err = findNodesThatPassExtenders(sched.Extenders, pod, feasibleNodes, diagnosis.NodeToStatusMap)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, diagnosis, err<br>    &#125;<br>    <span class="hljs-comment">// 返回所有通过过滤的节点</span><br>    <span class="hljs-keyword">return</span> feasibleNodes, diagnosis, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这部分首先运行preFilter插件首先进行一些轻量级的检查，然后再运行filter插件进行正式筛选，然后在运行filter拓展插件。</p>
+<p>这里我们主要关注filter插件的运行，查看其对应的findNodesThatPassFilters函数，在<code>pkg/scheduler/schedule_one.go:475</code>中，如下，补充了部分注释</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// findNodesThatPassFilters finds the nodes that fit the filter plugins.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(sched *Scheduler)</span></span> findNodesThatPassFilters(<br>    ctx context.Context, <span class="hljs-comment">// 调度上下文</span><br>    fwk framework.Framework, <span class="hljs-comment">// 调度框架</span><br>    state *framework.CycleState, <span class="hljs-comment">// 调度周期状态</span><br>    pod *v1.Pod, <span class="hljs-comment">// 待调度的 Pod</span><br>    diagnosis framework.Diagnosis, <span class="hljs-comment">// 调度诊断信息</span><br>    nodes []*framework.NodeInfo) ([]*v1.Node, <span class="hljs-type">error</span>) &#123; <span class="hljs-comment">// 所有节点信息</span><br>    numAllNodes := <span class="hljs-built_in">len</span>(nodes) <span class="hljs-comment">// 所有节点的数量</span><br>    <span class="hljs-comment">// 计算应该找到的可行节点数量</span><br>    numNodesToFind := sched.numFeasibleNodesToFind(fwk.PercentageOfNodesToScore(), <span class="hljs-type">int32</span>(numAllNodes))<br><br>    <span class="hljs-comment">// 创建一个足够大的列表来存储通过过滤的节点，以避免在运行时增长该列表</span><br>    feasibleNodes := <span class="hljs-built_in">make</span>([]*v1.Node, numNodesToFind)<br><br>    <span class="hljs-comment">// 如果框架没有过滤插件，直接使用所有节点</span><br>    <span class="hljs-keyword">if</span> !fwk.HasFilterPlugins() &#123;<br>        <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> feasibleNodes &#123;<br>            <span class="hljs-comment">// 从上一个调度周期停止的地方开始检查节点</span><br>            feasibleNodes[i] = nodes[(sched.nextStartNodeIndex+i)%numAllNodes].Node()<br>        &#125;<br>        <span class="hljs-keyword">return</span> feasibleNodes, <span class="hljs-literal">nil</span><br>    &#125;<br><br>    <span class="hljs-comment">// 用于并行处理时的错误通道</span><br>    errCh := parallelize.NewErrorChannel()<br>    <span class="hljs-keyword">var</span> statusesLock sync.Mutex <span class="hljs-comment">// 用于保护对诊断信息的并发访问</span><br>    <span class="hljs-keyword">var</span> feasibleNodesLen <span class="hljs-type">int32</span> <span class="hljs-comment">// 通过过滤的节点数量</span><br>    ctx, cancel := context.WithCancel(ctx) <span class="hljs-comment">// 创建一个可取消的上下文</span><br>    <span class="hljs-keyword">defer</span> cancel()<br><br>    <span class="hljs-comment">// 检查每个节点是否通过过滤</span><br>    checkNode := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(i <span class="hljs-type">int</span>)</span></span> &#123;<br>        nodeInfo := nodes[(sched.nextStartNodeIndex+i)%numAllNodes] <span class="hljs-comment">// 获取节点信息</span><br>        status := fwk.RunFilterPluginsWithNominatedPods(ctx, state, pod, nodeInfo) <span class="hljs-comment">// 运行过滤插件</span><br>        <span class="hljs-keyword">if</span> status.Code() == framework.Error &#123;<br>            errCh.SendErrorWithCancel(status.AsError(), cancel) <span class="hljs-comment">// 发送错误并可能取消整个操作</span><br>            <span class="hljs-keyword">return</span><br>        &#125;<br>        <span class="hljs-keyword">if</span> status.IsSuccess() &#123;<br>            <span class="hljs-comment">// 如果节点通过过滤，将其添加到可行节点列表中</span><br>            length := atomic.AddInt32(&amp;feasibleNodesLen, <span class="hljs-number">1</span>)<br>            <span class="hljs-keyword">if</span> length &gt; numNodesToFind &#123;<br>                cancel() <span class="hljs-comment">// 如果找到的节点超过了预定数量，取消剩余的检查</span><br>                atomic.AddInt32(&amp;feasibleNodesLen, <span class="hljs-number">-1</span>)<br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                feasibleNodes[length<span class="hljs-number">-1</span>] = nodeInfo.Node()<br>            &#125;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-comment">// 如果节点没有通过过滤，记录其状态</span><br>            statusesLock.Lock()<br>            diagnosis.NodeToStatusMap[nodeInfo.Node().Name] = status<br>            diagnosis.UnschedulablePlugins.Insert(status.FailedPlugin())<br>            statusesLock.Unlock()<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 记录开始检查节点的时间</span><br>    beginCheckNode := time.Now()<br>    statusCode := framework.Success<br>    <span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        <span class="hljs-comment">// 记录 Filter 扩展点的延迟</span><br>        metrics.FrameworkExtensionPointDuration.WithLabelValues(metrics.Filter, statusCode.String(), fwk.ProfileName()).Observe(metrics.SinceInSeconds(beginCheckNode))<br>    &#125;()<br><br>    <span class="hljs-comment">// 并行检查所有节点，直到找到预定数量的可行节点或检查完所有节点</span><br>    fwk.Parallelizer().Until(ctx, numAllNodes, checkNode, metrics.Filter)<br><br>    <span class="hljs-comment">// 截断可行节点列表到实际找到的节点数量</span><br>    feasibleNodes = feasibleNodes[:feasibleNodesLen]<br>    <span class="hljs-keyword">if</span> err := errCh.ReceiveError(); err != <span class="hljs-literal">nil</span> &#123;<br>        statusCode = framework.Error<br>        <span class="hljs-keyword">return</span> feasibleNodes, err<br>    &#125;<br>    <span class="hljs-keyword">return</span> feasibleNodes, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>注意到这里首先计算了需要筛选的node的数量，这主要是为了在大规模场景下降低筛选的数量，查看其对应的函数，在<code>pkg/scheduler/schedule_one.go:548</code>中，如下，补充了部分注释。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// numFeasibleNodesToFind returns the number of feasible nodes that once found, the scheduler stops</span><br><span class="hljs-comment">// its search for more feasible nodes.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(sched *Scheduler)</span></span> numFeasibleNodesToFind(percentageOfNodesToScore *<span class="hljs-type">int32</span>, numAllNodes <span class="hljs-type">int32</span>) (numNodes <span class="hljs-type">int32</span>) &#123;<br>    <span class="hljs-keyword">if</span> numAllNodes &lt; minFeasibleNodesToFind &#123;<br>        <span class="hljs-comment">// 如果所有节点的数量小于预设的最小可行节点数，则返回所有节点的数量</span><br>        <span class="hljs-keyword">return</span> numAllNodes<br>    &#125;<br><br>    <span class="hljs-comment">// 使用框架（profile）中设置的百分比，如果没有设置，则使用全局的百分比</span><br>    <span class="hljs-keyword">var</span> percentage <span class="hljs-type">int32</span><br>    <span class="hljs-keyword">if</span> percentageOfNodesToScore != <span class="hljs-literal">nil</span> &#123;<br>        percentage = *percentageOfNodesToScore<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        percentage = sched.percentageOfNodesToScore<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> percentage == <span class="hljs-number">0</span> &#123;<br>        <span class="hljs-comment">// 如果没有提供百分比，则使用默认的计算方式</span><br>        percentage = <span class="hljs-type">int32</span>(<span class="hljs-number">50</span>) - numAllNodes/<span class="hljs-number">125</span><br>        <span class="hljs-keyword">if</span> percentage &lt; minFeasibleNodesPercentageToFind &#123;<br>            <span class="hljs-comment">// 确保百分比不低于预设的最小值</span><br>            percentage = minFeasibleNodesPercentageToFind<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 计算基于总节点数和百分比的节点数</span><br>    numNodes = numAllNodes * percentage / <span class="hljs-number">100</span><br>    <span class="hljs-keyword">if</span> numNodes &lt; minFeasibleNodesToFind &#123;<br>        <span class="hljs-comment">// 如果计算出的节点数小于最小可行节点数，则返回最小值</span><br>        <span class="hljs-keyword">return</span> minFeasibleNodesToFind<br>    &#125;<br><br>    <span class="hljs-comment">// 返回计算出的可行节点数</span><br>    <span class="hljs-keyword">return</span> numNodes<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>然后定义了内部的checkNode函数，其输入是要检查的node 的id相对于<code>sched.nextStartNodeIndex</code>的偏移。注意这里使用了k8s内部定义的并行函数fwk.Parallelizer().Until，其定义如下，在<code>pkg/scheduler/framework/parallelize/parallelism.go:56</code>和<code>staging/src/k8s.io/client-go/util/workqueue/parallelizer.go:46</code>中：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Until is a wrapper around workqueue.ParallelizeUntil to use in scheduling algorithms.</span><br><span class="hljs-comment">// A given operation will be a label that is recorded in the goroutine metric.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p Parallelizer)</span></span> Until(ctx context.Context, pieces <span class="hljs-type">int</span>, doWorkPiece workqueue.DoWorkPieceFunc, operation <span class="hljs-type">string</span>) &#123;<br>	goroutinesMetric := metrics.Goroutines.WithLabelValues(operation)<br>	withMetrics := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(piece <span class="hljs-type">int</span>)</span></span> &#123;<br>		goroutinesMetric.Inc()<br>		doWorkPiece(piece)<br>		goroutinesMetric.Dec()<br>	&#125;<br><br>	workqueue.ParallelizeUntil(ctx, p.parallelism, pieces, withMetrics, workqueue.WithChunkSize(chunkSizeFor(pieces, p.parallelism)))<br>&#125;<br><span class="hljs-comment">// ParallelizeUntil is a framework that allows for parallelizing N</span><br><span class="hljs-comment">// independent pieces of work until done or the context is canceled.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParallelizeUntil</span><span class="hljs-params">(ctx context.Context, workers, pieces <span class="hljs-type">int</span>, doWorkPiece DoWorkPieceFunc, opts ...Options)</span></span> &#123;<br>	<span class="hljs-keyword">if</span> pieces == <span class="hljs-number">0</span> &#123;<br>		<span class="hljs-keyword">return</span><br>	&#125;<br>	o := options&#123;&#125;<br>	<span class="hljs-keyword">for</span> _, opt := <span class="hljs-keyword">range</span> opts &#123;<br>		opt(&amp;o)<br>	&#125;<br>	chunkSize := o.chunkSize<br>	<span class="hljs-keyword">if</span> chunkSize &lt; <span class="hljs-number">1</span> &#123;<br>		chunkSize = <span class="hljs-number">1</span><br>	&#125;<br><br>	chunks := ceilDiv(pieces, chunkSize)<br>	toProcess := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-type">int</span>, chunks)<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; chunks; i++ &#123;<br>		toProcess &lt;- i<br>	&#125;<br>	<span class="hljs-built_in">close</span>(toProcess)<br><br>	<span class="hljs-keyword">var</span> stop &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;<br>	<span class="hljs-keyword">if</span> ctx != <span class="hljs-literal">nil</span> &#123;<br>		stop = ctx.Done()<br>	&#125;<br>	<span class="hljs-keyword">if</span> chunks &lt; workers &#123;<br>		workers = chunks<br>	&#125;<br>	wg := sync.WaitGroup&#123;&#125;<br>	wg.Add(workers)<br>	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; workers; i++ &#123;<br>		<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>			<span class="hljs-keyword">defer</span> utilruntime.HandleCrash()<br>			<span class="hljs-keyword">defer</span> wg.Done()<br>			<span class="hljs-keyword">for</span> chunk := <span class="hljs-keyword">range</span> toProcess &#123;<br>				start := chunk * chunkSize<br>				end := start + chunkSize<br>				<span class="hljs-keyword">if</span> end &gt; pieces &#123;<br>					end = pieces<br>				&#125;<br>				<span class="hljs-keyword">for</span> p := start; p &lt; end; p++ &#123;<br>					<span class="hljs-keyword">select</span> &#123;<br>					<span class="hljs-keyword">case</span> &lt;-stop:<br>						<span class="hljs-keyword">return</span><br>					<span class="hljs-keyword">default</span>:<br>						doWorkPiece(p)<br>					&#125;<br>				&#125;<br>			&#125;<br>		&#125;()<br>	&#125;<br>	wg.Wait()<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>checkNode函数内部检查对应的node是否能通过所有filter插件的过滤(<code>RunFilterPluginsWithNominatedPods</code>)如果通过就将筛选过的node数量+1，并记录相关的值，同时还会检查是否已经筛选到了足够的node，如果足够了，那么就发送取消信号，停止并行进程，不再继续筛选。</p>
+<p>对于每个node进行筛选的函数<code>RunFilterPluginsWithNominatedPods</code>在<code>pkg/scheduler/framework/runtime/framework.go:816</code>中，如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> RunFilterPluginsWithNominatedPods(<br>    ctx context.Context, <span class="hljs-comment">// 调度上下文</span><br>    state *framework.CycleState, <span class="hljs-comment">// 当前周期状态</span><br>    pod *v1.Pod, <span class="hljs-comment">// 待调度的 Pod</span><br>    info *framework.NodeInfo, <span class="hljs-comment">// 节点信息</span><br>) *framework.Status &#123;<br>    <span class="hljs-keyword">var</span> status *framework.Status<br><br>    podsAdded := <span class="hljs-literal">false</span><br>  <span class="hljs-comment">// We run filters twice in some cases. If the node has greater or equal priority</span><br>	<span class="hljs-comment">// nominated pods, we run them when those pods are added to PreFilter state and nodeInfo.</span><br>	<span class="hljs-comment">// If all filters succeed in this pass, we run them again when these</span><br>	<span class="hljs-comment">// nominated pods are not added. This second pass is necessary because some</span><br>	<span class="hljs-comment">// filters such as inter-pod affinity may not pass without the nominated pods.</span><br>	<span class="hljs-comment">// If there are no nominated pods for the node or if the first run of the</span><br>	<span class="hljs-comment">// filters fail, we don&#x27;t run the second pass.</span><br>	<span class="hljs-comment">// We consider only equal or higher priority pods in the first pass, because</span><br>	<span class="hljs-comment">// those are the current &quot;pod&quot; must yield to them and not take a space opened</span><br>	<span class="hljs-comment">// for running them. It is ok if the current &quot;pod&quot; take resources freed for</span><br>	<span class="hljs-comment">// lower priority pods.</span><br>	<span class="hljs-comment">// Requiring that the new pod is schedulable in both circumstances ensures that</span><br>	<span class="hljs-comment">// we are making a conservative decision: filters like resources and inter-pod</span><br>	<span class="hljs-comment">// anti-affinity are more likely to fail when the nominated pods are treated</span><br>	<span class="hljs-comment">// as running, while filters like pod affinity are more likely to fail when</span><br>	<span class="hljs-comment">// the nominated pods are treated as not running. We can&#x27;t just assume the</span><br>	<span class="hljs-comment">// nominated pods are running because they are not running right now and in fact,</span><br>	<span class="hljs-comment">// they may end up getting scheduled to a different node.</span><br>    <span class="hljs-comment">// 我们可能需要两次运行过滤插件。如果节点上有优先级更高或相等的被提名的 Pods，</span><br>    <span class="hljs-comment">// 我们会在这些 Pods 被添加到 PreFilter 状态和 nodeInfo 时运行它们。</span><br>    <span class="hljs-comment">// 如果所有过滤插件在这一轮通过，我们会在这些被提名的 Pods 没有被添加的情况下再次运行它们。</span><br>    <span class="hljs-comment">// 第二轮运行是必要的，因为一些过滤插件（如 Pod 亲和性）可能在没有被提名的 Pods 的情况下无法通过。</span><br>    <span class="hljs-comment">// 如果节点没有被提名的 Pods 或者第一轮过滤插件失败，我们不会进行第二轮。</span><br>    <span class="hljs-comment">// 我们只考虑第一轮中优先级相等或更高的 Pods，因为当前的 &quot;pod&quot; 必须为它们让路，而不是占用为它们运行而开放的空间。</span><br>    <span class="hljs-comment">// 如果当前的 &quot;pod&quot; 占用了为低优先级 Pods 释放的资源，这是可以的。</span><br>    <span class="hljs-comment">// 要求新的 Pod 在这两种情况下都是可调度的，确保我们做出的是保守的决定：</span><br>    <span class="hljs-comment">// 像资源和 Pod 反亲和性这样的过滤器在将被提名的 Pods 视为运行时更有可能失败，</span><br>    <span class="hljs-comment">// 而像 Pod 亲和性这样的过滤器在将被提名的 Pods 视为未运行时更有可能失败。</span><br>    <span class="hljs-comment">// 我们不能仅仅假设被提名的 Pods 正在运行，因为它们现在并没有运行，事实上，</span><br>    <span class="hljs-comment">// 它们最终可能会被调度到一个不同的节点上。</span><br>    <span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">2</span>; i++ &#123;<br>        stateToUse := state<br>        nodeInfoToUse := info<br>        <span class="hljs-keyword">if</span> i == <span class="hljs-number">0</span> &#123;<br>            <span class="hljs-comment">// 第一轮：添加被提名的 Pods 到周期状态和节点信息</span><br>            <span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br>            podsAdded, stateToUse, nodeInfoToUse, err = addNominatedPods(ctx, f, pod, state, info)<br>            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                <span class="hljs-keyword">return</span> framework.AsStatus(err)<br>            &#125;<br>        &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> !podsAdded || !status.IsSuccess() &#123;<br>            <span class="hljs-keyword">break</span><br>        &#125;<br><br>        <span class="hljs-comment">// 运行过滤插件</span><br>        status = f.RunFilterPlugins(ctx, stateToUse, pod, nodeInfoToUse)<br>        <span class="hljs-keyword">if</span> !status.IsSuccess() &amp;&amp; !status.IsUnschedulable() &#123;<br>            <span class="hljs-keyword">return</span> status<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> status<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>注意到这里执行了两遍筛选，主要是考虑到这个node上面可能存在一些预计要被调度过来的pod，在第一轮中会假设这些pod真的会被调度过来，然后查看是否满足pod筛选需求，在第二列会假设这些pod最后没有被调度过来，然后检查是否满足pod的筛选需求。因为在第一轮中可能会存在反亲和性要求，导致无法通过筛选，在第二轮中可能会存在亲和性要求，导致无法通过筛选，这是一种很保守的筛选方式。</p>
+<p>利用各个插件进行筛选的函数（<code>RunFilterPlugins</code>）在<code>pkg/scheduler/framework/runtime/framework.go:725</code>中，如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// RunFilterPlugins runs the set of configured Filter plugins for pod on</span><br><span class="hljs-comment">// the given node. If any of these plugins doesn&#x27;t return &quot;Success&quot;, the</span><br><span class="hljs-comment">// given node is not suitable for running pod.</span><br><span class="hljs-comment">// Meanwhile, the failure message and status are set for the given node.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> RunFilterPlugins(<br>	ctx context.Context,<br>	state *framework.CycleState,<br>	pod *v1.Pod,<br>	nodeInfo *framework.NodeInfo,<br>) *framework.Status &#123;<br>	<span class="hljs-keyword">for</span> _, pl := <span class="hljs-keyword">range</span> f.filterPlugins &#123;<br>		<span class="hljs-keyword">if</span> state.SkipFilterPlugins.Has(pl.Name()) &#123;<br>			<span class="hljs-keyword">continue</span><br>		&#125;<br>		metrics.PluginEvaluationTotal.WithLabelValues(pl.Name(), metrics.Filter, f.profileName).Inc()<br>		<span class="hljs-keyword">if</span> status := f.runFilterPlugin(ctx, pl, state, pod, nodeInfo); !status.IsSuccess() &#123;<br>			<span class="hljs-keyword">if</span> !status.IsUnschedulable() &#123;<br>				<span class="hljs-comment">// Filter plugins are not supposed to return any status other than</span><br>				<span class="hljs-comment">// Success or Unschedulable.</span><br>				status = framework.AsStatus(fmt.Errorf(<span class="hljs-string">&quot;running %q filter plugin: %w&quot;</span>, pl.Name(), status.AsError()))<br>			&#125;<br>			status.SetFailedPlugin(pl.Name())<br>			<span class="hljs-keyword">return</span> status<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里的逻辑很简单，就是遍历各个筛选的插件，依次检查是否符合要求。</p>
+<p>可以继续看<code>runFilterPlugin</code>这运行一个筛选插件进行检查的函数，在pkg&#x2F;scheduler&#x2F;framework&#x2F;runtime&#x2F;framework.go:750中。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> runFilterPlugin(ctx context.Context, pl framework.FilterPlugin, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status &#123;<br>	<span class="hljs-keyword">if</span> !state.ShouldRecordPluginMetrics() &#123;<br>		<span class="hljs-keyword">return</span> pl.Filter(ctx, state, pod, nodeInfo)<br>	&#125;<br>	startTime := time.Now()<br>	status := pl.Filter(ctx, state, pod, nodeInfo)<br>	f.metricsRecorder.ObservePluginDurationAsync(metrics.Filter, pl.Name(), status.Code().String(), metrics.SinceInSeconds(startTime))<br>	<span class="hljs-keyword">return</span> status<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>主要也就是调用插件的Filter函数，具体插件的介绍后面再补充。</p>
+<h2 id="打分过程"><a href="#打分过程" class="headerlink" title="打分过程"></a>打分过程</h2><p>打分的函数<code>prioritizeNodes</code> 在<code>pkg/scheduler/schedule_one.go</code> 中，如下，补充了部分注释</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">prioritizeNodes</span><span class="hljs-params">(</span></span><br><span class="hljs-params"><span class="hljs-function">    ctx context.Context,</span></span><br><span class="hljs-params"><span class="hljs-function">    extenders []framework.Extender,</span></span><br><span class="hljs-params"><span class="hljs-function">    fwk framework.Framework,</span></span><br><span class="hljs-params"><span class="hljs-function">    state *framework.CycleState,</span></span><br><span class="hljs-params"><span class="hljs-function">    pod *v1.Pod,</span></span><br><span class="hljs-params"><span class="hljs-function">    nodes []*v1.Node,</span></span><br><span class="hljs-params"><span class="hljs-function">)</span></span> ([]framework.NodePluginScores, <span class="hljs-type">error</span>) &#123;<br>    <span class="hljs-comment">// 如果没有提供优先级配置，则所有节点的分数都设为 1。</span><br>    <span class="hljs-comment">// 这是为了在所需的格式中生成优先级列表</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(extenders) == <span class="hljs-number">0</span> &amp;&amp; !fwk.HasScorePlugins() &#123;<br>        result := <span class="hljs-built_in">make</span>([]framework.NodePluginScores, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(nodes))<br>        <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> nodes &#123;<br>            result = <span class="hljs-built_in">append</span>(result, framework.NodePluginScores&#123;<br>                Name:       nodes[i].Name,<br>                TotalScore: <span class="hljs-number">1</span>,<br>            &#125;)<br>        &#125;<br>        <span class="hljs-keyword">return</span> result, <span class="hljs-literal">nil</span><br>    &#125;<br><br>    <span class="hljs-comment">// 运行 PreScore 插件。</span><br>    preScoreStatus := fwk.RunPreScorePlugins(ctx, state, pod, nodes)<br>    <span class="hljs-keyword">if</span> !preScoreStatus.IsSuccess() &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, preScoreStatus.AsError()<br>    &#125;<br><br>    <span class="hljs-comment">// 运行 Score 插件。</span><br>    nodesScores, scoreStatus := fwk.RunScorePlugins(ctx, state, pod, nodes)<br>    <span class="hljs-keyword">if</span> !scoreStatus.IsSuccess() &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, scoreStatus.AsError()<br>    &#125;<br><br>    <span class="hljs-comment">// 如果启用了详细日志记录，记录每个插件对每个节点的打分</span><br>    klogV := klog.V(<span class="hljs-number">10</span>)<br>    <span class="hljs-keyword">if</span> klogV.Enabled() &#123;<br>        <span class="hljs-keyword">for</span> _, nodeScore := <span class="hljs-keyword">range</span> nodesScores &#123;<br>            <span class="hljs-keyword">for</span> _, pluginScore := <span class="hljs-keyword">range</span> nodeScore.Scores &#123;<br>                klogV.InfoS(<span class="hljs-string">&quot;Plugin scored node for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;plugin&quot;</span>, pluginScore.Name, <span class="hljs-string">&quot;node&quot;</span>, nodeScore.Name, <span class="hljs-string">&quot;score&quot;</span>, pluginScore.Score)<br>            &#125;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 如果有扩展器并且有节点，运行扩展器</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(extenders) != <span class="hljs-number">0</span> &amp;&amp; nodes != <span class="hljs-literal">nil</span> &#123;<br>        allNodeExtendersScores := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*framework.NodePluginScores, <span class="hljs-built_in">len</span>(nodes))<br>        <span class="hljs-keyword">var</span> mu sync.Mutex<br>        <span class="hljs-keyword">var</span> wg sync.WaitGroup<br>        <span class="hljs-comment">// 并发运行每个扩展器的优先级函数</span><br>        <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> extenders &#123;<br>            <span class="hljs-keyword">if</span> !extenders[i].IsInterested(pod) &#123;<br>                <span class="hljs-keyword">continue</span><br>            &#125;<br>            wg.Add(<span class="hljs-number">1</span>)<br>            <span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(extIndex <span class="hljs-type">int</span>)</span></span> &#123;<br>                <span class="hljs-keyword">defer</span> wg.Done()<br>                metrics.SchedulerGoroutines.WithLabelValues(metrics.PrioritizingExtender).Inc()<br>                metrics.Goroutines.WithLabelValues(metrics.PrioritizingExtender).Inc()<br>                <span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>                    metrics.SchedulerGoroutines.WithLabelValues(metrics.PrioritizingExtender).Dec()<br>                    metrics.Goroutines.WithLabelValues(metrics.PrioritizingExtender).Dec()<br>                &#125;()<br>                prioritizedList, weight, err := extenders[extIndex].Prioritize(pod, nodes)<br>                <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                    klog.V(<span class="hljs-number">5</span>).InfoS(<span class="hljs-string">&quot;Failed to run extender&#x27;s priority function. No score given by this extender.&quot;</span>, <span class="hljs-string">&quot;error&quot;</span>, err, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;extender&quot;</span>, extenders[extIndex].Name())<br>                    <span class="hljs-keyword">return</span><br>                &#125;<br>                mu.Lock()<br>                <span class="hljs-keyword">defer</span> mu.Unlock()<br>                <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> *prioritizedList &#123;<br>                    nodename := (*prioritizedList)[i].Host<br>                    score := (*prioritizedList)[i].Score<br>                    klogV.InfoS(<span class="hljs-string">&quot;Extender scored node for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;extender&quot;</span>, extenders[extIndex].Name(), <span class="hljs-string">&quot;node&quot;</span>, nodename, <span class="hljs-string">&quot;score&quot;</span>, score)<br>                    <span class="hljs-comment">// 将扩展器的分数转换为调度器使用的分数范围</span><br>                    finalscore := score * weight * (framework.MaxNodeScore / extenderv1.MaxExtenderPriority)<br>                    <span class="hljs-keyword">if</span> allNodeExtendersScores[nodename] == <span class="hljs-literal">nil</span> &#123;<br>                        allNodeExtendersScores[nodename] = &amp;framework.NodePluginScores&#123;<br>                            Name:   nodename,<br>                            Scores: <span class="hljs-built_in">make</span>([]framework.PluginScore, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(extenders)),<br>                        &#125;<br>                    &#125;<br>                    allNodeExtendersScores[nodename].Scores = <span class="hljs-built_in">append</span>(allNodeExtendersScores[nodename].Scores, framework.PluginScore&#123;<br>                        Name:  extenders[extIndex].Name(),<br>                        Score: finalscore,<br>                    &#125;)<br>                    allNodeExtendersScores[nodename].TotalScore += finalscore<br>                &#125;<br>            &#125;(i)<br>        &#125;<br>        wg.Wait() <span class="hljs-comment">// 等待所有扩展器完成</span><br>        <span class="hljs-comment">// 将扩展器的分数添加到节点分数中</span><br>        <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> nodesScores &#123;<br>            <span class="hljs-keyword">if</span> score, ok := allNodeExtendersScores[nodes[i].Name]; ok &#123;<br>                nodesScores[i].Scores = <span class="hljs-built_in">append</span>(nodesScores[i].Scores, score.Scores...)<br>                nodesScores[i].TotalScore += score.TotalScore<br>            &#125;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 记录每个节点的最终分数</span><br>    <span class="hljs-keyword">if</span> klogV.Enabled() &#123;<br>        <span class="hljs-keyword">for</span> i := <span class="hljs-keyword">range</span> nodesScores &#123;<br>            klogV.InfoS(<span class="hljs-string">&quot;Calculated node&#x27;s final score for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;node&quot;</span>, nodesScores[i].Name, <span class="hljs-string">&quot;score&quot;</span>, nodesScores[i].TotalScore)<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> nodesScores, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>主要流程包括：</p>
+<ol>
+<li>如果没有提供任何扩展器或打分插件，则为所有节点设置默认分数，并返回。</li>
+<li>运行 PreScore 插件，为打分阶段做准备。</li>
+<li>运行 Score 插件，获取每个节点的分数。</li>
+<li>如果有扩展器并且有节点，则并发运行每个扩展器的优先级函数，获取扩展器为节点分配的分数。</li>
+<li>将扩展器的分数转换为调度器使用的分数范围，并添加到节点分数中。</li>
+<li>记录每个节点的最终分数。</li>
+</ol>
+<p>这里补充一下其记录节点分数的结构体<code>NodePluginScores</code>，在文件<code>pkg/scheduler/framework/interface.go:55</code>中，其定义如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// NodePluginScores is a struct with node name and scores for that node.</span><br><span class="hljs-keyword">type</span> NodePluginScores <span class="hljs-keyword">struct</span> &#123;<br>	<span class="hljs-comment">// Name is node name.</span><br>	Name <span class="hljs-type">string</span><br>	<span class="hljs-comment">// Scores is scores from plugins and extenders.</span><br>	Scores []PluginScore<br>	<span class="hljs-comment">// TotalScore is the total score in Scores.</span><br>	TotalScore <span class="hljs-type">int64</span><br>&#125;<br><br><span class="hljs-comment">// PluginScore is a struct with plugin/extender name and score.</span><br><span class="hljs-keyword">type</span> PluginScore <span class="hljs-keyword">struct</span> &#123;<br>	<span class="hljs-comment">// Name is the name of plugin or extender.</span><br>	Name  <span class="hljs-type">string</span><br>	Score <span class="hljs-type">int64</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到每个插件给node打分都是一个int64的类型，一个节点可能会被多个插件进行打分，最后再汇总。</p>
+<p>再回到插件打分，这里我们主要关注关键的打分插件<code>RunScorePlugins</code> ，在<code>pkg/scheduler/framework/runtime/framework.go:931</code>中，如下，补充了部分注释</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> RunScorePlugins(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodes []*v1.Node) (ns []framework.NodePluginScores, status *framework.Status) &#123;<br>    startTime := time.Now()<br>    <span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        <span class="hljs-comment">// 记录打分扩展点的持续时间</span><br>        metrics.FrameworkExtensionPointDuration.WithLabelValues(metrics.Score, status.Code().String(), f.profileName).Observe(metrics.SinceInSeconds(startTime))<br>    &#125;()<br>    allNodePluginScores := <span class="hljs-built_in">make</span>([]framework.NodePluginScores, <span class="hljs-built_in">len</span>(nodes))<br>    numPlugins := <span class="hljs-built_in">len</span>(f.scorePlugins) - state.SkipScorePlugins.Len()<br>    plugins := <span class="hljs-built_in">make</span>([]framework.ScorePlugin, <span class="hljs-number">0</span>, numPlugins)<br>    pluginToNodeScores := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]framework.NodeScoreList, numPlugins)<br>    <span class="hljs-comment">// 为每个插件创建一个节点分数列表</span><br>    <span class="hljs-keyword">for</span> _, pl := <span class="hljs-keyword">range</span> f.scorePlugins &#123;<br>        <span class="hljs-keyword">if</span> state.SkipScorePlugins.Has(pl.Name()) &#123;<br>            <span class="hljs-keyword">continue</span><br>        &#125;<br>        plugins = <span class="hljs-built_in">append</span>(plugins, pl)<br>        pluginToNodeScores[pl.Name()] = <span class="hljs-built_in">make</span>(framework.NodeScoreList, <span class="hljs-built_in">len</span>(nodes))<br>    &#125;<br>    ctx, cancel := context.WithCancel(ctx)<br>    <span class="hljs-keyword">defer</span> cancel()<br>    errCh := parallelize.NewErrorChannel()<br><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(plugins) &gt; <span class="hljs-number">0</span> &#123;<br>        <span class="hljs-comment">// 并行地为每个节点运行每个插件的 Score 方法</span><br>        f.Parallelizer().Until(ctx, <span class="hljs-built_in">len</span>(nodes), <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(index <span class="hljs-type">int</span>)</span></span> &#123;<br>            nodeName := nodes[index].Name<br>            <span class="hljs-keyword">for</span> _, pl := <span class="hljs-keyword">range</span> plugins &#123;<br>                s, status := f.runScorePlugin(ctx, pl, state, pod, nodeName)<br>                <span class="hljs-keyword">if</span> !status.IsSuccess() &#123;<br>                    err := fmt.Errorf(<span class="hljs-string">&quot;plugin %q failed with: %w&quot;</span>, pl.Name(), status.AsError())<br>                    errCh.SendErrorWithCancel(err, cancel)<br>                    <span class="hljs-keyword">return</span><br>                &#125;<br>                pluginToNodeScores[pl.Name()][index] = framework.NodeScore&#123;<br>                    Name:  nodeName,<br>                    Score: s,<br>                &#125;<br>            &#125;<br>        &#125;, metrics.Score)<br>        <span class="hljs-keyword">if</span> err := errCh.ReceiveError(); err != <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, framework.AsStatus(fmt.Errorf(<span class="hljs-string">&quot;running Score plugins: %w&quot;</span>, err))<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 并行地为每个打分插件运行 NormalizeScore 方法</span><br>    f.Parallelizer().Until(ctx, <span class="hljs-built_in">len</span>(plugins), <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(index <span class="hljs-type">int</span>)</span></span> &#123;<br>        pl := plugins[index]<br>        <span class="hljs-keyword">if</span> pl.ScoreExtensions() == <span class="hljs-literal">nil</span> &#123;<br>            <span class="hljs-keyword">return</span><br>        &#125;<br>        nodeScoreList := pluginToNodeScores[pl.Name()]<br>        status := f.runScoreExtension(ctx, pl, state, pod, nodeScoreList)<br>        <span class="hljs-keyword">if</span> !status.IsSuccess() &#123;<br>            err := fmt.Errorf(<span class="hljs-string">&quot;plugin %q failed with: %w&quot;</span>, pl.Name(), status.AsError())<br>            errCh.SendErrorWithCancel(err, cancel)<br>            <span class="hljs-keyword">return</span><br>        &#125;<br>    &#125;, metrics.Score)<br>    <span class="hljs-keyword">if</span> err := errCh.ReceiveError(); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, framework.AsStatus(fmt.Errorf(<span class="hljs-string">&quot;running Normalize on Score plugins: %w&quot;</span>, err))<br>    &#125;<br><br>    <span class="hljs-comment">// 并行地为每个打分插件应用分数权重，并构建 allNodePluginScores</span><br>    f.Parallelizer().Until(ctx, <span class="hljs-built_in">len</span>(nodes), <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(index <span class="hljs-type">int</span>)</span></span> &#123;<br>        nodePluginScores := framework.NodePluginScores&#123;<br>            Name:   nodes[index].Name,<br>            Scores: <span class="hljs-built_in">make</span>([]framework.PluginScore, <span class="hljs-built_in">len</span>(plugins)),<br>        &#125;<br><br>        <span class="hljs-keyword">for</span> i, pl := <span class="hljs-keyword">range</span> plugins &#123;<br>            weight := f.scorePluginWeight[pl.Name()]<br>            nodeScoreList := pluginToNodeScores[pl.Name()]<br>            score := nodeScoreList[index].Score<br><br>            <span class="hljs-keyword">if</span> score &gt; framework.MaxNodeScore || score &lt; framework.MinNodeScore &#123;<br>                err := fmt.Errorf(<span class="hljs-string">&quot;plugin %q returns an invalid score %v, it should in the range of [%v, %v] after normalizing&quot;</span>, pl.Name(), score, framework.MinNodeScore, framework.MaxNodeScore)<br>                errCh.SendErrorWithCancel(err, cancel)<br>                <span class="hljs-keyword">return</span><br>            &#125;<br>            weightedScore := score * <span class="hljs-type">int64</span>(weight)<br>            nodePluginScores.Scores[i] = framework.PluginScore&#123;<br>                Name:  pl.Name(),<br>                Score: weightedScore,<br>            &#125;<br>            nodePluginScores.TotalScore += weightedScore<br>        &#125;<br>        allNodePluginScores[index] = nodePluginScores<br>    &#125;, metrics.Score)<br>    <span class="hljs-keyword">if</span> err := errCh.ReceiveError(); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, framework.AsStatus(fmt.Errorf(<span class="hljs-string">&quot;applying score defaultWeights on Score plugins: %w&quot;</span>, err))<br>    &#125;<br><br>    <span class="hljs-comment">// 返回所有节点的插件分数</span><br>    <span class="hljs-keyword">return</span> allNodePluginScores, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>主要流程包括：</p>
+<ol>
+<li>为每个插件创建一个节点分数列表。</li>
+<li>使用并行处理为每个节点运行每个插件的 <code>Score</code> 方法。</li>
+<li>为每个插件运行 <code>NormalizeScore</code> 方法，以标准化分数。</li>
+<li>应用每个插件的分数权重，构建最终的节点分数。</li>
+<li>返回各个节点的分数</li>
+</ol>
+<p>查看插件打分的函数runScorePlugin，在<code>pkg/scheduler/framework/runtime/framework.go:1025</code> 中，如下。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> runScorePlugin(ctx context.Context, pl framework.ScorePlugin, state *framework.CycleState, pod *v1.Pod, nodeName <span class="hljs-type">string</span>) (<span class="hljs-type">int64</span>, *framework.Status) &#123;<br>	<span class="hljs-keyword">if</span> !state.ShouldRecordPluginMetrics() &#123;<br>		<span class="hljs-keyword">return</span> pl.Score(ctx, state, pod, nodeName)<br>	&#125;<br>	startTime := time.Now()<br>	s, status := pl.Score(ctx, state, pod, nodeName)<br>	f.metricsRecorder.ObservePluginDurationAsync(metrics.Score, pl.Name(), status.Code().String(), metrics.SinceInSeconds(startTime))<br>	<span class="hljs-keyword">return</span> s, status<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到主要是调用插件的Score方法。</p>
+<h1 id="一般调度的后期处理"><a href="#一般调度的后期处理" class="headerlink" title="一般调度的后期处理"></a>一般调度的后期处理</h1><h2 id="PostFilter插件"><a href="#PostFilter插件" class="headerlink" title="PostFilter插件"></a>PostFilter插件</h2><p>在<code>schedulingCycle</code>中可以看到如果上述的一般调度没有为Pod找到合适的node，并且错误不是没有合适的node，即<code>ErrNoNodesAvailable</code> 的话，就会检查是否存在有PostFilterPlugins，如果有就运行，即运行<code>RunPostFilterPlugins</code>函数，来进行相关的处理，例如释放一些资源，从而希望使得该pod在下一次调度时有机会成功调度，当然这被释放的资源也可能被其他不同的pod给占用了，但是这对系统是无害的，所以也不管。</p>
+<p>该<code>RunPostFilterPlugins</code>函数在<code>pkg/scheduler/framework/runtime/framework.go:762</code>中，如下所示</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// RunPostFilterPlugins runs the set of configured PostFilter plugins until the first</span><br><span class="hljs-comment">// Success, Error or UnschedulableAndUnresolvable is met; otherwise continues to execute all plugins.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> RunPostFilterPlugins(ctx context.Context, state *framework.CycleState, pod *v1.Pod, filteredNodeStatusMap framework.NodeToStatusMap) (_ *framework.PostFilterResult, status *framework.Status) &#123;<br>	startTime := time.Now()<br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		metrics.FrameworkExtensionPointDuration.WithLabelValues(metrics.PostFilter, status.Code().String(), f.profileName).Observe(metrics.SinceInSeconds(startTime))<br>	&#125;()<br><br>	<span class="hljs-comment">// `result` records the last meaningful(non-noop) PostFilterResult.</span><br>	<span class="hljs-keyword">var</span> result *framework.PostFilterResult<br>	<span class="hljs-keyword">var</span> reasons []<span class="hljs-type">string</span><br>	<span class="hljs-keyword">var</span> failedPlugin <span class="hljs-type">string</span><br>	<span class="hljs-keyword">for</span> _, pl := <span class="hljs-keyword">range</span> f.postFilterPlugins &#123;<br>		r, s := f.runPostFilterPlugin(ctx, pl, state, pod, filteredNodeStatusMap)<br>		<span class="hljs-keyword">if</span> s.IsSuccess() &#123;<br>			<span class="hljs-keyword">return</span> r, s<br>		&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> s.Code() == framework.UnschedulableAndUnresolvable &#123;<br>			<span class="hljs-keyword">return</span> r, s.WithFailedPlugin(pl.Name())<br>		&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> !s.IsUnschedulable() &#123;<br>			<span class="hljs-comment">// Any status other than Success, Unschedulable or UnschedulableAndUnresolvable is Error.</span><br>			<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, framework.AsStatus(s.AsError()).WithFailedPlugin(pl.Name())<br>		&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> r != <span class="hljs-literal">nil</span> &amp;&amp; r.Mode() != framework.ModeNoop &#123;<br>			result = r<br>		&#125;<br><br>		reasons = <span class="hljs-built_in">append</span>(reasons, s.Reasons()...)<br>		<span class="hljs-comment">// Record the first failed plugin unless we proved that</span><br>		<span class="hljs-comment">// the latter is more relevant.</span><br>		<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(failedPlugin) == <span class="hljs-number">0</span> &#123;<br>			failedPlugin = pl.Name()<br>		&#125;<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> result, framework.NewStatus(framework.Unschedulable, reasons...).WithFailedPlugin(failedPlugin)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到他就是遍历了所有的postFilter插件，然后使用函数<code>runPostFilterPlugin</code>运行这些插件，其在<code>pkg/scheduler/framework/runtime/framework.go:796</code>中</p>
+<figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs pf">func (f *frameworkImpl) runPostFilterPlugin(ctx context.Context, pl framework.PostFilterPlugin, <span class="hljs-keyword">state</span> *framework.CycleState, pod *v1.Pod, filteredNodeStatusMap framework.NodeToStatusMap) (*framework.PostFilterResult, *framework.Status) &#123;<br>	if !<span class="hljs-keyword">state</span>.ShouldRecordPluginMetrics() &#123;<br>		return pl.PostFilter(ctx, <span class="hljs-keyword">state</span>, pod, filteredNodeStatusMap)<br>	&#125;<br>	startTime := time.Now()<br>	r, s := pl.PostFilter(ctx, <span class="hljs-keyword">state</span>, pod, filteredNodeStatusMap)<br>	f.metricsRecorder.ObservePluginDurationAsync(metrics.PostFilter, pl.Name(), s.Code().String(), metrics.SinceInSeconds(startTime))<br>	return r, s<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="Reserve插件"><a href="#Reserve插件" class="headerlink" title="Reserve插件"></a>Reserve插件</h2><p>得到想要调度到的pod后，可能需要执行一些资源预留的操作，就需要定义在reserve插件中，该插件对应的调用函数为RunReservePluginsReserve，在<code>pkg/scheduler/framework/runtime/framework.go:1144</code> 中</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// RunReservePluginsReserve runs the Reserve method in the set of configured</span><br><span class="hljs-comment">// reserve plugins. If any of these plugins returns an error, it does not</span><br><span class="hljs-comment">// continue running the remaining ones and returns the error. In such a case,</span><br><span class="hljs-comment">// the pod will not be scheduled and the caller will be expected to call</span><br><span class="hljs-comment">// RunReservePluginsUnreserve.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> RunReservePluginsReserve(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName <span class="hljs-type">string</span>) (status *framework.Status) &#123;<br>	startTime := time.Now()<br>	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>		metrics.FrameworkExtensionPointDuration.WithLabelValues(metrics.Reserve, status.Code().String(), f.profileName).Observe(metrics.SinceInSeconds(startTime))<br>	&#125;()<br>	<span class="hljs-keyword">for</span> _, pl := <span class="hljs-keyword">range</span> f.reservePlugins &#123;<br>		status = f.runReservePluginReserve(ctx, pl, state, pod, nodeName)<br>		<span class="hljs-keyword">if</span> !status.IsSuccess() &#123;<br>			err := status.AsError()<br>			klog.ErrorS(err, <span class="hljs-string">&quot;Failed running Reserve plugin&quot;</span>, <span class="hljs-string">&quot;plugin&quot;</span>, pl.Name(), <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>			<span class="hljs-keyword">return</span> framework.AsStatus(fmt.Errorf(<span class="hljs-string">&quot;running Reserve plugin %q: %w&quot;</span>, pl.Name(), err))<br>		&#125;<br>	&#125;<br>	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这里也是遍历所有的reserve插件，如果有任意一个插件失败了那么就失败了。单个插件的调用函数在<code>pkg/scheduler/framework/runtime/framework.go:1160</code>中，如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> runReservePluginReserve(ctx context.Context, pl framework.ReservePlugin, state *framework.CycleState, pod *v1.Pod, nodeName <span class="hljs-type">string</span>) *framework.Status &#123;<br>	<span class="hljs-keyword">if</span> !state.ShouldRecordPluginMetrics() &#123;<br>		<span class="hljs-keyword">return</span> pl.Reserve(ctx, state, pod, nodeName)<br>	&#125;<br>	startTime := time.Now()<br>	status := pl.Reserve(ctx, state, pod, nodeName)<br>	f.metricsRecorder.ObservePluginDurationAsync(metrics.Reserve, pl.Name(), status.Code().String(), metrics.SinceInSeconds(startTime))<br>	<span class="hljs-keyword">return</span> status<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="Permit插件"><a href="#Permit插件" class="headerlink" title="Permit插件"></a>Permit插件</h2><p>找到了要调度的pod后还需要运行permit插件，该插件主要用来查看记录是否还需要等待一下其他操作，例如抢占某个pod的资源，那么就需要等待被抢占pod的资源释放掉。</p>
+<p>该插件对应的函数<code>RunPermitPlugins</code> 在<code>pkg/scheduler/framework/runtime/framework.go:1200</code>中，如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// RunPermitPlugins runs the set of configured permit plugins. If any of these</span><br><span class="hljs-comment">// plugins returns a status other than &quot;Success&quot; or &quot;Wait&quot;, it does not continue</span><br><span class="hljs-comment">// running the remaining plugins and returns an error. Otherwise, if any of the</span><br><span class="hljs-comment">// plugins returns &quot;Wait&quot;, then this function will create and add waiting pod</span><br><span class="hljs-comment">// to a map of currently waiting pods and return status with &quot;Wait&quot; code.</span><br><span class="hljs-comment">// Pod will remain waiting pod for the minimum duration returned by the permit plugins.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(f *frameworkImpl)</span></span> RunPermitPlugins(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName <span class="hljs-type">string</span>) (status *framework.Status) &#123;<br>    startTime := time.Now() <span class="hljs-comment">// 记录permit插件开始运行的时间</span><br>    <span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        <span class="hljs-comment">// 记录permit插件的运行时间和最终状态</span><br>        metrics.FrameworkExtensionPointDuration.WithLabelValues(metrics.Permit, status.Code().String(), f.profileName).Observe(metrics.SinceInSeconds(startTime))<br>    &#125;()<br>    pluginsWaitTime := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]time.Duration) <span class="hljs-comment">// 存储每个插件的等待时间</span><br>    statusCode := framework.Success <span class="hljs-comment">// 初始化状态码为成功</span><br>    <span class="hljs-keyword">for</span> _, pl := <span class="hljs-keyword">range</span> f.permitPlugins &#123;<br>        <span class="hljs-comment">// 运行当前permit插件</span><br>        status, timeout := f.runPermitPlugin(ctx, pl, state, pod, nodeName)<br>        <span class="hljs-keyword">if</span> !status.IsSuccess() &#123;<br>            <span class="hljs-keyword">if</span> status.IsUnschedulable() &#123;<br>                <span class="hljs-comment">// 如果插件返回不可调度的状态，则记录日志并返回该状态</span><br>                klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Pod rejected by permit plugin&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;plugin&quot;</span>, pl.Name(), <span class="hljs-string">&quot;status&quot;</span>, status.Message())<br>                status.SetFailedPlugin(pl.Name()) <span class="hljs-comment">// 设置失败的插件名称</span><br>                <span class="hljs-keyword">return</span> status<br>            &#125;<br>            <span class="hljs-keyword">if</span> status.IsWait() &#123;<br>                <span class="hljs-comment">// 如果插件返回等待的状态，则记录等待时间，但不立即返回</span><br>                <span class="hljs-comment">// 允许的最长等待时间由 maxTimeout 限制</span><br>                <span class="hljs-keyword">if</span> timeout &gt; maxTimeout &#123;<br>                    timeout = maxTimeout<br>                &#125;<br>                pluginsWaitTime[pl.Name()] = timeout<br>                statusCode = framework.Wait <span class="hljs-comment">// 更新状态码为等待</span><br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                <span class="hljs-comment">// 如果插件返回错误状态，则记录错误日志并返回错误状态</span><br>                err := status.AsError()<br>                klog.ErrorS(err, <span class="hljs-string">&quot;Failed running Permit plugin&quot;</span>, <span class="hljs-string">&quot;plugin&quot;</span>, pl.Name(), <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>                <span class="hljs-keyword">return</span> framework.AsStatus(fmt.Errorf(<span class="hljs-string">&quot;running Permit plugin %q: %w&quot;</span>, pl.Name(), err)).WithFailedPlugin(pl.Name())<br>            &#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">if</span> statusCode == framework.Wait &#123;<br>        <span class="hljs-comment">// 如果任何插件返回等待状态，则创建并添加等待中的 Pod 到映射中，并返回等待状态</span><br>        waitingPod := newWaitingPod(pod, pluginsWaitTime)<br>        f.waitingPods.add(waitingPod)<br>        msg := fmt.Sprintf(<span class="hljs-string">&quot;one or more plugins asked to wait and no plugin rejected pod %q&quot;</span>, pod.Name)<br>        klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;One or more plugins asked to wait and no plugin rejected pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>        <span class="hljs-keyword">return</span> framework.NewStatus(framework.Wait, msg)<br>    &#125;<br>    <span class="hljs-comment">// 如果所有插件都成功或返回等待，且没有插件拒绝 Pod，则返回 nil 表示没有错误</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>主要流程包括：</p>
+<ol>
+<li>记录开始运行许可插件的时间。</li>
+<li>使用 <code>defer</code> 语句确保无论函数如何结束，都记录许可插件的运行时间和状态。</li>
+<li>遍历所有的permit插件。</li>
+<li>运行当前插件，并将结果状态保存到 <code>status</code>。</li>
+<li>检查状态：<ul>
+<li>如果状态是成功的，则继续运行下一个插件。</li>
+<li>如果状态是不可调度的，则记录日志并返回该状态。</li>
+<li>如果状态是等待的，则记录等待时间，并更新状态码为等待，然后继续运行下一个插件。</li>
+<li>如果状态是错误，则记录错误日志，并返回错误状态。</li>
+</ul>
+</li>
+<li>如果任何插件返回等待状态，则创建等待中的 Pod 并添加到映射中，然后返回等待状态。</li>
+<li>如果所有插件都成功或返回等待，且没有插件拒绝 Pod，则返回 <code>nil</code>。</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/k8s/" class="print-no-link">#k8s</a>
+      
+        <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="print-no-link">#源码分析</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>K8s源码分析（三）-K8s调度器调度周期介绍</div>
+      <div>http://example.com/2024/05/10/k8sSource3/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>John Doe</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/05/10/k8sSource4/" title="K8s源码分析（四）-K8s调度器绑定周期介绍">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">K8s源码分析（四）-K8s调度器绑定周期介绍</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/10/k8sSource2/" title="K8s源码分析（二）-K8s调度队列介绍">
+                        <span class="hidden-mobile">K8s源码分析（二）-K8s调度队列介绍</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
