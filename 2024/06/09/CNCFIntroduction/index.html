@@ -1,0 +1,1022 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="云原生计算基金会（CNCF）介绍CNCF(Cloud Native Computing Foundation)官网链接：https:&#x2F;&#x2F;www.cncf.io&#x2F; 官方的介绍如下：  云原生技术有利于各组织在公有云、私有云和混合云等新型动态环境中，构建和运行可弹性扩展的应用。云原生的代表技术包括容器、服务网格、微服务、不可变基础设施和声明式API。 这些技术能够构建容错性好、易于管理和便于观察的松耦">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CNCF项目全景图介绍">
+<meta property="og:url" content="http://example.com/2024/06/09/CNCFIntroduction/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="云原生计算基金会（CNCF）介绍CNCF(Cloud Native Computing Foundation)官网链接：https:&#x2F;&#x2F;www.cncf.io&#x2F; 官方的介绍如下：  云原生技术有利于各组织在公有云、私有云和混合云等新型动态环境中，构建和运行可弹性扩展的应用。云原生的代表技术包括容器、服务网格、微服务、不可变基础设施和声明式API。 这些技术能够构建容错性好、易于管理和便于观察的松耦">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://landscape.cncf.io/docs/landscape.png">
+<meta property="article:published_time" content="2024-06-09T07:36:11.000Z">
+<meta property="article:modified_time" content="2024-06-09T07:38:48.204Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://landscape.cncf.io/docs/landscape.png">
+  
+  
+  
+  <title>CNCF项目全景图介绍 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="CNCF项目全景图介绍"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-06-09 15:36" pubdate>
+          2024年6月9日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          38 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">CNCF项目全景图介绍</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="云原生计算基金会（CNCF）介绍"><a href="#云原生计算基金会（CNCF）介绍" class="headerlink" title="云原生计算基金会（CNCF）介绍"></a>云原生计算基金会（CNCF）介绍</h1><p>CNCF(Cloud Native Computing Foundation)官网链接：<a target="_blank" rel="noopener" href="https://www.cncf.io/">https://www.cncf.io/</a></p>
+<p>官方的介绍如下：</p>
+<ul>
+<li>云原生技术有利于各组织在公有云、私有云和混合云等新型动态环境中，构建和运行可弹性扩展的应用。云原生的代表技术包括容器、服务网格、微服务、不可变基础设施和声明式API。</li>
+<li>这些技术能够构建容错性好、易于管理和便于观察的松耦合系统。结合可靠的自动化手段，云原生技术使工程师能够轻松地对系统作出频繁和可预测的重大变更。</li>
+<li>云原生计算基金会（CNCF）致力于培育和维护一个厂商中立的开源生态系统，来推广云原生技术。我们通过将最前沿的模式民主化，让这些创新为大众所用。</li>
+</ul>
+<p>简单来说，CNCF主要致力于推动开源的云原生技术的可持续发展。</p>
+<h1 id="CNCF项目全景图"><a href="#CNCF项目全景图" class="headerlink" title="CNCF项目全景图"></a>CNCF项目全景图</h1><p>到2024年6月为止，CNCF已经有26个毕业项目，37个孵化项目，116个沙盒项目。毕业和孵化项目被认为是稳定的，并已在生产环境中成功使用。沙盒项目是新项目，还需要进行开发演进，不适合在生产环境中使用。</p>
+<p>其目前的全景图可以从此链接中查看：<a target="_blank" rel="noopener" href="https://landscape.cncf.io/">https://landscape.cncf.io/</a>，如下图所示：</p>
+<p><img src="https://landscape.cncf.io/docs/landscape.png" srcset="/img/loading.gif" lazyload alt="CNCF全景图"></p>
+<p>下面简单介绍一下CNCF各个层次的项目，主要参考来源于CNCF的官方介绍：<a target="_blank" rel="noopener" href="https://landscape.cncf.io/guide">https://landscape.cncf.io/guide</a></p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>配置是云原生环境中的第一层。它包含用于<em>创建和强化</em>构建云原生应用的基础的工具。它包括找到用于自动配置、创建和管理基础架构的工具，以及用于扫描、签名和存储容器映像的工具。该层还扩展到安全性，其中包含支持策略设置和实施、嵌入式身份验证和授权以及机密分发处理的工具。</p>
+<h3 id="自动化和配置"><a href="#自动化和配置" class="headerlink" title="自动化和配置"></a>自动化和配置</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>传统的 IT 流程依赖于漫长且劳动密集的手动发布周期，通常为三到六个月，导致生产环境变更速度缓慢。这与需要快速开发周期的云原生开发不兼容。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>自动化和配置工具通过编码环境设置，使工程师无需人工干预即可创建和管理计算资源，只需单击按钮即可重现所需状态。这些工具减少了手动配置的错误，提高了工作效率，并允许通过编程方式配置新服务器和应用程序，支持快速、动态的基础设施管理。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Cloud Custodian （孵化中）</li>
+<li>KubeEdge （孵化中）</li>
+</ul>
+</li>
+</ul>
+<h3 id="容器注册表"><a href="#容器注册表" class="headerlink" title="容器注册表"></a>容器注册表</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>容器注册表解决了云原生应用运行所需的容器镜像存储和分发问题，确保开发人员可以方便地访问和管理这些镜像。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>容器注册表通过集中存储容器镜像，使开发人员能够轻松访问所需的镜像。它们提供 Web API 接口以存储和检索镜像，并集成功能如扫描、签名和分发，以增强安全性和效率。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Harbor(已毕业)</li>
+<li>Dragonfly （孵化中）</li>
+</ul>
+</li>
+</ul>
+<h3 id="安全与合规"><a href="#安全与合规" class="headerlink" title="安全与合规"></a>安全与合规</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>默认情况下，Kubernetes 具有极其宽松的访问控制设置，不适合生产使用。结果：对于任何想要攻击您的系统的人来说，Kubernetes 集群都是一个有吸引力的目标。<br>安全和合规性工具解决了云原生应用程序在快速迭代过程中需要确保代码和操作环境安全的需求，防止未经授权的访问和潜在的安全漏洞。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>这些工具通过设置安全策略、扫描容器漏洞、签名镜像以防篡改，以及强化和监控 Kubernetes 集群来确保安全性。它们帮助发现错误配置并在系统出现异常行为时进行检测和响应。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Falco (已毕业)</li>
+<li>Open Policy Agent （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h3 id="密钥管理"><a href="#密钥管理" class="headerlink" title="密钥管理"></a>密钥管理</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>密钥管理工具解决了在云原生环境中安全存储和分发密码、API 密钥等敏感数据的需求，同时确保身份验证和授权过程的安全性和自动化。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>这些工具提供安全的密钥生成、存储、管理和轮换功能，支持自动化的密钥分发，并提供身份验证和授权服务。它们确保应用程序能安全地验证和授权请求，无需人工干预，提升整体安全性和效率。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>SPIFFE （已毕业）</li>
+<li>SPIRE （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h2 id="运行时"><a href="#运行时" class="headerlink" title="运行时"></a>运行时</h2><p>现在我们已经建立了云原生环境的基础，我们将上移一个基础设施层并放大到运行时层。它涵盖了容器在云原生环境中运行所需的一切。其中包括用于启动容器的代码（称为容器运行时）、使持久存储可用于容器的工具以及管理容器环境网络的工具。</p>
+<p>但请注意，这些资源不应与上面讨论的配置层处理的网络和存储工作相混淆。这些资源专注于让容器平台运行。此类别中的工具用于启动和停止容器，帮助它们存储数据，并允许它们相互通信。</p>
+<h3 id="云原生存储"><a href="#云原生存储" class="headerlink" title="云原生存储"></a>云原生存储</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>云原生架构的流动性和弹性使得持久保存数据非常具有挑战性，尤其是在容器不断创建、删除和改变位置的情况下。传统存储解决方案难以满足云原生环境中自动扩展和自我修复的需求。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>云原生存储工具通过提供云原生兼容的存储选项、标准化存储接口、以及数据保护功能（如备份和恢复），使存储自动化配置，消除人为瓶颈，实现自动扩展和自我修复。例如，容器存储接口 (CSI) 提供标准 API 以向容器提供文件和块存储，工具如 Minio 和 Velero 提供对象存储和数据保护功能。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Rook （已毕业）</li>
+<li>CubeFS （孵化中）</li>
+</ul>
+</li>
+</ul>
+<h3 id="容器运行时"><a href="#容器运行时" class="headerlink" title="容器运行时"></a>容器运行时</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>容器运行时解决了启动容器镜像（包含应用程序规范的文件）的需求，确保应用程序以标准化、安全和隔离的方式运行，同时为其提供必要的资源如 CPU、存储和内存。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>容器运行时软件在所有环境中标准化地启动应用程序，设置安全边界并隔离资源。工具如 CRI-O 和 gVisor 提供强化的安全边界，防止未经授权的访问和相互干扰，同时为应用程序设定资源限制，确保各应用程序稳定运行而不抢占资源。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>containerd （已毕业）</li>
+<li>CRI-O （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h3 id="云原生网络"><a href="#云原生网络" class="headerlink" title="云原生网络"></a>云原生网络</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>云原生网络解决了分布式应用程序中各个容器之间的通信问题，使这些容器能够私下、安全地相互通信。它还解决了数据流管理和网络策略扩展的挑战，尤其在需要连接虚拟机或外部服务时。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>此类工具使用容器网络接口 (CNI) 创建覆盖网络，分配 IP 地址，提供基本连接或完整的软件定义网络层。工具如 Flannel 提供基本连接，而 NSX-T 等工具创建独立的虚拟网络，支持网络流量管理和策略执行，确保容器化应用程序的安全高效通信。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Cilium （已毕业）</li>
+<li>CNI （孵化中）</li>
+</ul>
+</li>
+</ul>
+<h2 id="编排与管理"><a href="#编排与管理" class="headerlink" title="编排与管理"></a>编排与管理</h2><h3 id="调度与编排"><a href="#调度与编排" class="headerlink" title="调度与编排"></a>调度与编排</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>在云原生架构中，应用程序被分解为许多微服务，每个服务运行在一个容器中。管理这些大量分散的容器需要自动化的编排和调度工具，以确保资源分配、监控和故障恢复。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>容器编排工具如 Kubernetes自动管理容器，执行期望状态协调，确保集群实际状态与工程师设定的期望状态匹配。它通过创建、销毁和监控容器，自动处理应用程序的启动、扩展和恢复，使用户能够将整个集群视为单一资源池，简化了复杂的分布式应用程序管理。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Kubernetes （已毕业）</li>
+<li>Keda （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h3 id="协调与服务发现"><a href="#协调与服务发现" class="headerlink" title="协调与服务发现"></a>协调与服务发现</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>在动态且流动的云原生架构中，服务的位置不断变化，服务之间需要协作但没有固定的位置。服务发现工具解决了识别和定位服务位置的问题，确保各服务能够找到并通信。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>服务发现工具通过提供一个公共位置来存储和检索服务信息，分为服务发现引擎和名称解析工具。服务发现引擎（如 etcd）存储所有服务及其位置信息，而名称解析工具（如 CoreDNS）处理服务位置请求并返回网络地址信息。这些工具有效管理服务的注册和注销，确保服务间通信的可靠性和动态适应性。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Etcd （已毕业）</li>
+<li>CoreDNS （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h3 id="远程过程调用"><a href="#远程过程调用" class="headerlink" title="远程过程调用"></a>远程过程调用</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>现代应用程序由众多单独的服务组成，这些服务必须进行通信才能协作。RPC 是处理应用程序之间通信的一种选择。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>RPC 提供了一种紧耦合且高度规范的通信方式，允许高效的带宽利用和多种编程语言的支持，例如流行的 gRPC 实现。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>gRPC （孵化中）</li>
+</ul>
+</li>
+</ul>
+<h3 id="服务代理"><a href="#服务代理" class="headerlink" title="服务代理"></a>服务代理</h3><pre><code class="hljs">更关注于外部用户访问和 API 管理
+</code></pre>
+<ul>
+<li><p><strong>解决什么问题：</strong><br>服务代理解决了应用程序内部和应用程序之间的网络流量管理问题，使得流量可以受控地发送和接收，并允许对流量进行转换、重定向或拒绝请求等操作。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>通过将流量管理功能从应用程序中外部化到服务代理，开发人员可以更专注于编写核心业务逻辑，而平台团队则可以管理通用任务，如路由、TLS 终止和流量均衡，从而提高通信的可靠性、安全性和效率。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Envoy （已毕业）</li>
+<li>CONTOUR（孵化中）</li>
+</ul>
+</li>
+</ul>
+<h3 id="API-网关"><a href="#API-网关" class="headerlink" title="API 网关"></a>API 网关</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>API 网关解决了组织管理多个 API、实施规则并提供通用接口的问题，同时简化了用户与应用程序之间的交互。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>通过充当中间人，接收并评估用户请求，记录请求详细信息，并将请求转发到适当的服务，API 网关提供了统一的入口点和管理功能，使得开发人员可以更专注于核心业务逻辑。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Emissary-Ingress （孵化中）</li>
+</ul>
+</li>
+</ul>
+<h3 id="服务网格"><a href="#服务网格" class="headerlink" title="服务网格"></a>服务网格</h3><pre><code class="hljs">关注于服务内部通信和交互
+</code></pre>
+<ul>
+<li><p><strong>解决什么问题：</strong><br>服务网格解决了在云原生环境中管理服务之间通信和添加功能的问题，同时降低了技术债务和复杂性。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>通过统一管理集群中所有服务的可靠性、可观察性和安全性功能，服务网格使开发团队可以专注于编写业务逻辑，而无需触及底层代码。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Istio （已毕业）</li>
+<li>Linkerd （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h2 id="应用程序定义和开发"><a href="#应用程序定义和开发" class="headerlink" title="应用程序定义和开发"></a>应用程序定义和开发</h2><p>到目前为止，我们讨论的所有内容都与构建可靠、安全的环境和提供所有必要的依赖项有关。现在，我们已到达 CNCF 云原生环境的顶层。顾名思义，应用程序定义和开发层专注于使工程师能够构建应用程序的工具。</p>
+<h3 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>数据库解决了应用程序需要有效存储和检索数据的需求，同时确保数据安全和合规性。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>数据库通过提供通用接口和查询语言，使开发人员能够存储、查询和检索信息，并管理数据的备份、加密和访问控制。同时还加强数据库的容器化。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>TiKV （已毕业）</li>
+<li>Vitess （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h3 id="流媒体和消息传递"><a href="#流媒体和消息传递" class="headerlink" title="流媒体和消息传递"></a>流媒体和消息传递</h3><p><strong>解决什么问题：</strong><br>流媒体和消息传递解决了随着服务数量增加，应用程序通信管理变得更复杂的问题，提供了一个集中管理事件发布和读取的中心位置，使得应用程序能够协同工作。</p>
+<p><strong>如何解决问题：</strong><br>通过发布-订阅的方法，服务可以将事件发布到消息传递工具或流式传输，其他需要了解这些事件的服务则可以订阅并观察这些工具，从而实现了解耦的架构。这种解耦使得工程师能够添加新功能，而无需更新下游应用程序或发送大量查询。</p>
+<ul>
+<li><strong>代表性项目：</strong><ul>
+<li>CloudEvents （已毕业）</li>
+<li>NATS （孵化中）</li>
+</ul>
+</li>
+</ul>
+<h3 id="应用程序定义和映像构建"><a href="#应用程序定义和映像构建" class="headerlink" title="应用程序定义和映像构建"></a>应用程序定义和映像构建</h3><p><strong>解决什么问题：</strong><br>应用程序定义和镜像构建是一个广泛的类别，可以分为两个主要子类。首先，以开发人员为中心的工具，可帮助将应用程序代码构建到容器和&#x2F;或 Kubernetes 中。其次，以运营为中心的工具，以标准化方式部署应用程序。无论您是打算加速或简化开发环境，提供标准化的方式来部署第三方应用程序，还是希望简化编写新 Kubernetes 扩展的过程，此类别都可以涵盖许多优化 Kubernetes 开发人员和操作员体验的项目和产品。<br>应用程序定义和映像构建工具致力于解决开发人员和运营商在 Kubernetes 和容器化环境中面临的挑战，包括构建可重现映像、标准化应用程序部署和简化环境配置等问题。</p>
+<p><strong>如何解决问题：</strong><br>这些工具帮助开发人员简化扩展 Kubernetes、构建、部署和连接应用程序的过程，同时为运营商提供标准化的方式部署预打包的应用程序，快速部署服务网格等服务，以及简化映像创建和应用程序部署的过程。通过引入这些工具，可以加速应用程序开发、提高部署效率，并降低操作复杂性。</p>
+<ul>
+<li><strong>代表性项目：</strong><ul>
+<li>Helm(已毕业)</li>
+<li>Artifact Hub （孵化中）</li>
+<li>KubeVirt （孵化中）</li>
+</ul>
+</li>
+</ul>
+<h3 id="持续集成和交付"><a href="#持续集成和交付" class="headerlink" title="持续集成和交付"></a>持续集成和交付</h3><p><strong>解决什么问题：</strong><br>持续集成 (CI) 和持续交付 (CD) 工具旨在解决开发人员和运营商在构建和部署应用程序时面临的挑战，包括确保代码质量、自动化构建和部署流程、提高交付速度和减少错误的问题。</p>
+<p><strong>如何解决问题：</strong><br>这些工具通过自动化代码更改的构建、测试和部署过程，确保代码集成的连续性和质量。CI 系统可帮助开发人员快速发现并修复代码错误，而 CD 系统则将 CI 流程的结果推送到不同环境，从开发到生产，以确保交付的可靠性和一致性。这些工具与 Kubernetes 等技术结合使用，使得云原生环境下的持续集成和交付更加高效和可靠。</p>
+<ul>
+<li><strong>代表性项目：</strong><ul>
+<li>Argo（已毕业）</li>
+<li>Flux （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h2 id="可观察性和分析"><a href="#可观察性和分析" class="headerlink" title="可观察性和分析"></a>可观察性和分析</h2><p>现在我们已经了解了 CNCF 格局的各个层面，我们将重点关注从可观察性和分析性开始的列。</p>
+<p>在深入探讨这些类别之前，我们先来定义一下可观察性和分析性。可观察性是一种系统特性，它描述了系统从外部输出中可理解的程度。通过 CPU 时间、内存、磁盘空间、延迟、错误等来衡量，计算机系统的可观察性或多或少。分析是一种查看这些可观察数据并理解其意义的活动。</p>
+<p>为了确保服务不会中断，您需要观察和分析应用程序的各个方面，以便立即检测并纠正每个异常。这就是此类别的全部内容。它运行并观察所有层，这就是为什么它位于侧面而不是嵌入特定层的原因。</p>
+<p>此类别中的工具分为可观察性和混沌工程。请注意，类别名称有些误导 — 虽然此处列出了混沌工程，但请将其视为可靠性工具，而不是可观察性或分析工具。</p>
+<h3 id="可观察性"><a href="#可观察性" class="headerlink" title="可观察性"></a>可观察性</h3><p><strong>解决什么问题：</strong><br>可观察性解决了复杂系统中出现故障或性能下降时难以定位问题的挑战。它通过提供有关系统运行状况、关键统计数据和问题调试信息的高质量遥测数据，帮助用户理解系统的内部运行情况。</p>
+<p><strong>如何解决问题：</strong><br>可观察性框架收集并分析来自应用程序代码、底层基础设施以及编排系统等的日志、指标和跟踪数据。这些数据可以帮助运维人员更快地响应事件，开发人员在生产中调试应用程序，并帮助组织了解用户行为与系统性能之间的关系。在云原生环境下，可观察性对于快速定位和解决问题至关重要。</p>
+<ul>
+<li><strong>代表性项目：</strong><ul>
+<li>Prometheus（已毕业）</li>
+<li>Fluentd  （已毕业）</li>
+</ul>
+</li>
+</ul>
+<h3 id="混沌工程"><a href="#混沌工程" class="headerlink" title="混沌工程"></a>混沌工程</h3><p><strong>解决什么问题：</strong><br>混沌工程旨在解决复杂系统中故障带来的挑战，通过故意引入故障来测试系统的弹性，以确保系统和工程团队能够应对动荡和意外事件。</p>
+<p><strong>如何解决问题：</strong><br>混沌工程工具提供了一种受控的方式来引入故障并针对应用程序的特定实例运行实验。通过这种方式，团队可以在生产环境中实验，以确保系统在面对实际故障时能够优雅地运行和恢复。这种做法有助于优化平均修复时间(MTTR)，使团队更具应变能力和可靠性。</p>
+<ul>
+<li><strong>代表性项目：</strong>  <ul>
+<li>Chaos Mesh （孵化中）</li>
+<li>Litmus（孵化中）</li>
+</ul>
+</li>
+</ul>
+<h2 id="平台"><a href="#平台" class="headerlink" title="平台"></a>平台</h2><p>正如我们目前所见，讨论的每个类别都解决了一个特定的问题。单靠存储并不能提供管理应用所需的一切。您需要一个编排工具、一个容器运行时、服务发现、网络、API 网关等。平台将不同层的不同工具捆绑在一起，解决更大的问题。</p>
+<p>这些平台本身并没有什么新意。它们所做的一切都可以通过这些层或可观察性和分析列中的工具之一完成。您当然可以构建自己的平台，事实上，许多组织都这样做了。但是，可靠、安全地配置和微调不同的模块，同时确保所有技术始终保持最新状态并修补漏洞并非易事——您需要一个专门的团队来构建和维护它。如果您没有必要的资源或专业知识，您的团队可能最好使用平台。对于一些组织，尤其是那些工程团队较小的组织，平台是采用云原生方法的唯一途径。</p>
+<p>你可能会注意到，所有平台都围绕 Kubernetes展开。这是因为它是云原生堆栈的核心。</p>
+<h3 id="认证-Kubernetes-分发"><a href="#认证-Kubernetes-分发" class="headerlink" title="认证 Kubernetes - 分发"></a>认证 Kubernetes - 分发</h3><p><strong>解决什么问题：</strong><br>发行版（或发行版）解决了 Kubernetes 部署和管理的复杂性，为用户提供了可靠的 Kubernetes 安装方式，并提供了默认设置，以创建更好、更安全的操作环境。</p>
+<p><strong>如何解决问题：</strong><br>通过将核心 Kubernetes 打包并提供处理集群安装和升级的机制，发行版简化了 Kubernetes 的采用和管理过程。它提供了可预测的配置和设置，为用户提供了支持和升级路径，并附带经过测试的软件扩展，使得在 Kubernetes 上部署其他应用程序更加容易。</p>
+<ul>
+<li><strong>代表性项目：</strong><ul>
+<li>K3s （沙盒）</li>
+</ul>
+</li>
+</ul>
+<h3 id="经过认证的-Kubernetes-托管"><a href="#经过认证的-Kubernetes-托管" class="headerlink" title="经过认证的 Kubernetes - 托管"></a>经过认证的 Kubernetes - 托管</h3><p><strong>解决什么问题：</strong><br>托管 Kubernetes 是基础设施提供商（如AWS、Digital Ocean、Azure和Google）提供的服务，简化了 Kubernetes 的部署和管理，允许用户无需深入了解即可启动和管理 Kubernetes 集群。</p>
+<p><strong>如何解决问题：</strong><br>用户可以通过在云提供商处设置帐户，并通过简单的界面或命令行工具启动 Kubernetes 集群，而无需自己进行配置或管理。托管 Kubernetes 将管理细节外包给供应商，使用户能够专注于应用程序开发和部署。</p>
+<ul>
+<li><strong>代表性项目：</strong><ul>
+<li>无，主要是由云服务商提供</li>
+</ul>
+</li>
+</ul>
+<h3 id="认证-Kubernetes-安装程序"><a href="#认证-Kubernetes-安装程序" class="headerlink" title="认证 Kubernetes - 安装程序"></a>认证 Kubernetes - 安装程序</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>认证 Kubernetes - 安装程序解决了在机器上安装和配置 Kubernetes 的复杂性问题，特别是对于初学者和没有专业知识的用户而言。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>它通过自动执行安装和配置过程，提供经过审查的源代码和环境配置，简化了 Kubernetes 的部署过程，让用户可以快速轻松地搭建起符合标准的 Kubernetes 环境。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>Kubean （沙盒）</li>
+<li>Kind （沙盒）</li>
+</ul>
+</li>
+</ul>
+<h3 id="PaaS-容器服务"><a href="#PaaS-容器服务" class="headerlink" title="PaaS&#x2F;容器服务"></a>PaaS&#x2F;容器服务</h3><ul>
+<li><p><strong>解决什么问题：</strong><br>PaaS&#x2F;容器服务解决了用户在运行应用程序时不必关心底层计算资源细节的问题，为开发人员提供了托管应用程序的环境。</p>
+</li>
+<li><p><strong>如何解决问题：</strong><br>通过将各种开源和闭源工具组合在一起，并提供处理安装、升级和运行时需求的机制，PaaS&#x2F;容器服务简化了应用程序部署和管理过程，加快了价值实现途径。</p>
+</li>
+<li><p><strong>代表性项目：</strong></p>
+<ul>
+<li>目前该领域没有 CNCF 项目，但大多数产品都是开源的，Cloud Foundry 由 Cloud Foundry 基金会管理。</li>
+</ul>
+</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>现在我们已经分解了 CNCF 云原生全景图，并逐层、逐类进行了讨论，可能感觉没那么难了。它有一个逻辑结构，一旦你理解了它，浏览全景图就会变得容易得多。</p>
+<p>CNCF Landscape 的各个层级相互依存。首先是配置层，其中包含奠定基础设施基础所需的工具。接下来是运行时层，其中的所有内容都围绕容器以及容器在云原生环境中运行所需的内容。编排和管理层包含用于编排和管理容器和应用程序的工具 - 换句话说，就是创建应用程序构建平台所需的工具。应用程序和定义与开发层涉及使应用程序能够存储和发送数据所需的工具，以及我们构建和部署应用程序的方式。</p>
+<p>层旁边有两列。可观察性和分析列包括监控应用程序并在出现问题时发出警报的工具。由于所有层都必须受到监控，因此此类别涵盖所有层。最后是平台。平台不提供新功能，而是将不同层的多种工具捆绑在一起，对其进行配置和微调，以便随时可用。这简化了云原生技术的采用，甚至可能是组织能够利用这些技术的唯一方式。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>CNCF项目全景图介绍</div>
+      <div>http://example.com/2024/06/09/CNCFIntroduction/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>John Doe</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年6月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/12/k8sSource6/" title="【K8s源码分析（六）】-K8s中Pod拓扑分布约束（Pod Topology Spread Constraints）插件介绍">
+                        <span class="hidden-mobile">【K8s源码分析（六）】-K8s中Pod拓扑分布约束（Pod Topology Spread Constraints）插件介绍</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
