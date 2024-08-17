@@ -4,6 +4,33 @@
   
   
   <entry>
+    <title>【论文阅读】Fluid:Dataset Abstraction and Elastic Acceleration for Cloud-native Deep Learning Training Jobs</title>
+    <link href="/2024/08/17/FluidPaper/"/>
+    <url>/2024/08/17/FluidPaper/</url>
+    
+    <content type="html"><![CDATA[<h1 id="论文基础信息"><a href="#论文基础信息" class="headerlink" title="论文基础信息"></a>论文基础信息</h1><p><strong>论文地址：</strong> <a href="https://ieeexplore.ieee.org/document/9835158">Fluid: Dataset Abstraction and Elastic Acceleration for Cloud-native Deep Learning Training Jobs</a></p><p><strong>收录会议：</strong> 2022 IEEE 38th International Conference on Data Engineering (ICDE)</p><p><strong>作者：</strong> 阿里云X南京大学</p><p><strong>开源项目地址：</strong><a href="https://github.com/fluid-cloudnative/fluid">fluid</a></p><p><strong>其他：</strong> 期刊版的论文：<a href="https://ieeexplore.ieee.org/document/10249214">High-Level Data Abstraction and Elastic Data Caching for Data-Intensive AI Applications on Cloud-Native Platforms</a></p><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>深度学习快速发展，其既需要计算也需要数据，同时越来越倾向采用容器化和云原生技术，但是这种环境下存在计算与存储分离的特点，而一般从远端读取数据过慢，会存在<strong>I&#x2F;O瓶颈</strong>。<br>现有机器学习框架有采用了I&#x2F;O与GPU计算重叠的方式，但是这不足以消除瓶颈，而其他的预读取、内存缓存、多层次缓存等方式更适用于传统集群而不是云原生环境，主要不足在于：</p><ol><li>云中具有不同访问协议的<strong>异构存储</strong>方法，其导致<strong>程序复杂</strong>。缓存系统<strong>配置复杂</strong>，鉴于各种云环境下数据集的不同及用户理解的困难，<strong>难以配置性能良好的缓存系统</strong>。</li><li>云中的<strong>计算资源</strong>具有高度<strong>灵活性</strong>和<strong>弹性，</strong>这要求<strong>缓存</strong>也应随其<strong>自动拓展</strong>，而如何及时<strong>准确估计缓存需求</strong>、<strong>高效动态拓展</strong>是一个难题。</li><li><strong>同一数据集</strong>训练<strong>多个模型</strong>很流行，如何在多个深度学习作业之间<strong>有效共享数据</strong>存在挑战，这要求<strong>降低共享数据缓存的大小</strong>，<strong>避免</strong>频繁的数据<strong>缓存抖动</strong>，从而提高整体训练性能。</li></ol><h1 id="创新"><a href="#创新" class="headerlink" title="创新"></a>创新</h1><ol><li>将<strong>数据集进行抽象</strong>（提供了Fluid Dataset的CRD），并以PVC的统一形式提供用户使用。同时每个Fluid Dataset都由自动调整的Cache Runtime（如使用开源的Alluxio系统）提供缓存支持。</li><li>设计了一种基于<strong>训练速度跟踪</strong>的<strong>缓存自动拓展机制</strong>，以自动调整缓存容量，匹配训练速度和计算资源。</li><li>提出了一种<strong>数据缓存和DL作业协同感知</strong>的<strong>调度策略</strong>，通过高效的缓存机制<strong>加速</strong>具有某些<strong>相同数据集</strong>的<strong>多个DL训练作业</strong>的整体性能。</li><li>实验结果表明Fluid具有优越的性能，将Fluid 与现有的广泛使用和前沿解决方案集成时<strong>可将性能提高约 2 倍</strong>。</li></ol><h1 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h1><h2 id="数据集抽象和管理"><a href="#数据集抽象和管理" class="headerlink" title="数据集抽象和管理"></a>数据集抽象和管理</h2><p>Fluid Dataset作为数据集的抽象，Cache Runtime作为Cache的抽象，<strong>一个Cache Runtime与Fluid Dataset一一对应</strong>。如此设计更加灵活，相比于统一的缓存方案，其<strong>优点</strong>在于：</p><ol><li>分解的缓存管理器<strong>不太可能成为瓶颈</strong>，尤其是当许多文件元数据操作处于<strong>高度并行时</strong>；</li><li>这允许我们<strong>根据不同数据集的特点调整</strong>分布式缓存系统的<strong>配置</strong>，从而达到最优的配置。</li></ol><h2 id="分布式缓存自动配置"><a href="#分布式缓存自动配置" class="headerlink" title="分布式缓存自动配置"></a>分布式缓存自动配置</h2><p><strong>系统配置</strong>（例如<strong>线程池大小</strong>和<strong>元数据缓存级别</strong>）对于分布式缓存系统<strong>非常重要</strong>，因为它们会极大地影响不同类型的文件操作的性能。所以这里将候选配置、Dataset特征输入到一个预训练好的<strong>模型</strong>进行<strong>打分</strong>，然后选择最高得分的配置。<br><img src="/2024/08/17/FluidPaper/config.png" alt="配置打分"></p><h2 id="动态缓存系统的自动拓展"><a href="#动态缓存系统的自动拓展" class="headerlink" title="动态缓存系统的自动拓展"></a>动态缓存系统的自动拓展</h2><p>为了实时测量深度学习作业的训练速度，协调器<strong>收集</strong>在时间窗口T内总共<strong>训练的样本数</strong>SampleNum，从而<strong>得到训练速度</strong>为SampleNum&#x2F;T<br>Fluid通过反复实验的方式拓展缓存容量，其算法如下，主要根据训练速度不断调整。<br><img src="/2024/08/17/FluidPaper/alg.png" alt="拓展算法"></p><h2 id="基于共享的调度策略"><a href="#基于共享的调度策略" class="headerlink" title="基于共享的调度策略"></a>基于共享的调度策略</h2><p>旨在<strong>优先运行已缓存的作业</strong>，同时通过考虑数据集的特征来推测DL作业的运行时间。<br>调度打分如下，选取得分最高的进行调度。<br><img src="/2024/08/17/FluidPaper/score.png" alt="调度打分"></p><h1 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h1><p><img src="/2024/08/17/FluidPaper/arc.png" alt="具体实现"></p><h2 id="Fluid-Controller"><a href="#Fluid-Controller" class="headerlink" title="Fluid Controller"></a>Fluid Controller</h2><p>将Fluid Dataset和Cache Runtime定义为CRD，再定义Fluid COntroller为operator，Fluid COntroller负责绑定两者，同时配置的ML模型也在其中，一旦缓存就位，就会创建相应的PV和PVC，用户通过引用PVC来访问数据文件。</p><h2 id="Fluid-Csi插件"><a href="#Fluid-Csi插件" class="headerlink" title="Fluid Csi插件"></a>Fluid Csi插件</h2><p>Kubernetes 提供了容器存储接口(CSI) 。当任何容器需要通过分布式缓存系统访问数据时，它会引用相应的 PVC，然后 Fluid CSI 插件负责将分布式缓存系统挂载到容器上。</p><h2 id="缓存系统自动缩放器"><a href="#缓存系统自动缩放器" class="headerlink" title="缓存系统自动缩放器"></a>缓存系统自动缩放器</h2><p>缩放器就是前诉的协调器，它从DL工作者那里收集实时训练速度，并指示分布式缓存系统动态扩展缓存容量，以容纳与 DL 作业训练速度相匹配的训练示例数量。此外，如果缓存容量不足以容纳所有预取的训练示例，缓存系统自动缩放器将添加更多缓存工作者，以动态增加分布式缓存系统的可用缓存容量。此外，我们还通过逐出已使用的训练示例来优化缓存使用率，因为它们不会在同一时期被使用。</p><h2 id="Fluid调度器"><a href="#Fluid调度器" class="headerlink" title="Fluid调度器"></a>Fluid调度器</h2><p>该调度器基于K8s的原生调度器容器实现，通过 Kubernetes APIServer，调度器定期监视所有节点的资源状态以及缓存系统的状态，当一些资源被释放且可以调度一批深度学习作业时，Fluid 调度器会根据依赖数据集等因素对所有待处理的深度学习作业进行评分，并将得分最高的深度学习作业提交给容器调度器。<br>使用实例<br>一个简单的使用实例如下：<br><img src="/2024/08/17/FluidPaper/example.png" alt="使用实例"></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>AI集群</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>论文阅读</tag>
+      
+      <tag>集群调度</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>设置Clash代理，彻底解决linux系统Docker pull的问题</title>
     <link href="/2024/06/23/ClashForDocker/"/>
     <url>/2024/06/23/ClashForDocker/</url>
