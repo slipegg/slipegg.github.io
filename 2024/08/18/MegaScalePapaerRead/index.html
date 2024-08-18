@@ -1,0 +1,868 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="论文基础信息论文地址： {MegaScale}: Scaling Large Language Model Training to More Than 10,000 {GPUs} 收录会议： 21st USENIX Symposium on Networked Systems Design and Implementation (NSDI 24) 作者机构： 字节跳动x北京大学 部分组件的开源地址">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【论文阅读】{MegaScale}:Scaling Large Language Model Training to More Than 10,000 {GPUs}">
+<meta property="og:url" content="http://example.com/2024/08/18/MegaScalePapaerRead/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="论文基础信息论文地址： {MegaScale}: Scaling Large Language Model Training to More Than 10,000 {GPUs} 收录会议： 21st USENIX Symposium on Networked Systems Design and Implementation (NSDI 24) 作者机构： 字节跳动x北京大学 部分组件的开源地址">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2024/08/18/MegaScalePapaerRead/transformer.png">
+<meta property="og:image" content="http://example.com/2024/08/18/MegaScalePapaerRead/parallel.png">
+<meta property="og:image" content="http://example.com/2024/08/18/MegaScalePapaerRead/workflow.png">
+<meta property="og:image" content="http://example.com/2024/08/18/MegaScalePapaerRead/performance.png">
+<meta property="article:published_time" content="2024-08-18T07:46:06.000Z">
+<meta property="article:modified_time" content="2024-08-18T07:57:29.197Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="论文阅读">
+<meta property="article:tag" content="分布式训练">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2024/08/18/MegaScalePapaerRead/transformer.png">
+  
+  
+  
+  <title>【论文阅读】{MegaScale}:Scaling Large Language Model Training to More Than 10,000 {GPUs} - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【论文阅读】{MegaScale}:Scaling Large Language Model Training to More Than 10,000 {GPUs}"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-08-18 15:46" pubdate>
+          2024年8月18日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          29 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【论文阅读】{MegaScale}:Scaling Large Language Model Training to More Than 10,000 {GPUs}</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="论文基础信息"><a href="#论文基础信息" class="headerlink" title="论文基础信息"></a>论文基础信息</h1><p><strong>论文地址：</strong> <a target="_blank" rel="noopener" href="https://www.usenix.org/conference/nsdi24/presentation/jiang-ziheng">{MegaScale}: Scaling Large Language Model Training to More Than 10,000 {GPUs}</a></p>
+<p><strong>收录会议：</strong> 21st USENIX Symposium on Networked Systems Design and Implementation (NSDI 24)</p>
+<p><strong>作者机构：</strong> 字节跳动x北京大学</p>
+<p><strong>部分组件的开源地址：</strong><a target="_blank" rel="noopener" href="https://github.com/volcengine/veScale">veScale</a></p>
+<h1 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h1><p>MegaScale是字节跳动一个用于训练超过1万台GPU规模的LLM的生产系统。</p>
+<p>为了提高大规模系统的<strong>效率</strong>，他们采用全栈方法，跨<strong>model block</strong>和<strong>优化器</strong>设计、<strong>计算和通信重叠</strong>、<strong>算子优化</strong>、<strong>数据管道</strong>和<strong>网络性能调整</strong>来共同设计算法和系统组件。</p>
+<p>为了提高大规模系统的<strong>稳定性</strong>，他们<strong>加强</strong>了对系统的<strong>可观测性</strong>，开发了一套<strong>诊断工具</strong>来<strong>监控</strong>各个<strong>系统组件和事件</strong>，识别报错根本原因。</p>
+<p>最终在 12,288 个 GPU 上训练 175B LLM 模型时，MegaScale 实现了 55.2% 的模型 FLOP 利用率 (MFU)，<strong>与 Megatron-LM 相比</strong>，<strong>MFU 提高了 1.34 倍</strong>。</p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>LLM展示出来的巨大能力越来越被被重视。缩放定律显示了模型大小和训练数据大小是决定模型能力的关键因素。所以人们开始在数千亿乃至数万亿的token上训练具有数千亿甚至数万亿参数的大型模型。LLM领域的主要参与者构建了拥有数万个 GPU 的大规模 AI 集群来训练LLM。传统虽然也有管理过万台GPU，但是那都是面对多个小任务，而现在LLM一个任务就占据了数万台GPU，这带来了<strong>两个挑战</strong>：</p>
+<ul>
+<li><strong>如何提高训练效率</strong>。其中主要指标看的是FLOP模型利用率，即假设峰值 FLOP 为 100% 时观察到的吞吐量与理论最大吞吐量的比率。这挑战包括了通信、算子优化、数据预处理、GPU内存消耗等。</li>
+<li><strong>如何提高稳定性</strong>。训练过程中故障和掉队是LLM训练的常态，但是其故障的代价也是非常高昂的，所以减少恢复时间至关重要；而掉队不仅影响自己的工作，还会减慢涉及数万个GPU的整个工作。</li>
+</ul>
+<p>为了解决这两个挑战，提出了<strong>两个系统设计原则</strong>：</p>
+<ul>
+<li><strong>算法-系统协同设计。</strong>其<ul>
+<li>对<strong>模型架构</strong>进行了一些修改并融入了有效的优化技术，包括parallel transformer、slide window attention、LAMB optimizer。</li>
+<li>利用<strong>混合并行</strong>策略，将<strong>数据并行</strong>、<strong>piple并行</strong>、<strong>张量并行</strong>和<strong>序列并行</strong>相结合。并根据每个并行策略的模式设计定制技术，以最大化通信和计算之间的重叠。</li>
+<li><strong>应用预取</strong>和<strong>基于树的加载</strong>来<strong>优化数据管道</strong>。</li>
+<li>我们利用<strong>非阻塞异步操作</strong>，消除<strong>大规模集体通信组初始化</strong>的全局障碍。</li>
+<li>设计<strong>自定义网络拓扑</strong>，<strong>减少 ECMP 哈希冲突</strong>，<strong>自定义拥塞控制</strong>，并<strong>调整重传超时参数</strong>以获得高网络性能。</li>
+</ul>
+</li>
+<li><strong>深度可观测性。</strong><ul>
+<li>许多硬稳定性问题<strong>只会大规模出现</strong>，这可能源于堆栈深处的各种软件和硬件故障。考虑到系统的规模和复杂性，<strong>手动识别和解决每个问题是不可行的</strong>。</li>
+<li>我们应用深度可观察性的原理<strong>构建了</strong>一套<strong>诊断工具</strong>。我们所说的“<strong>深度可观察</strong>性”是指一种全面的监控和可视化策略，它超越表面指标，收集系统堆栈每个组件的详细、精细的数据，旨在创建系统性能的多维视图。这套工具使我们能够通过揭示复杂的相互作用和依赖机制来诊断系统并确定根本原因。</li>
+<li>我们开发了一个强大的训练框架来<strong>自动化故障定位和恢复</strong>。我们设计了<strong>封装</strong>各种形式信息的<strong>心跳消息</strong>，以方便实时异常检测并<strong>提供早期预警</strong>。我们实施了一<strong>套诊断测试</strong>来<strong>识别导致中断的节点</strong>。我们<strong>优化检查点和恢复程序</strong>以<strong>减少中断</strong>。为了解决<strong>掉队</strong>造成的细微差别，我们开发了一个<strong>性能分析工具</strong>来<strong>记录细粒度的 CUDA 事件</strong>并从分布式视图<strong>生成系统范围的热图和时间线跟踪</strong>，并开发了一个 <strong>3D 并行训练可视化工具</strong>来显示排名之间的数据依赖关系诊断。</li>
+</ul>
+</li>
+</ul>
+<h1 id="大规模高效训练"><a href="#大规模高效训练" class="headerlink" title="大规模高效训练"></a>大规模高效训练</h1><h2 id="模型算法优化"><a href="#模型算法优化" class="headerlink" title="模型算法优化"></a>模型算法优化</h2><p><strong>并行transformer</strong></p>
+<p>采取之前使用过的并行transformer架构，如下的一个变化：</p>
+<p><img src="/2024/08/18/MegaScalePapaerRead/transformer.png" srcset="/img/loading.gif" lazyload alt="transformer"></p>
+<p>这可以使得MLP块和Attention块并行进行。</p>
+<p><strong>滑动窗口注意力（SWA）</strong></p>
+<p>滑动窗口注意力是一种稀疏注意力机制，它采用围绕输入序列中每个标记的固定大小的窗口。计算复杂度为 O(s × w)，其中 s 是输入序列长度，w 是固定窗口大小。滑动窗口注意力比完全自注意力更有效，其计算复杂度为 O(s × s)，假设 w ≪ s。</p>
+<p><strong>LAMB优化器</strong></p>
+<p>为了提高批量大小从而进行大规模高效训练，我们采用LAMB 优化器，其已被证明可以在不影响准确性的情况下将 BERT 的训练批量大小扩展到 64K。在 LLM 设置中，我们的实验发现 LAMB 可以将批量大小扩展到 4 倍，而不会损失精度。</p>
+<h2 id="3D并行中的通信折叠"><a href="#3D并行中的通信折叠" class="headerlink" title="3D并行中的通信折叠"></a>3D并行中的通信折叠</h2><p><strong>数据并行优化</strong></p>
+<p>针对数据并行中从其他模型更新参数的前向传递的all-gather和在收集梯度的后向传递的reduce-scatter操作，由于all-gather 操作在模型块的前向传递之前触发，reduce-scatter 操作在其向后传递后开始。这导致了第一个全收集操作和最后一个reduce-scatter操作无法隐藏的挑战。受 PyTorch FSDP 的启发，初始all-gather 操作在每次迭代开始时预取，使其与数据加载操作重叠，有效地将通信时间减少 1&#x2F;(2 * vpp_size) 。我们还首先启动高优先级通信以最大化重叠。通信算子的优先级由依赖于通信结果的相应计算算子的顺序确定。</p>
+<p><strong>pipline并行重叠优化</strong></p>
+<p>对于warm-up阶段，我们将发送和接收解耦，使得操作可以和计算重叠，同时也避免了被较慢的发送和接收所阻塞。</p>
+<p>对于cool-down阶段，作为warma-up的逆过程，我们逆向应用相关优化。</p>
+<p>对于steady阶段，由于前向和后向计算都独立于相邻的通信操作，所以使发送和接收操作异步启动以与计算重叠</p>
+<p><strong>张量&#x2F;序列并行性重叠</strong></p>
+<p>张量并行通常用于计算密集型操作中的权重划分，而 LayerNorm 和 Dropout 等操作则沿序列维度进行划分以节省 GPU 内存。这就需要对 GPU 之间的输入收集和输出重新分配进行all-gather和reduce-scatter操作。</p>
+<p>下图 a 显示了并行transformer架构中的这种通信模式。在这里，两个通信操作处于关键路径上。为了消除这种开销，我们选择将all-gather和reduce-scatter与 FFN 路径上的并行线性融合（下图 b）。由于FFN路径上的GEMM核较大，因此可以更好地隐藏通信。我们将 GEMM 内核分成小块，并通过通信管道执行（下图c）。该策略可以类似地应用于向后传递</p>
+<p><img src="/2024/08/18/MegaScalePapaerRead/parallel.png" srcset="/img/loading.gif" lazyload alt="并行优化"></p>
+<h2 id="算子优化"><a href="#算子优化" class="headerlink" title="算子优化"></a>算子优化</h2><p>采用flash-attention2来通过改进不同线程块和线程束之间的工作划分对transformer的进行优化。</p>
+<p>对于 LayerNorm 和 GeLU算子还进行了算子融合的优化，从而优化了内存的访问，实现了更好的性能。</p>
+<h2 id="数据Pipeline优化"><a href="#数据Pipeline优化" class="headerlink" title="数据Pipeline优化"></a>数据Pipeline优化</h2><p>目标是隐藏数据预处理和数据加载的时间消耗，从而减少GPU的空闲。手段如下：</p>
+<ul>
+<li><strong>异步数据预处理：</strong>当 GPU 工作线程在每个训练步骤结束时同步梯度时，可以开始后续步骤的数据预处理，从而隐藏了预处理开销。</li>
+<li><strong>减少冗余数据加载：</strong>传统分布式训练的典型数据加载阶段，每个GPU worker都有自己的数据加载器，通过将数据读取到CPU中再传递到GPU中，多个work的读取会导致磁盘带宽读取的瓶颈。考虑到一台机器上的GPU worker都在同一个张量并行组中，所以每次迭代输入的数据都相同，故在每台机器上使用单个专用的数据加载器将数据读取到共享内存中，然后GPU worker直接将必要的数据复制到自己的GPU内存中进行处理。</li>
+</ul>
+<h2 id="集体通讯组初始化"><a href="#集体通讯组初始化" class="headerlink" title="集体通讯组初始化"></a>集体通讯组初始化</h2><p>在初始化时，需要在各个GPU worker之间建立NVIDIA集体通信组（NCCL），默认实现在2048个GPU上的初始化需要1047秒，虽然这对于训练时间微不足道，但是却对日常测试开发造成了影响，还阻碍了快速重启和恢复机制，故对其进行了优化。</p>
+<ul>
+<li><strong>优化barrier operation：</strong>采用异步非阻塞的Redis替换单线程阻塞的TCPStore。这将2048个GPU上的初始化时间减少到了361秒。</li>
+<li><strong>优化global barrier：</strong>通过设计通信组初始化的顺序，以尽量减少对global barrier的需要。这种方法将全局屏障的时间复杂度从 O(n2) 降低到 O(n)。通过这些优化，初始化时间在 2048 个 GPU 上减少到 5 秒以下，在超过 10,000 个 GPU 上减少到 30 秒以下。</li>
+</ul>
+<h2 id="网络性能调优"><a href="#网络性能调优" class="headerlink" title="网络性能调优"></a>网络性能调优</h2><p>主要优化的手段包括以下这些（不做详细介绍了）：</p>
+<ul>
+<li><strong>优化网络拓扑：</strong>数据中心网络采用基于 Broadcom Tomahawk 4 芯片的高性能交换机构建。</li>
+<li><strong>减少 ECMP 哈希冲突。</strong>精心设计了网络拓扑并调度网络流量，以减少 ECMP 哈希冲突。</li>
+<li><strong>拥塞控制：</strong>开发了一种结合了 Swift  和 DCQCN 原理的算法，将往返时间 (RTT) 的精确测量与显式拥塞通知 (ECN) 的快速拥塞响应功能集成在一起。</li>
+<li><strong>重传超时设置：</strong>重新设置NCCL中的参数来控制重传定时器和重试计数，并在 NIC 上启用了 adap_retrans 功能。</li>
+</ul>
+<h1 id="大规模训练容错"><a href="#大规模训练容错" class="headerlink" title="大规模训练容错"></a>大规模训练容错</h1><h2 id="鲁棒性的训练工作流"><a href="#鲁棒性的训练工作流" class="headerlink" title="鲁棒性的训练工作流"></a>鲁棒性的训练工作流</h2><p>如下图所示，用户将训练任务提交给Driver后，他与k8s进行交互，为每个Executor分配资源并启动相应的pod，一个Exector关联一个node。Exector需要定期通过心跳给Driver上报信息，如果收到了异常信息或者超时未收到信息，那么就会停止所有Exector的任务执行，并启动自检程序，识别到有问题的节点后，将相关节点上报给k8s进行驱逐，并补充等量的通过了健康检查的节点。</p>
+<p><img src="/2024/08/18/MegaScalePapaerRead/workflow.png" srcset="/img/loading.gif" lazyload alt="容错工作流"></p>
+<h2 id="监控数据收集和分析"><a href="#监控数据收集和分析" class="headerlink" title="监控数据收集和分析"></a>监控数据收集和分析</h2><p><strong>心跳信息</strong>包括：</p>
+<ol>
+<li>Exector基本信息</li>
+<li>训练的日志信息，用来识别警告、错误等关键字</li>
+<li>RDMA流量指标，有些异常发生后，训练还是能继续进行，这时就可以通过分析RDMA流量指标来分析，因为训练具有周期性，一般流量情况都相似，如果出现异常波动，就需要进行人工排除或启动自动恢复程序了。</li>
+</ol>
+<p>为了加强对<strong>训练稳定性和表现的监控</strong>，还开发了精度达到毫秒级的监控系统：</p>
+<ol>
+<li>二级监控通常用于评估整体健康状况并排除常见配置对训练的影响。</li>
+<li>毫秒级的监控也用于判断网络是否拥塞，数据并行和管道并行的数据传输速度是否达到物理极限。</li>
+</ol>
+<h2 id="诊断测试"><a href="#诊断测试" class="headerlink" title="诊断测试"></a>诊断测试</h2><p>自检诊断的执行时间和准确性之间存在权衡。通过迭代实验和优化，我们部署了一套轻量级诊断测试，有效覆盖了实际训练过程中遇到的各种硬件和软件故障。</p>
+<p><strong>主机内网络测试：</strong></p>
+<ol>
+<li>环回测试测量从所有 RDMA NIC (RNIC) 到各种主机内端点（包括内存节点和 GPU）的环回带宽。</li>
+<li>RNICto-RNIC 测试检查同一主机上不同 RNIC 之间的连接和带宽性能。</li>
+</ol>
+<p><strong>NCCL 测试：</strong></p>
+<ol>
+<li>为了识别 GPU 通信中的潜在故障，我们在单个节点内的 GPU 之间运行全面测试，以观察带宽是否符合预期基准。</li>
+<li>一旦主机内通信测试通过，每个节点还会与同一 ToR 交换机下的相邻机器进行 all-reduce 测试，以评估节点间 GPU 通信。</li>
+</ol>
+<h2 id="快速检测点和恢复"><a href="#快速检测点和恢复" class="headerlink" title="快速检测点和恢复"></a>快速检测点和恢复</h2><p>目的是为了确保最新的<strong>检查点尽可能接近故障发生时的训练进度状态</strong>，同时还希望<strong>减少检查点过程引入的延迟</strong>，特别是关键路径上阻碍训练进度的时间，从而阻碍整体系统吞吐量。</p>
+<p>为了<strong>快速构建检查点</strong>，引入了一种优化的两阶段方法：</p>
+<ol>
+<li>第一阶段：每个<strong>GPU将其片上状态写入到主机内存中</strong>，然后继续训练，过程可缩短到几秒钟</li>
+<li>第二阶段：<strong>后台进程接管</strong>，将主机内存异步<strong>传输到分布式文件系统</strong>（HDFS）中</li>
+</ol>
+<p>为了优化从<strong>检查点恢复</strong>的过程，由于其<strong>瓶颈</strong>主要在于<strong>HDFS的带宽</strong>，又意识到多个<strong>GPU worker</strong>通常都<strong>共享相同的状态分区</strong>，如同一个数据并行组的worker，为了<strong>避免重复读</strong>，一组中只有<strong>一个worker从HDFS读取</strong>，然后再将其<strong>状态广播</strong>给其他需要的GPU worker。</p>
+<h1 id="大规模训练故障排除"><a href="#大规模训练故障排除" class="headerlink" title="大规模训练故障排除"></a>大规模训练故障排除</h1><p>尽管我们强大的训练框架可以自动发现、查明并解决大多数常见故障，但仍然存在<strong>某些硬件异常现象</strong>，这些异常现象以<strong>概率的形式出现</strong>，<strong>无法通过机器自检发现</strong>。一些异常可能会使系统看似正常运行，但<strong>会显着降低训练效率</strong>。为了解决这些细微差别的情况，我们<strong>实现了多种自定义监控和分析工具</strong>，旨在支持逐案异常检测。</p>
+<h2 id="使用-CUDA-事件监视器进行性能诊断"><a href="#使用-CUDA-事件监视器进行性能诊断" class="headerlink" title="使用 CUDA 事件监视器进行性能诊断"></a>使用 CUDA 事件监视器进行性能诊断</h2><p>在大规模实验中观察到不同的running表现出不同的计算效率。即使使用相同的配置，这种不一致仍然存在，如下图所示。我们还观察到，训练任务的性能在此规模上并不一致。各种训练任务的 MFU 随着时间的推移逐渐下降。但是在单 GPU GEMM 微基准测试下没有检测到明显的差异。</p>
+<p><img src="/2024/08/18/MegaScalePapaerRead/performance.png" srcset="/img/loading.gif" lazyload alt="性能差异"></p>
+<p>为了诊断这种性能问题，我们开发了一种性能分析工具，用于记录运行期间每个机器级别上关键代码段的执行时间。其基于CUDA事件方法对事件进行计时，以防止性能损失并提供两种可视化模式，可以从不同角度分析收集到的数据。</p>
+<ul>
+<li>第一种模式使用热图来显示<strong>不同维度的机器之间的时间消耗差异</strong>。由于训练性能主要由最慢的主机所决定，所以在观察到了<strong>性能表现较差的主机后可以将其驱逐出去</strong>。</li>
+<li>第二种模式<strong>从不同的分布式视图（数据并行性、管道并行性、张量并行性）以跟踪格式显示机器上的事件时间线。</strong>通过将各种等级的跟踪跨度聚合到单个时间线上，我们获得了全面的视角，揭示了数据并行等级之间的整体执行顺序、管道气泡和同步特征。</li>
+</ul>
+<p>当计时器数据以逐行格式写入本地文件时，一个单独的流处理进程会将该日志文件与 Kafka 队列实时同步。分析数据库通过使用来自该 Kafka 队列的数据来保持更新，从而在不中断训练作业的情况下实现动态分析。</p>
+<h2 id="3D-并行训练可视化"><a href="#3D-并行训练可视化" class="headerlink" title="3D 并行训练可视化"></a>3D 并行训练可视化</h2><p>由于3D并行技术的使用以及前述的优化技术的使用，<strong>数据流和任务排序变得极其复杂</strong>，各个GPU worker之间存在<strong>复杂依赖关系</strong>，这加大了故障检测的挑战：</p>
+<p><strong>单个GPU worker故障</strong>，可能会导致<strong>整个集群的NCCL通信停滞</strong>，从而导致<strong>大量的超时的消息</strong>。<strong>为了快速排除</strong>，我们让每个GPU worker在通信<strong>超时的时候</strong>记<strong>录自己正在进行的事件</strong>。然后，使用这些日志根据 3D 并行设置中的逻辑拓扑<strong>构建数据依赖关系的可视化表示</strong>。从而支持<strong>快速查明有问题的节点，</strong>一旦确定，这些节点可以通过强大的训练框架手动隔离和标记以进行维护。</p>
+<h1 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h1><p>这里指出MegaScale 构建于 <a target="_blank" rel="noopener" href="https://github.com/NVIDIA/Megatron-LM/tree/main">Megatron-LM</a> 之上，通过各种实验展示了MegaScale的优越性。其中在 12,288 个 GPU 上训练 175B LLM 模型时，MegaScale 实现了 55.2% MFU，比 Megatron-LM 提高了 1.34 倍。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI%E9%9B%86%E7%BE%A4/" class="category-chain-item">AI集群</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" class="print-no-link">#论文阅读</a>
+      
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/" class="print-no-link">#分布式训练</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【论文阅读】{MegaScale}:Scaling Large Language Model Training to More Than 10,000 {GPUs}</div>
+      <div>http://example.com/2024/08/18/MegaScalePapaerRead/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>John Doe</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年8月18日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/08/17/FluidPaper/" title="【论文阅读】Fluid:Dataset Abstraction and Elastic Acceleration for Cloud-native Deep Learning Training Jobs">
+                        <span class="hidden-mobile">【论文阅读】Fluid:Dataset Abstraction and Elastic Acceleration for Cloud-native Deep Learning Training Jobs</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
