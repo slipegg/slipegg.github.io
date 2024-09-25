@@ -39,8 +39,10 @@
 <meta property="og:image" content="http://example.com/2024/09/13/InternLM/prompt.jpg">
 <meta property="og:image" content="http://example.com/2024/09/13/InternLM/normalAnswer.png">
 <meta property="og:image" content="http://example.com/2024/09/13/InternLM/answerRAG.png">
+<meta property="og:image" content="http://example.com/2024/09/13/InternLM/XTunerBefore.jpg">
+<meta property="og:image" content="http://example.com/2024/09/13/InternLM/XTunerAfter.jpg">
 <meta property="article:published_time" content="2024-09-13T13:57:01.000Z">
-<meta property="article:modified_time" content="2024-09-22T13:44:37.958Z">
+<meta property="article:modified_time" content="2024-09-25T08:52:31.553Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="InternLM">
 <meta property="article:tag" content="大模型">
@@ -280,7 +282,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.7k 字
+          3.2k 字
         
       </span>
     
@@ -291,7 +293,7 @@
         
         
         
-          14 分钟
+          16 分钟
         
       </span>
     
@@ -388,7 +390,15 @@
 <p>可见其并不知道唐三最后成了什么神。</p>
 <h3 id="RAG后的问答"><a href="#RAG后的问答" class="headerlink" title="RAG后的问答"></a>RAG后的问答</h3><p><img src="/2024/09/13/InternLM/answerRAG.png" srcset="/img/loading.gif" lazyload alt="RAG后的回答"></p>
 <p>可以见到经过RAG调整后，模型使用《斗罗大陆》的知识库最后知道了唐三最后成为了海神。</p>
-<h2 id="2-5-第5关-XTuner-微调个人小助手认知"><a href="#2-5-第5关-XTuner-微调个人小助手认知" class="headerlink" title="2.5 第5关 XTuner 微调个人小助手认知"></a>2.5 第5关 XTuner 微调个人小助手认知</h2>
+<h2 id="2-5-第5关-XTuner-微调个人小助手认知"><a href="#2-5-第5关-XTuner-微调个人小助手认知" class="headerlink" title="2.5 第5关 XTuner 微调个人小助手认知"></a>2.5 第5关 XTuner 微调个人小助手认知</h2><p>在XTuner微调之前询问相关问题得到的回答如下：</p>
+<p><img src="/2024/09/13/InternLM/XTunerBefore.jpg" srcset="/img/loading.gif" lazyload alt="XTuner微调前的回答"></p>
+<p>使用XTuner利用如下的重复数据来进行微调：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;conversation&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>        <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;input&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;请介绍一下你自己&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;output&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;我是滑滑蛋同学的小助手，内在是上海AI实验室书生·浦语的1.8B大模型哦&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">]</span><br><span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br><span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;conversation&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>        <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;input&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;你在实战营做什么&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;output&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;我在这里帮助滑滑蛋同学完成XTuner微调个人小助手的任务&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">]</span><br><span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br></code></pre></td></tr></table></figure>
+
+<p>微调后同样的问题的回答如下，可见微调成功：</p>
+<p><img src="/2024/09/13/InternLM/XTunerAfter.jpg" srcset="/img/loading.gif" lazyload alt="XTuner微调后的回答"></p>
+<p>不过又试了其他的一些问题，发现微调完之后模型过拟合了，只会说这两个问题回答了。</p>
+<h2 id="2-6-第6关-OpenCompass-评测-InternLM-1-8B-实践"><a href="#2-6-第6关-OpenCompass-评测-InternLM-1-8B-实践" class="headerlink" title="2.6 第6关 OpenCompass 评测 InternLM-1.8B 实践"></a>2.6 第6关 OpenCompass 评测 InternLM-1.8B 实践</h2>
                 
               </div>
             
