@@ -16,24 +16,30 @@
   <meta name="author" content="滑滑蛋">
   <meta name="keywords" content="">
   
-    <meta name="description" content="背景最近参与了2024年中科院举办的开源之夏活动，完成了字节跳动开源的Godel Scheduler的”基于 Godel Scheduler 实现应用亲和&#x2F;反亲和以及均匀分布功能“的项目。这里做一个经验贴，希望能帮助到后面想要参与到这个项目中的人来。 项目报名下面这个是2024年整体的一个活动时间。  我印象中在4月29号之前就已经在陆陆续续放出会参与到开源之夏活动中的项目了，所以可以在">
+    <meta name="description" content="GPU架构概览物理体系架构下图是A100的物理体系架构：  绿色部分是计算核心   在 NVidia 的 GPU 里，最基本的处理单元是SP（Streaming Processor），A100中，64SP会组成一个SM（streaming Multiprocessor），SM是GPU中调度的基础单元，A100中总共具有108个SM，所以得到共有108*64&#x3D;6192个计算核心。   中间">
 <meta property="og:type" content="article">
-<meta property="og:title" content="2024开源之夏参与经验总结">
-<meta property="og:url" content="http://example.com/2024/12/02/OSPPExperience/index.html">
+<meta property="og:title" content="GPU架构概览">
+<meta property="og:url" content="http://example.com/2025/05/10/GPUStudy1/index.html">
 <meta property="og:site_name" content="滑滑蛋的个人博客">
-<meta property="og:description" content="背景最近参与了2024年中科院举办的开源之夏活动，完成了字节跳动开源的Godel Scheduler的”基于 Godel Scheduler 实现应用亲和&#x2F;反亲和以及均匀分布功能“的项目。这里做一个经验贴，希望能帮助到后面想要参与到这个项目中的人来。 项目报名下面这个是2024年整体的一个活动时间。  我印象中在4月29号之前就已经在陆陆续续放出会参与到开源之夏活动中的项目了，所以可以在">
+<meta property="og:description" content="GPU架构概览物理体系架构下图是A100的物理体系架构：  绿色部分是计算核心   在 NVidia 的 GPU 里，最基本的处理单元是SP（Streaming Processor），A100中，64SP会组成一个SM（streaming Multiprocessor），SM是GPU中调度的基础单元，A100中总共具有108个SM，所以得到共有108*64&#x3D;6192个计算核心。   中间">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/2024/12/02/OSPPExperience/timeLine.png">
-<meta property="article:published_time" content="2024-12-02T08:47:58.000Z">
-<meta property="article:modified_time" content="2024-12-02T09:02:57.303Z">
+<meta property="og:image" content="http://example.com/2025/05/10/GPUStudy1/image-4.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPUStudy1/image-5.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPUStudy1/image.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPUStudy1/image-1.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPUStudy1/image-3.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPUStudy1/image-2.png">
+<meta property="article:published_time" content="2025-05-10T06:25:24.000Z">
+<meta property="article:modified_time" content="2025-05-10T06:32:27.125Z">
 <meta property="article:author" content="滑滑蛋">
-<meta property="article:tag" content="开源之夏">
+<meta property="article:tag" content="GPU">
+<meta property="article:tag" content="AI">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/2024/12/02/OSPPExperience/timeLine.png">
+<meta name="twitter:image" content="http://example.com/2025/05/10/GPUStudy1/image-4.png">
   
   
   
-  <title>2024开源之夏参与经验总结 - 滑滑蛋的个人博客</title>
+  <title>GPU架构概览 - 滑滑蛋的个人博客</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -241,7 +247,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="2024开源之夏参与经验总结"></span>
+            <span id="subtitle" data-typed-text="GPU架构概览"></span>
           
         </div>
 
@@ -252,8 +258,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-02 16:47" pubdate>
-          2024年12月2日 下午
+        <time datetime="2025-05-10 14:25" pubdate>
+          2025年5月10日 下午
         </time>
       </span>
     
@@ -264,7 +270,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.6k 字
+          4.4k 字
         
       </span>
     
@@ -275,7 +281,7 @@
         
         
         
-          8 分钟
+          23 分钟
         
       </span>
     
@@ -320,26 +326,242 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">2024开源之夏参与经验总结</h1>
+            <h1 id="seo-header">GPU架构概览</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>最近参与了2024年中科院举办的<a target="_blank" rel="noopener" href="https://summer-ospp.ac.cn/">开源之夏活动</a>，完成了字节跳动开源的Godel Scheduler的”<a target="_blank" rel="noopener" href="https://summer-ospp.ac.cn/org/prodetail/247d60192?lang=zh&list=pro">基于 Godel Scheduler 实现应用亲和&#x2F;反亲和以及均匀分布功能</a>“的项目。这里做一个经验贴，希望能帮助到后面想要参与到这个项目中的人来。</p>
-<h1 id="项目报名"><a href="#项目报名" class="headerlink" title="项目报名"></a>项目报名</h1><p>下面这个是2024年整体的一个活动时间。</p>
-<p><img src="/2024/12/02/OSPPExperience/timeLine.png" srcset="/img/loading.gif" lazyload alt="活动时间线"></p>
-<p>我印象中在4月29号之前就已经在陆陆续续放出会参与到开源之夏活动中的项目了，所以可以在此期间多多关注一下，然后提早做准备。</p>
-<p>我个人是在5月初就基本决定了要做哪几个项目，然后优先选择了其中一个最想做的来做准备，选择的时候主要是参考哪一个与我现有的研究规划最为接近同时又是在力所能及的范围内的，我最后选择的godel-scheduler的项目虽然是一个比较新的开源项目，但是我之前就已经有读到过这个项目的论文，并且我个人也比较相信字节的背书（事实证明字节的人确实也很技术过硬，都很nice）。基本确定之后我就开始做了相关的准备工作，首先去恶补了一下k8s调度器的相关知识并开始阅读源码，并且正好也将其整理成了博客，然后尝试部署使用了godel-scheduler。然后我是5月15号就去主动发邮件联系了项目的导师，做了一番自我介绍以及对项目的青睐，不过其实当时导师也只是回了一下感谢关注，后面有信息会周知。据我所知有些项目的导师你在联系的时候会交流的比较热烈，会进一步确定双方的意向。可能还是主要看导师的习惯，如果导师回复的没有那么热烈也不一定是没机会，集中精力去准备就好了。</p>
-<p>后面正式申请的时候需要按要求填写一份个人简历和项目申请书，项目申请书是会公开出去的，需要注意不要在里面写个人隐私。项目申请书的内容也是仅供参考，个人感觉把自己的预研工作写清楚，展现自己有完成这个项目的能力就行了，像里面写的时间规划后面也是可以灵活调整的。</p>
-<p>本来想要申请两个项目的以保底，不过奈何精力不足，就直接all in到一个项目中了。</p>
-<h1 id="项目开发"><a href="#项目开发" class="headerlink" title="项目开发"></a>项目开发</h1><p>开源之夏官方公告中有说这些项目是需要一整个暑假全勤去搞，但是实际上据我观察大部分任务可能并不需要这么多时间。像我当时暑假是实习+实验室项目与论文+开源之夏并行的，实际上多肝肝也还是来得及（就是后期可能会有点点赶）。</p>
-<p>我是当时花了大概一个星期完成了一个初步版本，然后在8月初就提了一个pr，然后本来想着是等着有人在下面给我提改进意见，然后继续改的。但是实际上一直没人理，不过其实也有我当时因为比较忙所以想先缓缓的原因，然后后面到了9月初我去主动邮件联系了导师，然后导师帮我拉了一个飞书群，让另外一名正式员工来指导我。</p>
-<p>当时其实本来感觉已经开发的差不多了，但是后面交流下来发现自己还是对很多地方理解的不是很彻底，没有把项目与原生k8s不同的地方兼顾到，所以后面又改了很多。</p>
-<p>值得注意的是虽然上面写的项目开发的时间是在9月30号，9月30号也确实就需要上传结项项目书了，但是10月份其实还是可以继续在pr上commit，所以实际上开发是可以一直推进到10月底。我实际上也一直干到了那时候，也多亏后面不在实习了，不然肯定干不完了。所以个人感觉还是要去尽早联系导师，多多沟通，预留足够的时间，导师确实能够在开发过程中给予很多的指导。</p>
-<p>还有一个需要提前注意的点，就是开发过程中的commit提交需要使用个人注册的学校邮箱，还需要把github的邮箱隐私模式关掉，我当时忘记关了，所以后面还发了份邮件过去说明这个事情。</p>
-<h1 id="项目结项"><a href="#项目结项" class="headerlink" title="项目结项"></a>项目结项</h1><p>项目结项需要写一个结项报告，主要就是把完成了什么事情写出来，这个只要和导师那边协商好了就行不是太大的问题，主要还是看开发进度。我当时实际上最后还是差一个小功能没有彻底完成，所以就先合到了主项目的一个分支，然后后面11月才把功能彻底完成，提交了一个新的pr上去。</p>
-<p>最后结项通过之后要记得去填写银行卡信息。</p>
-<p>导师还可以在结项后去帮忙申请优秀学生，我是当时申请了最具潜力奖，祈愿一个能过~</p>
+                <h1 id="GPU架构概览"><a href="#GPU架构概览" class="headerlink" title="GPU架构概览"></a>GPU架构概览</h1><h2 id="物理体系架构"><a href="#物理体系架构" class="headerlink" title="物理体系架构"></a>物理体系架构</h2><p>下图是A100的物理体系架构：</p>
+<ul>
+<li>绿色部分是计算核心</li>
+</ul>
+<blockquote>
+<p>在 NVidia 的 GPU 里，最基本的处理单元是SP（Streaming Processor），A100中，64SP会组成一个SM（streaming Multiprocessor），SM是GPU中调度的基础单元，A100中总共具有108个SM，所以得到共有108*64&#x3D;6192个计算核心。</p>
+</blockquote>
+<ul>
+<li><p>中间蓝色部分是L2缓存</p>
+</li>
+<li><p>最上面是PCIE层，通过PCIE接口以外设的方式集成到服务器上。</p>
+</li>
+<li><p>最下面是NVLink，它是多个GPU间进行通信的组件，会对GPU之间的通信做些优化</p>
+</li>
+<li><p>两侧的HBM2就是显存，目前的A100的显存有两种40G and 80G</p>
+</li>
+</ul>
+<p><img src="/2025/05/10/GPUStudy1/image-4.png" srcset="/img/loading.gif" lazyload></p>
+<p>SM是核心的计算元件，下图是A100的SM的结构，可以看到：</p>
+<ul>
+<li><p>存在一个192KB的L1级的Cache</p>
+</li>
+<li><p>各计算单元SP&#x2F;CUDA Core存在一个L0级的指令Cache</p>
+</li>
+</ul>
+<blockquote>
+<p>在 Fermi 架构之后，SP 被改称为 CUDA Core，通过 CUDA 来控制具体的指令执行。</p>
+</blockquote>
+<ul>
+<li><p>计算单元存在适配 FP16、BF16、TF32、FP64、INT8、INT4 和 Binary 等各类数据类型运算的<strong>向量</strong>运行单元</p>
+</li>
+<li><p>计算单元存在一个额外的Tensor core去进行<strong>张量</strong>计算</p>
+</li>
+</ul>
+<blockquote>
+<p>每个TensorCore提供一个4x4x4矩阵处理数组，它执行操作D&#x3D;A*B+C，其中A、B、C和D是4×4矩阵。每个TensorCore每个时钟周期可以执行64个浮点FMA混合精度操作，而在一个SM中有多个TensorCore。</p>
+<p>张量核心与普通的 CUDA 核心其实有很大的区别，<strong>CUDA 核心在每个时钟周期都可以准确的执行一次整数或者浮点数的运算</strong>，时钟的速度和核心的数量都会影响整体性能。<strong>张量核心通过牺牲一定的精度可以在每个时钟计算执行一次 4 x 4 的矩阵运算</strong>。</p>
+</blockquote>
+<ul>
+<li><p>计算单元还存在一个Warp调度器负责调度执行可运行的Warp</p>
+</li>
+<li><p>计算单元有专门的特殊函数的计算单元（Special Functions Unit、SPU），（超越函数和数学函数,反平方根、正余弦啥的）</p>
+</li>
+<li><p>计算单元还存在Dispatch Unit作为指令分发单元</p>
+</li>
+</ul>
+<p><img src="/2025/05/10/GPUStudy1/image-5.png" srcset="/img/loading.gif" lazyload></p>
+<p>其内存架构如下图所示：</p>
+<ul>
+<li><p>最外层是HBM内存，大小为80GB</p>
+</li>
+<li><p>然后还有一个SM共享的L2 Cache，大小为40MB</p>
+</li>
+<li><p>每个SM有一个L1级的Cache，大小为192KB</p>
+</li>
+<li><p>每个SM的寄存器也可以视作一个缓存，大小为256KB</p>
+</li>
+<li><p>GPU与CPU之间通过PCIe进行通信</p>
+</li>
+</ul>
+<p><img src="/2025/05/10/GPUStudy1/image.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="CUDA编程模型下的逻辑体系结构"><a href="#CUDA编程模型下的逻辑体系结构" class="headerlink" title="CUDA编程模型下的逻辑体系结构"></a>CUDA编程模型下的逻辑体系结构</h2><h3 id="CUDA简介"><a href="#CUDA简介" class="headerlink" title="CUDA简介"></a>CUDA简介</h3><p>一个CUDA程序的可以分为两个部分: 在CPU上运行的<code>Host</code>程序；在GPU上运行的<code>Device</code>程序。两者拥有各自的存储器。GPU上运行的函数又被叫做<code>kernel</code>函数，通过<code>global</code>关键字声名，例如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// Kernel definition</span><br><span class="hljs-function">__global__ <span class="hljs-type">void</span> <span class="hljs-title">MatAdd</span><span class="hljs-params">(<span class="hljs-type">float</span> A[N][N], <span class="hljs-type">float</span> B[N][N],</span></span><br><span class="hljs-params"><span class="hljs-function"><span class="hljs-type">float</span> C[N][N])</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-type">int</span> i = blockIdx.x * blockDim.x + threadIdx.x;<br>    <span class="hljs-type">int</span> j = blockIdx.y * blockDim.y + threadIdx.y;<br>    <span class="hljs-keyword">if</span> (i &lt; N &amp;&amp; j &lt; N)<br>        C[i][j] = A[i][j] + B[i][j];<br>&#125;<br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>...<br>    <span class="hljs-comment">// Kernel invocation</span><br>    <span class="hljs-function">dim3 <span class="hljs-title">threadsPerBlock</span><span class="hljs-params">(<span class="hljs-number">16</span>, <span class="hljs-number">16</span>)</span></span>;<br>    <span class="hljs-function">dim3 <span class="hljs-title">numBlocks</span><span class="hljs-params">(N / threadsPerBlock.x, N / threadsPerBlock.y)</span></span>;<br>    MatAdd&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;(A, B, C);<br>    ...<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到在程序中我们需要声明用多少个block，每个block中使用多少线程。线程可以使用1维、2维、3维的线程索引(thread index)来标识，block也可以使用1维、2维、3维的索引。例如在上面的启动命令<code>kernel&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;()</code>中就分别制定了block的数量以及每个block中threads的数量。然后在具体的kernel计算就可以根据相关id计算出要取第几位的数。</p>
+<h3 id="计算线程模型简介"><a href="#计算线程模型简介" class="headerlink" title="计算线程模型简介"></a>计算线程模型简介</h3><p>在CUDA架构下，线程的组织结构可以统一成如下所示：</p>
+<p><img src="/2025/05/10/GPUStudy1/image-1.png" srcset="/img/loading.gif" lazyload></p>
+<p>总的来说，CUDA 可以分为 Grid，Block 和 Thread 三个层次结构：</p>
+<ul>
+<li><p>线程层次结构Ⅰ-Grid：Kernel 在 device 上执行时，实际上是启动很多线程，一个 Kernel 所启动的所有线程称为一个网格（grid），同一个网格上的线程共享相同的全局内存空间，grid 是线程结构的第一层次。</p>
+</li>
+<li><p>线程层次结构Ⅱ-Block：Grid 分为多个线程块（block），一个 block 里面包含很多线程，Block 之间并行执行，并且无法通信，也没有执行顺序，每个 block 包含共享内存（shared memory），可以共享里面的 Thread。</p>
+</li>
+<li><p>线程层次结Ⅲ-Thread：CUDA 并行程序实际上会被多个 threads 执行，多个 threads 会被群组成一个线程 block，同一个 block 中 threads 可以同步，也可以通过 shared memory 通信。</p>
+</li>
+</ul>
+<p><strong>将这些线程与硬件进行对应的关系如下所示：</strong></p>
+<table>
+<thead>
+<tr>
+<th><strong>软件</strong></th>
+<th><strong>硬件</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Thread</td>
+<td>SP&#x2F;CUDA Core</td>
+</tr>
+<tr>
+<td>Block</td>
+<td>SM</td>
+</tr>
+<tr>
+<td>Grid</td>
+<td>一组SM</td>
+</tr>
+</tbody></table>
+<p>注意往往32个Thread会组成一个Warp，Warp的调度流程如下：</p>
+<ol>
+<li><p>线程启动后，被分组成若干个 warp（每 32 个线程为一组）</p>
+</li>
+<li><p>每个 warp 被分配到某个 SM 上执行</p>
+</li>
+<li><p>SM 的 warp scheduler 轮询多个 warp，选择 ready warp 发射指令</p>
+</li>
+</ol>
+<blockquote>
+<p>同一个warp中的thread可以以任意顺序执行，active warps被SM资源限制。当一个warp空闲时，SM就可以调度驻留在该SM中另一个可用warp。在并发的warp之间切换是没什么消耗的，因为硬件资源早就被分配到所有thread和block，所以新调度的warp的状态已经存储在SM中了。</p>
+<p>GPU 的线程切换只是切换了寄存器组（一个 SM 中有高达 64k 个寄存器），延迟超级低，几乎没有成本。一个 CUDA Core 可以随时在八个线程之间反复横跳，哪个线程数据准备好了就执行哪个。&#x20;</p>
+</blockquote>
+<ul>
+<li>warp 内所有线程执行同一条指令，但使用不同数据（即 data-parallel）</li>
+</ul>
+<blockquote>
+<p>GPU 控制部件面积比较小，为了节约控制器，<strong>一个 Warp 内部的所有 CUDA Core 的 PC（程序计数器）一直是同步的，但是访存地址是可以不同的，每个核心还可以有自己独立的寄存器组，它们使用不同的数据执行相同的命令</strong>，这种执行方式叫做 SIMT（Single Instruction Multi Trhead）。</p>
+</blockquote>
+<ul>
+<li>遇到分支时，warp divergence 会导致串行化执行不同路径</li>
+</ul>
+<blockquote>
+<p>极端情况下，每一个Core的指令流都不一样，那么甚至还可能导致一个 Warp 中仅有一个 Core 在工作，效率降低为 1&#x2F;32.</p>
+<p><img src="/2025/05/10/GPUStudy1/image-3.png" srcset="/img/loading.gif" lazyload></p>
+</blockquote>
+<h3 id="内存模型简介"><a href="#内存模型简介" class="headerlink" title="内存模型简介"></a>内存模型简介</h3><p><code>CUDA threads</code>在执行时，可以访问多个<code>memory spaces</code>，每个线程有自己的私有的<code>local memory</code>。每个block有一个<code>shared memory</code>，block的所有线程都可以访问。最后，所有线程都可以访问<code>global memory</code>。</p>
+<p><img src="/2025/05/10/GPUStudy1/image-2.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="历史架构演进"><a href="#历史架构演进" class="headerlink" title="历史架构演进"></a>历史架构演进</h1><table>
+<thead>
+<tr>
+<th>架构名称</th>
+<th>中文名字</th>
+<th>发布时间</th>
+<th>核心参数</th>
+<th>特点&amp;优势</th>
+<th>纳米制程</th>
+<th>代表型号</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fermi</td>
+<td>费米</td>
+<td>2010</td>
+<td>16 个 SM，每个 SM 包含 32 个 CUDA Cores，一共 512 CUDA Cores</td>
+<td>首个完整 GPU 计算架构，支持与共享存储结合的 Cache 层次 GPU 架构，支持 ECC GPU 架构</td>
+<td>40&#x2F;28nm, 30 亿晶体管</td>
+<td>Quadro 7000</td>
+</tr>
+<tr>
+<td>Kepler</td>
+<td>开普勒</td>
+<td>2012</td>
+<td>15 个 SMX，每个 SMX 包括 192 个 FP32+64 个 FP64 CUDA Cores</td>
+<td>游戏性能大幅提升，首次支持 GPU Direct 技术</td>
+<td>28nm, 71 亿晶体管</td>
+<td>K80, K40M</td>
+</tr>
+<tr>
+<td>Maxwell</td>
+<td>麦克斯韦</td>
+<td>2014</td>
+<td>16 个 SM，每个 SM 包括 4 个处理块，每个处理块包括 32 个 CUDA Cores+8 个 LD&#x2F;ST Unit + 8 SFU</td>
+<td>每组 SM 单元从 192 个减少到每组 128 个，每个 SMM 单元拥有更多逻辑控制电路</td>
+<td>28nm, 80 亿晶体管</td>
+<td>M5000, M4000GTX 9XX 系列</td>
+</tr>
+<tr>
+<td>Pascal</td>
+<td>帕斯卡</td>
+<td>2016</td>
+<td>GP100 有 60 个 SM，每个 SM 包括 64 个 CUDA Cores，32 个 DP Cores</td>
+<td>NVLink 第一代，双向互联带宽 160GB&#x2F;s，P100 拥有 56 个 SM HBM</td>
+<td>16nm, 153 亿晶体管</td>
+<td>P100, P6000, TTX1080</td>
+</tr>
+<tr>
+<td>Volta</td>
+<td>伏特</td>
+<td>2017</td>
+<td>80 个 SM，每个 SM 包括 32 个 FP64+64 Int32+64 FP32+8 个 Tensor Cores</td>
+<td>NVLink2.0，Tensor Cores 第一代，支持 AI 运算，NVSwitch1.0</td>
+<td>12nm, 211 亿晶体管</td>
+<td>V100, TiTan V</td>
+</tr>
+<tr>
+<td>Turing</td>
+<td>图灵</td>
+<td>2018</td>
+<td>102 核心 92 个 SM，SM 重新设计，每个 SM 包含 64 个 Int32+64 个 FP32+8 个 Tensor Cores</td>
+<td>Tensor Core2.0，RT Core 第一代</td>
+<td>12nm, 186 亿晶体管</td>
+<td>T4，2080TI, RTX 5000</td>
+</tr>
+<tr>
+<td>Ampere</td>
+<td>安培</td>
+<td>2020</td>
+<td>108 个 SM，每个 SM 包含 64 个 FP32+64 个 INT32+32 个 FP64+4 个 Tensor Cores</td>
+<td>Tensor Core3.0，RT Core2.0，NVLink3.0，结构稀疏性矩阵 MIG1.0</td>
+<td>7nm, 283 亿晶体管</td>
+<td>A100, A30 系列</td>
+</tr>
+<tr>
+<td>Hopper</td>
+<td>赫柏</td>
+<td>2022</td>
+<td>132 个 SM，每个 SM 包含 128 个 FP32+64 个 INT32+64 个 FP64+4 个 Tensor Cores</td>
+<td>Tensor Core4.0，NVLink4.0，结构稀疏性矩阵 MIG2.0</td>
+<td>4nm, 800 亿晶体管</td>
+<td>H100</td>
+</tr>
+<tr>
+<td>Blackwell</td>
+<td>布莱克韦尔</td>
+<td>2024</td>
+<td>-</td>
+<td>Tensor Core5.0，NVLink5.0, 第二代 Transformer 引擎，支持 RAS</td>
+<td>4NP, 2080 亿晶体管</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>具体可以看这个：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/chenzomi12/AISystem/blob/main/02Hardware/03GPUBase/04History.md">https://github.com/chenzomi12/AISystem/blob/main/02Hardware/03GPUBase/04History.md</a></p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><p><a target="_blank" rel="noopener" href="https://hustcat.github.io/gpu-architecture/">https://hustcat.github.io/gpu-architecture/</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/319355296/answer/2193938981">https://www.zhihu.com/question/319355296/answer/2193938981</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/8435687930">https://zhuanlan.zhihu.com/p/8435687930</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/chenzomi12/AISystem/blob/main/02Hardware/03GPUBase">https://github.com/chenzomi12/AISystem/blob/main/02Hardware/03GPUBase</a></p>
+</li>
+</ul>
 
                 
               </div>
@@ -358,7 +580,7 @@
     
       <span class="category-chain">
         
-  <a href="/categories/%E5%BC%80%E6%BA%90%E4%B9%8B%E5%A4%8F/" class="category-chain-item">开源之夏</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
 
@@ -373,7 +595,9 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/%E5%BC%80%E6%BA%90%E4%B9%8B%E5%A4%8F/" class="print-no-link">#开源之夏</a>
+        <a href="/tags/GPU/" class="print-no-link">#GPU</a>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
       
     </div>
   
@@ -385,8 +609,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>2024开源之夏参与经验总结</div>
-      <div>http://example.com/2024/12/02/OSPPExperience/</div>
+      <div>GPU架构概览</div>
+      <div>http://example.com/2025/05/10/GPUStudy1/</div>
     </div>
     <div class="license-meta">
       
@@ -398,7 +622,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2024年12月2日</div>
+          <div>2025年5月10日</div>
         </div>
       
       
@@ -430,18 +654,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/05/10/GPUStudy1/" title="GPU架构概览">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">GPU架构概览</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/11/19/k8sUseGPU/" title="如何在K8s集群中管理与使用GPU">
-                        <span class="hidden-mobile">如何在K8s集群中管理与使用GPU</span>
+                      <a href="/2024/12/02/OSPPExperience/" title="2024开源之夏参与经验总结">
+                        <span class="hidden-mobile">2024开源之夏参与经验总结</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
