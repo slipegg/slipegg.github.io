@@ -25,7 +25,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://camo.githubusercontent.com/ded622d3db4ad28f7b47098ae182c09dc1d629c90f487a885f683527825ecc94/687474703a2f2f692e737461636b2e696d6775722e636f6d2f65545a76572e6a7067">
 <meta property="article:published_time" content="2023-11-09T15:36:55.000Z">
-<meta property="article:modified_time" content="2024-03-28T03:46:15.832Z">
+<meta property="article:modified_time" content="2024-03-28T03:48:34.000Z">
 <meta property="article:author" content="滑滑蛋">
 <meta property="article:tag" content="代码风格">
 <meta name="twitter:card" content="summary_large_image">
@@ -572,6 +572,12 @@
   
 
 
+  
+  
+
+
+
+
 
 
 
@@ -788,6 +794,49 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script defer src="/js/leancloud.js" ></script>
 

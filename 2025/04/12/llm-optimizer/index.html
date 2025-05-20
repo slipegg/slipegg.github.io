@@ -16,19 +16,39 @@
   <meta name="author" content="滑滑蛋">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
-<meta property="og:title" content="LLMFromScratch4">
-<meta property="og:url" content="http://example.com/2025/05/20/LLMFromScratch4/index.html">
+    <meta name="description" content="优化器指的是对于我们的一堆模型参数 θ ，以及一个损失函数 L(θ) ，如何找到找到 L(θ) 的最小值。 SGD随机梯度下降 Stochastic Gradient Descent SGD 是最为基础的梯度下降方法。 其核心思路是：在每一步迭代中，用当前的梯度，按着负梯度方向把参数“推”一点，直到 loss 变得更小。 对于一个模型参数 θ，目标是最小化损失函数 L(θ)，SGD 每一步的更新公">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大模型训练-优化器整理">
+<meta property="og:url" content="http://example.com/2025/04/12/llm-optimizer/index.html">
 <meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="优化器指的是对于我们的一堆模型参数 θ ，以及一个损失函数 L(θ) ，如何找到找到 L(θ) 的最小值。 SGD随机梯度下降 Stochastic Gradient Descent SGD 是最为基础的梯度下降方法。 其核心思路是：在每一步迭代中，用当前的梯度，按着负梯度方向把参数“推”一点，直到 loss 变得更小。 对于一个模型参数 θ，目标是最小化损失函数 L(θ)，SGD 每一步的更新公">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-05-20T05:03:26.000Z">
-<meta property="article:modified_time" content="2025-05-20T05:03:26.270Z">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-13.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-14.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-12.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-7.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-11.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-10.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-9.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-8.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-4.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-6.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-5.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-1.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-2.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-3.png">
+<meta property="og:image" content="http://example.com/2025/04/12/llm-optimizer/image-15.png">
+<meta property="article:published_time" content="2025-04-12T05:55:53.000Z">
+<meta property="article:modified_time" content="2025-05-20T06:02:11.024Z">
 <meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="大模型">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2025/04/12/llm-optimizer/image-13.png">
   
   
   
-  <title>LLMFromScratch4 - 滑滑蛋的个人博客</title>
+  <title>大模型训练-优化器整理 - 滑滑蛋的个人博客</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -236,7 +256,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="LLMFromScratch4"></span>
+            <span id="subtitle" data-typed-text="大模型训练-优化器整理"></span>
           
         </div>
 
@@ -247,8 +267,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2025-05-20 13:03" pubdate>
-          2025年5月20日 下午
+        <time datetime="2025-04-12 13:55" pubdate>
+          2025年4月12日 下午
         </time>
       </span>
     
@@ -259,7 +279,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          0 字
+          2.3k 字
         
       </span>
     
@@ -270,7 +290,7 @@
         
         
         
-          1 分钟
+          12 分钟
         
       </span>
     
@@ -315,12 +335,169 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">LLMFromScratch4</h1>
+            <h1 id="seo-header">大模型训练-优化器整理</h1>
             
             
               <div class="markdown-body">
                 
-                
+                <p>优化器指的是对于我们的一堆模型参数 θ ，以及一个损失函数 L(θ) ，如何找到找到 L(θ) 的最小值。</p>
+<h1 id="SGD"><a href="#SGD" class="headerlink" title="SGD"></a>SGD</h1><p>随机梯度下降 Stochastic Gradient Descent SGD 是最为基础的梯度下降方法。</p>
+<p>其核心思路是：在每一步迭代中，用当前的梯度，按着负梯度方向把参数“推”一点，直到 loss 变得更小。</p>
+<p>对于一个模型参数 θ，目标是最小化损失函数 L(θ)，SGD 每一步的更新公式是：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-13.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>θ：模型参数</p>
+</li>
+<li><p>η：学习率（step size）</p>
+</li>
+<li><p>∇θL：当前梯度</p>
+</li>
+</ul>
+<p>依据更新时使用的样本数的不同，它可以分为多种类型：</p>
+<ul>
+<li><p>如果用 <strong>整个训练集</strong> 来计算一次梯度，叫 <strong>Batch Gradient Descent</strong></p>
+</li>
+<li><p>如果用 <strong>一个样本</strong> 来计算梯度，叫 <strong>True SGD</strong></p>
+</li>
+<li><p>如果用 <strong>一个小批量样本（如32、64、128）</strong>，叫 <strong>Mini-batch SGD</strong>（最常用）</p>
+</li>
+</ul>
+<p><strong>Mini-batch SGD</strong> 就是现在主流训练方法——又能并行训练，又比逐样本快。</p>
+<p>SGD足够简单和直观，但是SGD也有一些明显的缺点：</p>
+<h1 id="Momentum"><a href="#Momentum" class="headerlink" title="Momentum"></a>Momentum</h1><p><strong>Momentum（动量法）</strong> 是在 SGD 基础上的进行了优化，它引入了动量机制，它用过去的“梯度方向”给当前的更新加“惯性”！像小球在山谷中滑行，会积蓄动能，不会被小坑困住。</p>
+<p><strong>Momentum</strong>的更新公式如下：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-14.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>γ：动量系数（一般取 0.9 或 0.99）</p>
+</li>
+<li><p>v_t：累计的更新速度（类似速度向量）</p>
+</li>
+<li><p>η：学习率</p>
+</li>
+<li><p>∇θL(θt)：当前梯度</p>
+</li>
+</ul>
+<p>v_t累积了过去的动量，使得在进行梯度更新的时候具有了惯性。</p>
+<p>但是它也存在明显的缺点：</p>
+<h1 id="AdaGrad"><a href="#AdaGrad" class="headerlink" title="AdaGrad"></a>AdaGrad</h1><p>SGD的一个问题在于所有参数都共用同一个学习率，而这会导致：</p>
+<ul>
+<li><p>大梯度的参数震荡很厉害</p>
+</li>
+<li><p>小梯度的参数几乎不更新</p>
+</li>
+</ul>
+<p>为此AdaGrad提出依据历史的梯度信息来调整学习率。其参数更新的计算公式如下：</p>
+<p>首先记录每个参数过去所有的梯度平方的“累计值”：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-12.png" srcset="/img/loading.gif" lazyload></p>
+<p>然后更新参数的时候，把学习率除以这个值的平方根：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-7.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>θt：第 t 次迭代的参数</p>
+</li>
+<li><p>η：初始学习率</p>
+</li>
+<li><p>g_t：当前梯度</p>
+</li>
+<li><p>G_t：当前参数的梯度平方和</p>
+</li>
+<li><p>ϵ：防止除以 0 的小常数（如 1e−8）</p>
+</li>
+</ul>
+<p>在这种方法下就很好的解决了之前的问题：</p>
+<ul>
+<li><p>如果某个参数的历史梯度<strong>一直很大</strong>，那它的 GtG_tGt 就大，学习率就变小 → 避免剧烈震荡</p>
+</li>
+<li><p>如果某个参数的历史梯度<strong>一直很小</strong>，学习率就不怎么缩 → 它还能继续学</p>
+</li>
+</ul>
+<p>但是它也存在一个明显的缺点，那就是因为G_t是不断累积的，所以到了后期梯度会变得很小，导致模型参数基本不更新。</p>
+<h1 id="RMSProp"><a href="#RMSProp" class="headerlink" title="RMSProp"></a>RMSProp</h1><p>为了解决AdaGrad随着时间推移，模型参数基本不更新的问题，RMSProp被提出。</p>
+<p>它用<strong>指数加权移动平均（EMA）</strong>&#x6765;更新梯度的平方，公式如下，即E[g^2]_t中越往前的梯度f对于当前的E[g^2]_t的影响就越小,从而使得学习率最后不会降为0，而是一直保持一定的平衡：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-11.png" srcset="/img/loading.gif" lazyload></p>
+<p>然后更新参数时使用：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-10.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>γ：衰减系数（典型值 0.9）</p>
+</li>
+<li><p>η：学习率</p>
+</li>
+<li><p>g_t：当前梯度</p>
+</li>
+<li><p>E[g^2]_t：当前参数历史梯度平方的加权平均</p>
+</li>
+<li><p>ϵ：小常数，防止除以 0</p>
+</li>
+</ul>
+<p>类比理解一下：</p>
+<ul>
+<li><p><strong>AdaGrad</strong>：你每次都把经验“记下来”，越记越多，最后太谨慎，啥都不敢动了 🙈</p>
+</li>
+<li><p><strong>RMSProp</strong>：你只记“最近几次”的经验 → 有记忆，但也保持灵活，适应当前环境 🧠✨</p>
+</li>
+</ul>
+<h1 id="Adam"><a href="#Adam" class="headerlink" title="Adam"></a>Adam</h1><p>总的来说，<strong>Adam &#x3D; Momentum + RMSProp + 偏差校正</strong>，它是一种带动量的、带自适应学习率的优化器。</p>
+<p>它吸收了前人经验，<strong>既有方向记忆（动量）</strong>，又能<strong>差异化学习率（RMSProp思想）</strong>，而且还做了聪明的<strong>偏差修正</strong>，让前期更新不“失控”。</p>
+<p>Adam 给每个参数记录了两个“动量”：</p>
+<ul>
+<li>&#x20;<strong>一阶矩（梯度的滑动平均）</strong>：</li>
+</ul>
+<p><img src="/2025/04/12/llm-optimizer/image-9.png" srcset="/img/loading.gif" lazyload></p>
+<p>像 Momentum：记录梯度方向的平均值</p>
+<ul>
+<li><strong>二阶矩（梯度平方的滑动平均）</strong>：</li>
+</ul>
+<p><img src="/2025/04/12/llm-optimizer/image-8.png" srcset="/img/loading.gif" lazyload></p>
+<p>像 RMSProp：记录梯度的幅度变化（用于调整每个参数学习率）</p>
+<p>此外由于在训练初期，m_t和v_t会偏向于 0（因为一开始动量积累值太小）</p>
+<p>Adam 加了修正项：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-4.png" srcset="/img/loading.gif" lazyload></p>
+<p>最终参数更新的公式如下：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-6.png" srcset="/img/loading.gif" lazyload></p>
+<p>可视化理解一下的话，Adam 就像一个聪明的登山者：</p>
+<ul>
+<li><p>手里有指南针（动量）🧭</p>
+</li>
+<li><p>脚底有自适应的避震鞋（学习率调整）👟</p>
+</li>
+<li><p>前期还会做“热身”（偏差校正）🔥<br>&#x20;→ 一路平稳往谷底走，不会乱跳也不会卡住</p>
+</li>
+</ul>
+<p>和前面的优化器对比一下，得到如下的结果：</p>
+<h1 id="AdamW"><a href="#AdamW" class="headerlink" title="AdamW"></a>AdamW</h1><h2 id="权重衰减"><a href="#权重衰减" class="headerlink" title="权重衰减"></a>权重衰减</h2><p>在介绍AdamW之前，我们需要先理解一下权重衰减的概念。</p>
+<p>权重衰减指的是在训练过程中，让<strong>模型参数自动变小</strong>，从而<strong>防止过拟合，需要权重衰减主要</strong>有两个原因：</p>
+<ol>
+<li><p><strong>防止过拟合：</strong>&#x53C2;数太大可能在训练集上学得很好，但泛化能力差。衰减可以让它更“温和”地拟合数据。</p>
+</li>
+<li><p><strong>提升数值稳定性：</strong>&#x8FC7;大的参数可能导致不稳定，比如梯度爆炸或输出范围奇怪（尤其在 softmax&#x2F;logits 中）</p>
+</li>
+</ol>
+<p>一般而言，在训练模型时，对于Loss我们有：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-5.png" srcset="/img/loading.gif" lazyload></p>
+<p>比如交叉熵损失、均方误差之类的。</p>
+<p>为了进行权重衰减，我们可以在计算Loss时加入一个L2正则项：</p>
+<p><img src="/2025/04/12/llm-optimizer/image.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>L(θ)是原本的损失（衡量模型对训练集的拟合）</p>
+</li>
+<li><p>||θ||^2 是参数向量的平方和（越大说明参数越激进）</p>
+</li>
+<li><p>λ是一个超参数，控制“惩罚力度”</p>
+</li>
+</ul>
+<p>对于SGD，在加入了L2正则项后，损失函数再对θ求导可以得到：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-1.png" srcset="/img/loading.gif" lazyload></p>
+<p>再把 2λ 合并写成 λ，并将参数写全就可以得到：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-2.png" srcset="/img/loading.gif" lazyload></p>
+<p>再整理一下得到：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-3.png" srcset="/img/loading.gif" lazyload></p>
+<p>而在SGD加L2正则可以做到权重衰减，但是对于Adam却有了问题，因为Adam 中每个参数的更新方向会被“除以一个平方根的梯度平方平均”，也就是：</p>
+<p><img src="/2025/04/12/llm-optimizer/image-15.png" srcset="/img/loading.gif" lazyload></p>
+<p>如果把 λ⋅θ加到这里就会导致梯度方向被缩放，权重衰减也被缩放！从而导致衰减效果不稳定，容易<strong>衰减不到位或者过头</strong>。</p>
+<h2 id="AdamW核心修改"><a href="#AdamW核心修改" class="headerlink" title="AdamW核心修改"></a>AdamW核心修改</h2><p>为了解决Adam中权重衰减的问题，AdamW的做法是<strong>不把 λ⋅θ 当做“梯度的一部分”加进去，而是直接减掉，</strong></p>
+<p>AdamW下，参数更新的公式变成了：</p>
+<p><strong>θ &#x3D; θ - η * ∇L - η * λ * θ&#x20;</strong></p>
+<p>即直接减掉，不去受到学习率更新的影响。</p>
+
                 
               </div>
             
@@ -328,6 +505,34 @@
             <div>
               <div class="post-metas my-3">
   
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+    </div>
   
 </div>
 
@@ -337,8 +542,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>LLMFromScratch4</div>
-      <div>http://example.com/2025/05/20/LLMFromScratch4/</div>
+      <div>大模型训练-优化器整理</div>
+      <div>http://example.com/2025/04/12/llm-optimizer/</div>
     </div>
     <div class="license-meta">
       
@@ -350,7 +555,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2025年5月20日</div>
+          <div>2025年4月12日</div>
         </div>
       
       
@@ -382,9 +587,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/05/20/LLMFromScratch5/" title="LLMFromScratch5">
+                      <a href="/2025/04/22/transformerStudy/" title="Transformer 详解">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">LLMFromScratch5</span>
+                        <span class="hidden-mobile">Transformer 详解</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -392,8 +597,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2025/05/20/LLMFromScratch3/" title="LLMFromScratch3">
-                        <span class="hidden-mobile">LLMFromScratch3</span>
+                      <a href="/2024/12/02/OSPPExperience/" title="2024开源之夏参与经验总结">
+                        <span class="hidden-mobile">2024开源之夏参与经验总结</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
@@ -481,6 +686,12 @@
 
 
   
+
+
+  
+  
+
+
 
 
 
@@ -699,6 +910,49 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script defer src="/js/leancloud.js" ></script>
 

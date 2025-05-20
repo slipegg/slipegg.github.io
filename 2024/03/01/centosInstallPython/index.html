@@ -24,7 +24,7 @@
 <meta property="og:description" content="该脚本主要是在Centos系统上使用源码安装Python3.7，安装后可以调用python3和pip3来进行使用，同时不与系统Python2.7冲突，还额外加入了腾讯的pip源来加速pip3下载包。 脚本使用方法如下：  创建文件 install_py37.sh，写入以下 shell 脚本 赋予执行权限，chmox +x install_py37.sh 执行脚本，.&#x2F;install_py37.sh">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-03-01T15:15:40.000Z">
-<meta property="article:modified_time" content="2024-03-28T03:38:59.968Z">
+<meta property="article:modified_time" content="2024-03-28T03:39:00.000Z">
 <meta property="article:author" content="滑滑蛋">
 <meta property="article:tag" content="转载">
 <meta property="article:tag" content="Python">
@@ -527,6 +527,12 @@
   
 
 
+  
+  
+
+
+
+
 
 
 
@@ -743,6 +749,49 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script defer src="/js/leancloud.js" ></script>
 
