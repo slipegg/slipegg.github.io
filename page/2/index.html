@@ -266,15 +266,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/05/10/k8sSource3/" target="_self">
-          【K8s源码分析（三）】-K8s调度器调度周期介绍
+        <a href="/2025/05/25/Pytorch%20torch.distributed%20%E5%8F%8ANCCL%E5%88%9D%E6%8E%A2/" target="_self">
+          Pytorch torch.distributed 及NCCL初探
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/10/k8sSource3/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/25/Pytorch%20torch.distributed%20%E5%8F%8ANCCL%E5%88%9D%E6%8E%A2/" target="_self">
         <div>
-          本次分析参考的K8s版本是v1.27.0。 K8s的整体调度框架如下图所示。  调度框架顶层函数K8s调度器调度的核心函数schedulerone在pkg/scheduler/schedule_one.go:62，如下，这里将一些解释写在了注释里 1234567891011121314151617181920212223242526272829303132333435363738394041424
+          Pytorch torch.distributed 举例学习单机通信12345678910111213141516171819202122232425262728293031323334353637import osimport torchimport torch.distributed as distimport torch.multiprocessing as mpdef setup(rank
         </div>
       </a>
 
@@ -282,8 +282,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-10 16:37" pubdate>
-              2024-05-10
+            <time datetime="2025-05-25 20:53" pubdate>
+              2025-05-25
             </time>
           </div>
         
@@ -298,12 +298,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
   
   
 
@@ -320,9 +320,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/k8s/">#k8s</a>
-            
-              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -336,15 +334,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/05/10/k8sSource2/" target="_self">
-          【K8s源码分析（二）】-K8s调度队列介绍
+        <a href="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/" target="_self">
+          GPU架构概览
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/10/k8sSource2/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/" target="_self">
         <div>
-          本次分析参考的K8s版本是v1.27.0。 调度队列简介这里是官方对于K8s中调度队列的介绍，很值得一看：Scheduling queue in kube-scheduler。整体的架构如下图所示。  简单来说K8s中的调度队列主要有3种：  ActiveQ（heap结构）：在每个调度周期开始时都会从这里取出一个Pod尝试调度。一开始提交的所有没有指定.spec.nodeName的Pod都会发送到
+          GPU架构概览物理体系架构下图是A100的物理体系架构：  绿色部分是计算核心   在 NVidia 的 GPU 里，最基本的处理单元是SP（Streaming Processor），A100中，64SP会组成一个SM（streaming Multiprocessor），SM是GPU中调度的基础单元，A100中总共具有108个SM，所以得到共有108*64&#x3D;6192个计算核心。   中间
         </div>
       </a>
 
@@ -352,8 +350,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-10 16:33" pubdate>
-              2024-05-10
+            <time datetime="2025-05-10 20:53" pubdate>
+              2025-05-10
             </time>
           </div>
         
@@ -368,12 +366,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
   
   
 
@@ -390,9 +388,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/k8s/">#k8s</a>
-            
-              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -406,15 +402,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/05/10/k8sSource1/" target="_self">
-          【K8s源码分析（一）】-K8s调度框架及调度器初始化介绍
+        <a href="/2025/05/04/LLMFromScratch4/" target="_self">
+          【从零构建大模型】四、对模型进行无监督训练
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/10/k8sSource1/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/04/LLMFromScratch4/" target="_self">
         <div>
-          本次分析参考的K8s版本是v1.27.0。 调度框架介绍这是官方对于v1.27调度框架的介绍文档：https://v1-27.docs.kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/ 将调度器的实现转化为插件的形式有助于加强调度器的拓展性、灵活性，同时也使得调度核心的实现更加的轻量、可维护。 下图展示了Po
+          概览构建大模型的全景图如下，本文介绍了如何训练大模型以及如何重加载已有的预训练过的大模型参数。  介绍的脉络如下：  介绍Evaluating generative text modelsUsing GPT to generate text简单回顾一下GPT模型，其结构的关键参数如下所示： 123456789101112131415161718192021import torchfrom prev
         </div>
       </a>
 
@@ -422,8 +418,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-10 16:18" pubdate>
-              2024-05-10
+            <time datetime="2025-05-04 20:53" pubdate>
+              2025-05-04
             </time>
           </div>
         
@@ -438,12 +434,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
   
   
 
@@ -460,9 +456,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/k8s/">#k8s</a>
-            
-              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -476,15 +470,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/05/01/godelPaperRead/" target="_self">
-          【论文阅读】Gödel:Unified Large-Scale Resource Management and Scheduling at ByteDance
+        <a href="/2025/05/03/LLMFromScratch3/" target="_self">
+          【从零构建大模型】三、从零实现一个 GPT 模型以生成文本
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/01/godelPaperRead/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/03/LLMFromScratch3/" target="_self">
         <div>
-          论文基础信息论文地址： Gödel: Unified Large-Scale Resource Management and Scheduling at ByteDance 收录会议： 云计算顶会-ACM Symposium on Cloud Computing(SoCC2023) 作者机构： 字节跳动基础架构团队 背景资源大规模： 字节跳动在全球范围内运营着数十个大规模集群，每个集群包含有数十万
+          概览构建大模型的全景图如下，本文介绍了基础GPT-2系列的模型架构。  介绍的脉络如下：  介绍Coding an LLM architecture一个参数量为124 million的GPT-2模型包括了以下的定义参数： 123456789GPT_CONFIG_124M = &#123;    &quot;vocab_size&quot;: 50257,    # Vocabulary size
         </div>
       </a>
 
@@ -492,8 +486,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-01 11:35" pubdate>
-              2024-05-01
+            <time datetime="2025-05-03 20:53" pubdate>
+              2025-05-03
             </time>
           </div>
         
@@ -508,199 +502,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" class="category-chain-item">论文阅读</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/%E9%9B%86%E7%BE%A4%E8%B0%83%E5%BA%A6/">#集群调度</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/18/dockerInterview/" target="_self">
-          Docker 面试题汇总(附答案)
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/18/dockerInterview/" target="_self">
-        <div>
-          建议和这篇一起观看，更加全面一些：万字总结！Docker简介及底层关键技术剖析 Docker 底层原理、概念类问题1. Docker 和 LXC 有什么区别？LXC是在Linux上相关技术实现的容器，docker则在如下的几个方面进行了改进： 1、移植性：通过抽象容器配置，容器可以实现一个平台移植到另一个平台。 2、镜像系统：基于AUFS的镜像系统为容器的分发带来了很多的便利，通是共同的镜像层只需
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-18 11:13" pubdate>
-              2024-04-18
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Docker/" class="category-chain-item">Docker</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Docker/">#Docker</a>
-            
-              <a href="/tags/%E9%9D%A2%E8%AF%95%E9%A2%98/">#面试题</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/18/DockerStudy/" target="_self">
-          万字总结！Docker简介及底层关键技术剖析
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/18/DockerStudy/" target="_self">
-        <div>
-          Docker 简介Docker 是一个开源的应用容器引擎，基于 Go 语言 并遵从 Apache2.0 协议开源。Docker 可以让开发者打包他们的应用以及依赖包到一个轻量级、可移植的容器中，然后发布到任何流行的 Linux 机器上，也可以实现虚拟化。容器是完全使用沙箱机制，相互之间不会有任何接口（类似 iPhone 的 app）。几乎没有性能开销，可以很容易地在机器和数据中心中运行。最重要的是
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-18 11:13" pubdate>
-              2024-04-18
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Docker/" class="category-chain-item">Docker</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Docker/">#Docker</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/08/MIT6-824lab3A3B/" target="_self">
-          【MIT6.824】lab3 Fault-tolerant Key/Value Service 实现笔记
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/08/MIT6-824lab3A3B/" target="_self">
-        <div>
-          引言lab3A的实验要求如下： Your first task is to implement a solution that works when there are no dropped messages, and no failed servers. You’ll need to add RPC-sending code to the Clerk Put&#x2F;Append&#x2F;G
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-08 15:39" pubdate>
-              2024-04-08
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/MIT6-824/Lab/" class="category-chain-item">Lab</a>
+  <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
   
   
 
@@ -717,11 +524,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/Go/">#Go</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -735,15 +538,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/04/08/MIT6-824lab2C2D/" target="_self">
-          【MIT6.824】lab2C-persistence, lab2D-log compaction 实现笔记
+        <a href="/2025/05/02/LLMFromScratch2/" target="_self">
+          【从零构建大模型】二、编码Attention机制
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/08/MIT6-824lab2C2D/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/02/LLMFromScratch2/" target="_self">
         <div>
-          引言lab2C的实验要求如下 Complete the functions persist() and readPersist() in raft.go by adding code to save and restore persistent state. You will need to encode (or “serialize”) the state as an array of byte
+          概览构建大模型的全景图如下，本文介绍了基础的attention处理。  介绍的脉络如下：  介绍The problem with modeling long sequences对于类似翻译的任务，由于不同语言的语法问题，所以难以做到一对一的逐字翻译，需要提前对原本的字符串进行encoder提取信息，然后使用decoder模块进行翻译。 而传统的encoder-decoder RNNs方法在enco
         </div>
       </a>
 
@@ -751,8 +554,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-08 10:01" pubdate>
-              2024-04-08
+            <time datetime="2025-05-02 20:53" pubdate>
+              2025-05-02
             </time>
           </div>
         
@@ -767,12 +570,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/MIT6-824/Lab/" class="category-chain-item">Lab</a>
+  <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
   
   
 
@@ -789,11 +592,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/Go/">#Go</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -807,15 +606,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/04/02/k8sArchitecture/" target="_self">
-          Kubernetes 架构及部署、调度、状态管理流程简介
+        <a href="/2025/05/01/LLMFromScratch1/" target="_self">
+          【从零构建大模型】一、文本数据处理
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/k8sArchitecture/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/01/LLMFromScratch1/" target="_self">
         <div>
-          Kubernetes简称k8s，是用于自动部署、扩展和管理“容器化应用程序”的开源系统。该系统由Google设计并捐赠给Cloud Native Computing Foundation来使用。 它旨在提供“跨主机集群的自动部署、扩展以及运行应用程序容器的平台”。 它支持一系列容器工具，包括Docker等。它是当前绝对主流的容器管理平台。目前阿里（ACK）、字节（ Gödel ）、美团（LAR）内
+          概览构建大模型的全景图如下，本文介绍了最开始的数据处理。  数据处理的全景图如下所示，大致流程为：  将原文本，一般为一个string，进行分割。  对分割后的词转化为id。  生成一个embeddings层，然后id作为序号去embeddings层中取对应的行作为自己的表征。    如此转化后就将原本深度学习模型不能处理的原始数据转化为了可以处理的矩阵，同时我们希望这最后表示原始数据的矩阵中也能
         </div>
       </a>
 
@@ -823,8 +622,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 20:53" pubdate>
-              2024-04-02
+            <time datetime="2025-05-01 20:53" pubdate>
+              2025-05-01
             </time>
           </div>
         
@@ -839,12 +638,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/k8s/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
   
   
 
@@ -861,7 +660,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/k8s/">#k8s</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -875,15 +674,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/03/28/linearizability/" target="_self">
-          分布式系统中的线性一致性
+        <a href="/2025/04/30/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%98%BE%E5%AD%98%E5%8D%A0%E7%94%A8/" target="_self">
+          大模型显存占用浅析
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/28/linearizability/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/30/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%98%BE%E5%AD%98%E5%8D%A0%E7%94%A8/" target="_self">
         <div>
-          前言分布式一致性指的是在同一个系统中，不同客户端操作看到的数据之间的关系。这里重点关注的是网络键值存储系统中的一致性模型。 首先为什么这有可能出现问题呢？主要是来源于分布式系统中特有的问题，包括：  并发读&#x2F;写 副本 缓存 故障、恢复 重传 …  这些问题就有可能导致系统出现意想不到的场景，比如如下是一个简单的生产者代码： 12put(&quot;result&quot;, 27)put
+          基础知识浮点数对于大模型常说的1B、7B中的B指的是Billion，即十亿参数，然后还需考虑模型采用什么位数来存储，常见的表示类型如下：  可以非常直观地看到，浮点数主要是由符号位（sign）、指数位（exponent）和小数位（mantissa）三部分组成。 符号位都是1位（0表示正，1表示负），指数位影响浮点数范围，小数位影响精度。 其中TF32并不是有32bit，只有19bit不要记错了。B
         </div>
       </a>
 
@@ -891,8 +690,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-28 11:36" pubdate>
-              2024-03-28
+            <time datetime="2025-04-30 20:53" pubdate>
+              2025-04-30
             </time>
           </div>
         
@@ -907,12 +706,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/MIT6-824/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
   
   
 
@@ -929,9 +728,211 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
+              <a href="/tags/LLM/">#LLM</a>
             
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/04/25/Transformer-KV%20cache%E6%B5%85%E6%9E%90/" target="_self">
+          Transformer-KV cache浅析
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/25/Transformer-KV%20cache%E6%B5%85%E6%9E%90/" target="_self">
+        <div>
+          推理回顾假设模型最终生成了“遥遥领先”4个字。 当模型生成第一个“遥”字时，input&#x3D;”&lt;s&gt;”, “&lt;s&gt;”是起始字符。Attention的计算如下：  为了看上去方便，我们暂时忽略scale项根号d， 但是要注意这个scale面试时经常考。 如上图所示，最终Attention的计算公式如下，（softmaxed 表示已经按行进行了softmax）:  以此类
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-04-25 20:53" pubdate>
+              2025-04-25
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/04/23/Transformer%20%E4%B8%ADDecoder-only%E3%80%81Encoder-only%E3%80%81Decoder-encoder%E6%9E%B6%E6%9E%84%E5%8C%BA%E5%88%AB/" target="_self">
+          Transformer 中Decoder-only、Encoder-only、Decoder-encoder架构区别
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/23/Transformer%20%E4%B8%ADDecoder-only%E3%80%81Encoder-only%E3%80%81Decoder-encoder%E6%9E%B6%E6%9E%84%E5%8C%BA%E5%88%AB/" target="_self">
+        <div>
+          不同架构的特点Encoder-Decoder 模型&#x20; 特点:包含编码器和解码器两个部分。编码器处理输入序列，生成上下文向量;解码器则根据编码器的输出生成目标序列。这个结构能够同时处理输入和输出序列的关联。  典型模型：T5(Text-to-Text Transfer Transformer) 、&#x42;ART  &#x20;应用:序列到序列任务，如机器翻译、摘要生成。&#x20;
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-04-23 20:53" pubdate>
+              2025-04-23
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/04/22/Transformer%E8%AF%A6%E8%A7%A3/" target="_self">
+          Transformer详解
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/22/Transformer%E8%AF%A6%E8%A7%A3/" target="_self">
+        <div>
+          概览 Transformer由两个部分组成，包括Decoder和Encoder两个部分 Self-attention对于输入X，我们有对应的WQ、WK、WV矩阵，可以计算得到，Q、K、V  Q代表查询向量（Query）  K代表键向量（Key），KQ其实就代表了对于各个字符的注意力  V代表值向量（Value），需要与注意力相乘得倒最后的值    然后依据下面的公式可以计算出对应的Attentio
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-04-22 20:53" pubdate>
+              2025-04-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -943,7 +944,7 @@
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <a class="extend prev" rel="prev" href="/"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/#board">3</a><a class="page-number" href="/page/4/#board">4</a><a class="extend next" rel="next" href="/page/3/#board"><i class="iconfont icon-arrowright"></i></a>
+      <a class="extend prev" rel="prev" href="/"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/#board">3</a><a class="page-number" href="/page/4/#board">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/#board">7</a><a class="extend next" rel="next" href="/page/3/#board"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
 

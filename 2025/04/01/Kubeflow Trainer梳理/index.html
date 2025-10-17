@@ -1,0 +1,964 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="仓库链接：https:&#x2F;&#x2F;github.com&#x2F;kubeflow&#x2F;trainer 主要的结构体介绍TrainJob12345678910111213&#x2F;&#x2F; TrainJob represents configuration of a training job.type TrainJob struct &#123;    metav1.TypeMeta &#96;json:&quot;,inline&amp;quot">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubeflow Trainer梳理">
+<meta property="og:url" content="http://example.com/2025/04/01/Kubeflow%20Trainer%E6%A2%B3%E7%90%86/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="仓库链接：https:&#x2F;&#x2F;github.com&#x2F;kubeflow&#x2F;trainer 主要的结构体介绍TrainJob12345678910111213&#x2F;&#x2F; TrainJob represents configuration of a training job.type TrainJob struct &#123;    metav1.TypeMeta &#96;json:&quot;,inline&amp;quot">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/image.png">
+<meta property="article:published_time" content="2025-04-01T12:53:03.000Z">
+<meta property="article:modified_time" content="2025-10-17T06:17:08.536Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="k8s">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/images/image.png">
+  
+  
+  
+  <title>Kubeflow Trainer梳理 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Kubeflow Trainer梳理"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-04-01 20:53" pubdate>
+          2025年4月1日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          18k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          89 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Kubeflow Trainer梳理</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>仓库链接：<a target="_blank" rel="noopener" href="https://github.com/kubeflow/trainer">https://github.com/kubeflow/trainer</a></p>
+<h1 id="主要的结构体介绍"><a href="#主要的结构体介绍" class="headerlink" title="主要的结构体介绍"></a>主要的结构体介绍</h1><h2 id="TrainJob"><a href="#TrainJob" class="headerlink" title="TrainJob"></a>TrainJob</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// TrainJob represents configuration of a training job.</span><br><span class="hljs-keyword">type</span> TrainJob <span class="hljs-keyword">struct</span> &#123;<br>    metav1.TypeMeta <span class="hljs-string">`json:&quot;,inline&quot;`</span><br><br>    <span class="hljs-comment">// Standard object&#x27;s metadata.</span><br>    metav1.ObjectMeta <span class="hljs-string">`json:&quot;metadata,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Specification of the desired TrainJob.</span><br>    Spec TrainJobSpec <span class="hljs-string">`json:&quot;spec,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Current status of TrainJob.</span><br>    Status TrainJobStatus <span class="hljs-string">`json:&quot;status,omitempty&quot;`</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// TrainJobSpec represents specification of the desired TrainJob.</span><br><span class="hljs-keyword">type</span> TrainJobSpec <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Reference to the training runtime.</span><br>    <span class="hljs-comment">// The field is immutable.</span><br>    <span class="hljs-comment">// +kubebuilder:validation:XValidation:rule=&quot;self == oldSelf&quot;, message=&quot;runtimeRef is immutable&quot;</span><br>    RuntimeRef RuntimeRef <span class="hljs-string">`json:&quot;runtimeRef&quot;`</span><br><br>    <span class="hljs-comment">// Configuration of the desired trainer.</span><br>    Trainer *Trainer <span class="hljs-string">`json:&quot;trainer,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Configuration of the training dataset.</span><br>    DatasetConfig *DatasetConfig <span class="hljs-string">`json:&quot;datasetConfig,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Configuration of the pre-trained and trained model.</span><br>    ModelConfig *ModelConfig <span class="hljs-string">`json:&quot;modelConfig,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Labels to apply for the derivative JobSet and Jobs.</span><br>    <span class="hljs-comment">// They will be merged with the TrainingRuntime values.</span><br>    Labels <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;labels,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Annotations to apply for the derivative JobSet and Jobs.</span><br>    <span class="hljs-comment">// They will be merged with the TrainingRuntime values.</span><br>    Annotations <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;annotations,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Custom overrides for the training runtime.</span><br>    <span class="hljs-comment">// +listType=atomic</span><br>    PodSpecOverrides []PodSpecOverride <span class="hljs-string">`json:&quot;podSpecOverrides,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Whether the controller should suspend the running TrainJob.</span><br>    <span class="hljs-comment">// Defaults to false.</span><br>    <span class="hljs-comment">// +kubebuilder:default=false</span><br>    Suspend *<span class="hljs-type">bool</span> <span class="hljs-string">`json:&quot;suspend,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// ManagedBy is used to indicate the controller or entity that manages a TrainJob.</span><br>    <span class="hljs-comment">// The value must be either an empty, `trainer.kubeflow.org/trainjob-controller` or</span><br>    <span class="hljs-comment">// `kueue.x-k8s.io/multikueue`. The built-in TrainJob controller reconciles TrainJob which</span><br>    <span class="hljs-comment">// don&#x27;t have this field at all or the field value is the reserved string</span><br>    <span class="hljs-comment">// `trainer.kubeflow.org/trainjob-controller`, but delegates reconciling TrainJobs</span><br>    <span class="hljs-comment">// with a &#x27;kueue.x-k8s.io/multikueue&#x27; to the Kueue. The field is immutable.</span><br>    <span class="hljs-comment">// Defaults to `trainer.kubeflow.org/trainjob-controller`</span><br>    <span class="hljs-comment">// +kubebuilder:default=&quot;trainer.kubeflow.org/trainjob-controller&quot;</span><br>    <span class="hljs-comment">// +kubebuilder:validation:XValidation:rule=&quot;self in [&#x27;trainer.kubeflow.org/trainjob-controller&#x27;, &#x27;kueue.x-k8s.io/multikueue&#x27;]&quot;, message=&quot;ManagedBy must be trainer.kubeflow.org/trainjob-controller or kueue.x-k8s.io/multikueue if set&quot;</span><br>    <span class="hljs-comment">// +kubebuilder:validation:XValidation:rule=&quot;self == oldSelf&quot;, message=&quot;ManagedBy value is immutable&quot;</span><br>    ManagedBy *<span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;managedBy,omitempty&quot;`</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="TrainingRuntimeList"><a href="#TrainingRuntimeList" class="headerlink" title="TrainingRuntimeList"></a>TrainingRuntimeList</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// TrainingRuntimeList is a collection of training runtimes.</span><br><span class="hljs-keyword">type</span> TrainingRuntimeList <span class="hljs-keyword">struct</span> &#123;<br>    metav1.TypeMeta <span class="hljs-string">`json:&quot;,inline&quot;`</span><br><br>    <span class="hljs-comment">// Standard list metadata.</span><br>    metav1.ListMeta <span class="hljs-string">`json:&quot;metadata,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// List of TrainingRuntimes.</span><br>    Items []TrainingRuntime <span class="hljs-string">`json:&quot;items&quot;`</span><br>&#125;<br><br><span class="hljs-comment">// TrainingRuntime represents a training runtime which can be referenced as part of</span><br><span class="hljs-comment">// `runtimeRef` API in TrainJob. This resource is a namespaced-scoped and can be referenced</span><br><span class="hljs-comment">// by TrainJob that created in the *same* namespace as the TrainingRuntime.</span><br><span class="hljs-keyword">type</span> TrainingRuntime <span class="hljs-keyword">struct</span> &#123;<br>    metav1.TypeMeta <span class="hljs-string">`json:&quot;,inline&quot;`</span><br><br>    <span class="hljs-comment">// Standard object&#x27;s metadata.</span><br>    metav1.ObjectMeta <span class="hljs-string">`json:&quot;metadata,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Specification of the desired TrainingRuntime.</span><br>    Spec TrainingRuntimeSpec <span class="hljs-string">`json:&quot;spec,omitempty&quot;`</span><br>&#125;<br><br><span class="hljs-comment">// TrainingRuntimeSpec represents a specification of the desired training runtime.</span><br><span class="hljs-keyword">type</span> TrainingRuntimeSpec <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Configuration for the model training with ML-specific parameters.</span><br>    MLPolicy *MLPolicy <span class="hljs-string">`json:&quot;mlPolicy,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Configuration for the PodGroup to enable gang-scheduling via supported plugins.</span><br>    PodGroupPolicy *PodGroupPolicy <span class="hljs-string">`json:&quot;podGroupPolicy,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// JobSet template which will be used by TrainJob.</span><br>    Template JobSetTemplateSpec <span class="hljs-string">`json:&quot;template&quot;`</span><br>&#125;<br><br><span class="hljs-comment">// MLPolicy represents configuration for the model trining with ML-specific parameters.</span><br><span class="hljs-comment">// +kubebuilder:validation:XValidation:rule=&quot;!(has(self.numNodes) &amp;&amp; (has(self.torch) &amp;&amp; has(self.torch.elasticPolicy)))&quot;, message=&quot;numNodes should not be set if torch.elasticPolicy is configured&quot;</span><br><span class="hljs-comment">// +kubebuilder:validation:XValidation:rule=&quot;!(has(self.torch) &amp;&amp; has(self.mpi))&quot;, message=&quot;Only one of the policy can be configured&quot;</span><br><span class="hljs-keyword">type</span> MLPolicy <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Number of training nodes.</span><br>    <span class="hljs-comment">// Defaults to 1.</span><br>    NumNodes *<span class="hljs-type">int32</span> <span class="hljs-string">`json:&quot;numNodes,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Configuration for the runtime-specific parameters, such as Torch or MPI.</span><br>    <span class="hljs-comment">// Only one of its members may be specified.</span><br>    MLPolicySource <span class="hljs-string">`json:&quot;,inline&quot;`</span><br>&#125;<br><br><span class="hljs-comment">// MLPolicySource represents the runtime-specific configuration for various technologies.</span><br><span class="hljs-comment">// One of the following specs can be set.</span><br><span class="hljs-keyword">type</span> MLPolicySource <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Configuration for the PyTorch runtime.</span><br>    Torch *TorchMLPolicySource <span class="hljs-string">`json:&quot;torch,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Configuration for the MPI Runtime.</span><br>    MPI *MPIMLPolicySource <span class="hljs-string">`json:&quot;mpi,omitempty&quot;`</span><br>&#125;<br><br><span class="hljs-comment">// PodGroupPolicy represents a PodGroup configuration for gang-scheduling.</span><br><span class="hljs-keyword">type</span> PodGroupPolicy <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Configuration for gang-scheduling using various plugins.</span><br>    PodGroupPolicySource <span class="hljs-string">`json:&quot;,inline&quot;`</span><br>&#125;<br><br><span class="hljs-comment">// PodGroupPolicySource represents supported plugins for gang-scheduling.</span><br><span class="hljs-comment">// Only one of its members may be specified.</span><br><span class="hljs-keyword">type</span> PodGroupPolicySource <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Coscheduling plugin from the Kubernetes scheduler-plugins for gang-scheduling.</span><br>    Coscheduling *CoschedulingPodGroupPolicySource <span class="hljs-string">`json:&quot;coscheduling,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// TODO (andreyvelich): Add support for Volcano gang-scheduler.</span><br>&#125;<br><br><span class="hljs-comment">// JobSetTemplateSpec represents a template of the desired JobSet.</span><br><span class="hljs-keyword">type</span> JobSetTemplateSpec <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Metadata for custom JobSet&#x27;s labels and annotations.</span><br>    <span class="hljs-comment">// JobSet name and namespace is equal to the TrainJob&#x27;s name and namespace.</span><br>    metav1.ObjectMeta <span class="hljs-string">`json:&quot;metadata,omitempty&quot;`</span><br><br>    <span class="hljs-comment">// Specification of the desired JobSet which will be created from TrainJob.</span><br>    Spec jobsetv1alpha2.JobSetSpec <span class="hljs-string">`json:&quot;spec,omitempty&quot;`</span><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<h1 id="设计巧思"><a href="#设计巧思" class="headerlink" title="设计巧思"></a>设计巧思</h1><h2 id="TrainJob-TrainJobStatus"><a href="#TrainJob-TrainJobStatus" class="headerlink" title="TrainJob.TrainJobStatus"></a>TrainJob.TrainJobStatus</h2><p>结构：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// TrainJobStatus represents the current status of TrainJob.</span><br>type TrainJobStatus <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Conditions for the TrainJob.</span><br>    <span class="hljs-comment">//</span><br>    <span class="hljs-comment">// +optional</span><br>    <span class="hljs-comment">// +listType=map</span><br>    <span class="hljs-comment">// +listMapKey=type</span><br>    <span class="hljs-comment">// +patchStrategy=merge</span><br>    <span class="hljs-comment">// +patchMergeKey=type</span><br>    Conditions []metav1.Condition `json:<span class="hljs-string">&quot;conditions,omitempty&quot;</span> patchStrategy:<span class="hljs-string">&quot;merge&quot;</span> patchMergeKey:<span class="hljs-string">&quot;type&quot;</span>`<br><br>    <span class="hljs-comment">// JobsStatus tracks the child Jobs in TrainJob.</span><br>    <span class="hljs-comment">// +listType=map</span><br>    <span class="hljs-comment">// +listMapKey=name</span><br>    JobsStatus []JobStatus `json:<span class="hljs-string">&quot;jobsStatus,omitempty&quot;</span>`<br>&#125;<br><span class="hljs-comment">// Condition contains details for one aspect of the current state of this API Resource.</span><br><span class="hljs-comment">// ---</span><br><span class="hljs-comment">// This struct is intended for direct use as an array at the field path .status.conditions.  For example,</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//  type FooStatus struct&#123;</span><br><span class="hljs-comment">//      // Represents the observations of a foo&#x27;s current state.</span><br><span class="hljs-comment">//      // Known .status.conditions.type are: &quot;Available&quot;, &quot;Progressing&quot;, and &quot;Degraded&quot;</span><br><span class="hljs-comment">//      // +patchMergeKey=type</span><br><span class="hljs-comment">//      // +patchStrategy=merge</span><br><span class="hljs-comment">//      // +listType=map</span><br><span class="hljs-comment">//      // +listMapKey=type</span><br><span class="hljs-comment">//      Conditions []metav1.Condition `json:&quot;conditions,omitempty&quot; patchStrategy:&quot;merge&quot; patchMergeKey:&quot;type&quot; protobuf:&quot;bytes,1,rep,name=conditions&quot;`</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//      // other fields</span><br><span class="hljs-comment">//  &#125;</span><br>type Condition <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// type of condition in CamelCase or in foo.example.com/CamelCase.</span><br>    <span class="hljs-comment">// ---</span><br>    <span class="hljs-comment">// Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be</span><br>    <span class="hljs-comment">// useful (see .node.status.conditions), the ability to deconflict is important.</span><br>    <span class="hljs-comment">// The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)</span><br>    <span class="hljs-comment">// +required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Pattern=`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$`</span><br>    <span class="hljs-comment">// +kubebuilder:validation:MaxLength=316</span><br>    Type string `json:<span class="hljs-string">&quot;type&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,1,opt,name=type&quot;</span>`<br>    <span class="hljs-comment">// status of the condition, one of True, False, Unknown.</span><br>    <span class="hljs-comment">// +required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Enum=True;False;Unknown</span><br>    Status ConditionStatus `json:<span class="hljs-string">&quot;status&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,2,opt,name=status&quot;</span>`<br>    <span class="hljs-comment">// observedGeneration represents the .metadata.generation that the condition was set based upon.</span><br>    <span class="hljs-comment">// For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date</span><br>    <span class="hljs-comment">// with respect to the current state of the instance.</span><br>    <span class="hljs-comment">// +optional</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Minimum=0</span><br>    ObservedGeneration int64 `json:<span class="hljs-string">&quot;observedGeneration,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;varint,3,opt,name=observedGeneration&quot;</span>`<br>    <span class="hljs-comment">// lastTransitionTime is the last time the condition transitioned from one status to another.</span><br>    <span class="hljs-comment">// This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.</span><br>    <span class="hljs-comment">// +required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Type=string</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Format=date-time</span><br>    LastTransitionTime Time `json:<span class="hljs-string">&quot;lastTransitionTime&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,4,opt,name=lastTransitionTime&quot;</span>`<br>    <span class="hljs-comment">// reason contains a programmatic identifier indicating the reason for the condition&#x27;s last transition.</span><br>    <span class="hljs-comment">// Producers of specific condition types may define expected values and meanings for this field,</span><br>    <span class="hljs-comment">// and whether the values are considered a guaranteed API.</span><br>    <span class="hljs-comment">// The value should be a CamelCase string.</span><br>    <span class="hljs-comment">// This field may not be empty.</span><br>    <span class="hljs-comment">// +required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:MaxLength=1024</span><br>    <span class="hljs-comment">// +kubebuilder:validation:MinLength=1</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Pattern=`^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$`</span><br>    Reason string `json:<span class="hljs-string">&quot;reason&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,5,opt,name=reason&quot;</span>`<br>    <span class="hljs-comment">// message is a human readable message indicating details about the transition.</span><br>    <span class="hljs-comment">// This may be an empty string.</span><br>    <span class="hljs-comment">// +required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:Required</span><br>    <span class="hljs-comment">// +kubebuilder:validation:MaxLength=32768</span><br>    Message string `json:<span class="hljs-string">&quot;message&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,6,opt,name=message&quot;</span>`<br>&#125;<br><br><br>type JobStatus <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// Name of the child Job.</span><br>    Name string `json:<span class="hljs-string">&quot;name&quot;</span>`<br><br>    <span class="hljs-comment">// Ready is the number of child Jobs where the number of ready pods and completed pods</span><br>    <span class="hljs-comment">// is greater than or equal to the total expected pod count for the child Job.</span><br>    Ready int32 `json:<span class="hljs-string">&quot;ready&quot;</span>`<br><br>    <span class="hljs-comment">// Succeeded is the number of successfully completed child Jobs.</span><br>    Succeeded int32 `json:<span class="hljs-string">&quot;succeeded&quot;</span>`<br><br>    <span class="hljs-comment">// Failed is the number of failed child Jobs.</span><br>    Failed int32 `json:<span class="hljs-string">&quot;failed&quot;</span>`<br><br>    <span class="hljs-comment">// Active is the number of child Jobs with at least 1 pod in a running or pending state</span><br>    <span class="hljs-comment">// which are not marked for deletion.</span><br>    Active int32 `json:<span class="hljs-string">&quot;active&quot;</span>`<br><br>    <span class="hljs-comment">// Suspended is the number of child Jobs which are in a suspended state.</span><br>    Suspended int32 `json:<span class="hljs-string">&quot;suspended&quot;</span>`<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>一个结束的trainJob的example：</p>
+<p><img src="/images/image.png" srcset="/img/loading.gif" lazyload></p>
+<p>如何看一个trainJob是否结束了：</p>
+<ul>
+<li>直接遍历status.Conditions，比较是否有type为<em>TrainJobComplete或TrainJobFailed</em>，并且比较其status值是否为True</li>
+</ul>
+<p><strong>优点：</strong>&#x4F7F;用condition可以清楚地记录所有发生过的事件的过程。</p>
+<p>如何SetStatuCondition：</p>
+<ul>
+<li><p>以newCondition.Type为标准去查看之前是否已经有相关的Condition了</p>
+</li>
+<li><p>如果还没有这个事件，就加入</p>
+</li>
+<li><p>如果已经有了，就更新为现在这个Condition</p>
+</li>
+</ul>
+<p><strong>优点：</strong>&#x63A7;制了Condition的数量，</p>
+<h1 id="主要流程介绍"><a href="#主要流程介绍" class="headerlink" title="主要流程介绍"></a>主要流程介绍</h1><h2 id="x20-TrainJobReconciler-Reconcile"><a href="#x20-TrainJobReconciler-Reconcile" class="headerlink" title="&#x20;TrainJobReconciler.Reconcile"></a>&#x20;TrainJobReconciler.Reconcile</h2><p>这是主要的回调函数</p>
+<ol>
+<li><p>根据req的名字得到trainJob</p>
+</li>
+<li><p>如果trainJob已经结束了就直接返回</p>
+</li>
+<li><p>根据这个trainJob所属的runtime的APIGroup和Kind来得到这个类别的所有的runtime</p>
+</li>
+<li><p>然后调用reconcileObjects(ctx context.Context, runtime jobruntimes.Runtime, trainJob *trainer.TrainJob)</p>
+</li>
+<li><p>更新trainJob的Status</p>
+<ol>
+<li><p>查看trainJob.Spec.Suspend和trainJob.Status.Conditions，任意标记了suspended，就将一个新的suspended添加到Status.Conditions中</p>
+</li>
+<li><p>根据reconcileObjects的返回的opState来添加对应的<em>creationSucceeded、buildFailed、creationFailed、updateFailed</em>对应的Condition</p>
+</li>
+<li><p>设置TerminalCondition</p>
+</li>
+<li><p>如果在上述的Condition设置中发生了condition的变化，就进行Status的更新</p>
+</li>
+</ol>
+</li>
+</ol>
+<h2 id="TrainJobReconciler-reconcileObjects"><a href="#TrainJobReconciler-reconcileObjects" class="headerlink" title="TrainJobReconciler.reconcileObjects"></a>TrainJobReconciler.reconcileObjects</h2><ol>
+<li><p>让传进来的runtime根据trainJob.Spec.RuntimeRef.Name得到ClusterTrainingRuntime</p>
+</li>
+<li><p>调用ClusterTrainingRuntime来创建新的objects</p>
+<ol>
+<li><p>对于label和annotation会在template的基础上添加上trainJob的</p>
+</li>
+<li><p>最后会根据TemplateSpec生成出带label、annotation、mlPolicy、podGroupPolicy、PodSpecReplicas的infoOption，并根据infoOption来生成Info</p>
+</li>
+<li><p>根据f.enforceMLPlugins来依据MPI、Torch、PlainML中的设置更新info.RuntimePolicy.MLPolicy、info.RuntimePolicy.MLPolicy.Torch来更新info.Trainer中的一些信息，如NumNodes、Env、ContainerPort等</p>
+</li>
+<li><p>根据f.enforcePodGroupPolicyPlugins来依据CoScheduling的设置更新info.Scheduler中的信息，如info.Scheduler.PodLabels[schedulerpluginsv1alpha1.<em>PodGroupLabel</em>] &#x3D; trainJob.Name</p>
+</li>
+<li><p>根据f.componentBuilderPlugins来依据coScheduling、jobSet、MPI等使用info更新一下额外的components，如CoScheduling就需要更新schedulerpluginsv1alpha1ac.PodGroup</p>
+</li>
+</ol>
+</li>
+<li><p>遍历创建的objects进行处理</p>
+<ol>
+<li><p>对object进行类型转换，转为obj</p>
+</li>
+<li><p>调用patch更新obj</p>
+</li>
+</ol>
+</li>
+</ol>
+<h1 id="JobSet介绍"><a href="#JobSet介绍" class="headerlink" title="JobSet介绍"></a>JobSet介绍</h1><p>JobSet是trainRuntime中的template，是创建pod的基本单元，一个jobset中有多个ReplicatedJob，每个ReplicatedJob代表的是多个一样的pod。</p>
+<h1 id="Coscheduling所添加的内容"><a href="#Coscheduling所添加的内容" class="headerlink" title="Coscheduling所添加的内容"></a>Coscheduling所添加的内容</h1><p>原本Coscheduling所使用的podGroup的定义：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// PodGroupSpec represents the template of a pod group.</span><br><span class="hljs-keyword">type</span> PodGroupSpec <span class="hljs-keyword">struct</span> &#123;<br>        <span class="hljs-comment">// MinMember defines the minimal number of members/tasks to run the pod group;</span><br>        <span class="hljs-comment">// if there&#x27;s not enough resources to start all tasks, the scheduler</span><br>        <span class="hljs-comment">// will not start any.</span><br>        MinMember <span class="hljs-type">uint32</span> <span class="hljs-string">`json:&quot;minMember&quot;`</span><br><br>        <span class="hljs-comment">// MinResources defines the minimal resource of members/tasks to run the pod group;</span><br>        <span class="hljs-comment">// if there&#x27;s not enough resources to start all tasks, the scheduler</span><br>        <span class="hljs-comment">// will not start any.</span><br>        MinResources *v1.ResourceList <span class="hljs-string">`json:&quot;minResources,omitempty&quot;`</span><br><br>        <span class="hljs-comment">// ScheduleTimeoutSeconds defines the maximal time of members/tasks to wait before run the pod group;</span><br>        ScheduleTimeoutSeconds *<span class="hljs-type">int32</span> <span class="hljs-string">`json:&quot;scheduleTimeoutSeconds,omitempty&quot;`</span><br>&#125;<br><br><span class="hljs-comment">// PodGroupStatus represents the current state of a pod group.</span><br><span class="hljs-keyword">type</span> PodGroupStatus <span class="hljs-keyword">struct</span> &#123;<br>        <span class="hljs-comment">// Current phase of PodGroup.</span><br>        Phase PodGroupPhase <span class="hljs-string">`json:&quot;phase&quot;`</span><br><br>        <span class="hljs-comment">// OccupiedBy marks the workload (e.g., deployment, statefulset) UID that occupy the podgroup.</span><br>        <span class="hljs-comment">// It is empty if not initialized.</span><br>        OccupiedBy <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;occupiedBy,omitempty&quot;`</span><br><br>        <span class="hljs-comment">// The number of actively running pods.</span><br>        <span class="hljs-comment">// +optional</span><br>        Running <span class="hljs-type">uint32</span> <span class="hljs-string">`json:&quot;running&quot;`</span><br><br>        <span class="hljs-comment">// The number of pods which reached phase Succeeded.</span><br>        <span class="hljs-comment">// +optional</span><br>        Succeeded <span class="hljs-type">uint32</span> <span class="hljs-string">`json:&quot;succeeded&quot;`</span><br><br>        <span class="hljs-comment">// The number of pods which reached phase Failed.</span><br>        <span class="hljs-comment">// +optional</span><br>        Failed <span class="hljs-type">uint32</span> <span class="hljs-string">`json:&quot;failed&quot;`</span><br><br>        <span class="hljs-comment">// ScheduleStartTime of the group</span><br>        ScheduleStartTime metav1.Time <span class="hljs-string">`json:&quot;scheduleStartTime&quot;`</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<h2 id="pkg-runtime-framework-plugins-coscheduling"><a href="#pkg-runtime-framework-plugins-coscheduling" class="headerlink" title="pkg&#x2F;runtime&#x2F;framework&#x2F;plugins&#x2F;coscheduling"></a>pkg&#x2F;runtime&#x2F;framework&#x2F;plugins&#x2F;coscheduling</h2><h4 id="对于CoScheduling"><a href="#对于CoScheduling" class="headerlink" title="对于CoScheduling"></a>对于<strong>CoScheduling</strong></h4><p>需要实现三大Plug：</p>
+<ul>
+<li><p>EnforcePodGroupPolicyPlugin：</p>
+<ul>
+<li><p>EnforcePodGroupPolicy函数：</p>
+<ul>
+<li>主要是加入了<code>info.Scheduler.PodLabels[schedulerpluginsv1alpha1.</code><em><code>PodGroupLabel</code></em><code>] = trainJob.Name</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>WatchExtensionPlugin</p>
+<ul>
+<li><p>ReconcilerBuilders函数：</p>
+<ul>
+<li>确保 PodGroup CRD 已安装，并配置控制器监听 PodGroup、LimitRange 和 RuntimeClass 资源的变化。当这些资源发生变化时，会触发相应的处理逻辑，以保证系统状态的一致性。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>ComponentBuilderPlugin</p>
+<ul>
+<li><p>build函数：</p>
+<ul>
+<li><p>如果 info.RuntimePolicy.PodGroupPolicy.Coscheduling不为空，就创建schedulerpluginsv1alpha1ac.PodGroup(需要的内容，包括：</p>
+</li>
+<li><p>根据info.TotalRequests计算totalMembers、各个类型的资源的总的资源请求</p>
+</li>
+<li><p>构建出podGroup，主要是填充下面这部分内容：</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// PodGroupSpecApplyConfiguration represents an declarative configuration of the PodGroupSpec type for use</span><br><span class="hljs-comment">// with apply.</span><br><span class="hljs-keyword">type</span> PodGroupSpecApplyConfiguration <span class="hljs-keyword">struct</span> &#123;<br>    MinMember              *<span class="hljs-type">int32</span>           <span class="hljs-string">`json:&quot;minMember,omitempty&quot;`</span><br>    MinResources           *v1.ResourceList <span class="hljs-string">`json:&quot;minResources,omitempty&quot;`</span><br>    ScheduleTimeoutSeconds *<span class="hljs-type">int32</span>           <span class="hljs-string">`json:&quot;scheduleTimeoutSeconds,omitempty&quot;`</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>将podGroup的ownerReferences指向trainJob</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="对于PodGroupRuntimeClassHandler"><a href="#对于PodGroupRuntimeClassHandler" class="headerlink" title="对于PodGroupRuntimeClassHandler"></a>对于<strong>PodGroupRuntimeClassHandler</strong></h4><p>需要添加这几个plugin：</p>
+<ul>
+<li><p>TypedEventHandler，这个包含了对event增删查改以及Generic的操作</p>
+</li>
+<li><p>增删查改实际上都统一调用了<strong>queueSuspendedTrainJobs</strong>，具体代码执行如下：</p>
+<ul>
+<li><p>依据runtimeClass.Name获取到所有的trainingRuntimes和clusterTrainingRuntimes</p>
+</li>
+<li><p>依据trainingRuntime.Name和clusterTrainingRuntime.Name获取到对应的trainJob</p>
+</li>
+<li><p>遍历所有的trainJob，如果它已经suspend那么就将其作为一个request加入到处理队列中</p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="Volcano中相关内容"><a href="#Volcano中相关内容" class="headerlink" title="Volcano中相关内容"></a>Volcano中相关内容</h1><h2 id="PodGroup整理"><a href="#PodGroup整理" class="headerlink" title="PodGroup整理"></a>PodGroup整理</h2><p><strong>podGroup定义：</strong></p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs protobuf"><span class="hljs-comment">// PodGroupSpec represents the template of a pod group.</span><br>type PodGroupSpec struct &#123;<br>    <span class="hljs-comment">// MinMember defines the minimal number of members/tasks to run the pod group;</span><br>    <span class="hljs-comment">// if there&#x27;s not enough resources to start all tasks, the scheduler</span><br>    <span class="hljs-comment">// will not start anyone.</span><br>    MinMember <span class="hljs-type">int32</span> `json:<span class="hljs-string">&quot;minMember,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,1,opt,name=minMember&quot;</span>`<br><br>    <span class="hljs-comment">// Queue defines the queue to allocate resource for PodGroup; if queue does not exist,</span><br>    <span class="hljs-comment">// the PodGroup will not be scheduled. Defaults to `default` Queue with the lowest weight.</span><br>    <span class="hljs-comment">// +optional</span><br>    Queue <span class="hljs-type">string</span> `json:<span class="hljs-string">&quot;queue,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,2,opt,name=queue&quot;</span>`<br><br>    <span class="hljs-comment">// If specified, indicates the PodGroup&#x27;s priority. &quot;system-node-critical&quot; and</span><br>    <span class="hljs-comment">// &quot;system-cluster-critical&quot; are two special keywords which indicate the</span><br>    <span class="hljs-comment">// highest priorities with the former being the highest priority. Any other</span><br>    <span class="hljs-comment">// name must be defined by creating a PriorityClass object with that name.</span><br>    <span class="hljs-comment">// If not specified, the PodGroup priority will be default or zero if there is no</span><br>    <span class="hljs-comment">// default.</span><br>    <span class="hljs-comment">// +optional</span><br>    PriorityClassName <span class="hljs-type">string</span> `json:<span class="hljs-string">&quot;priorityClassName,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,3,opt,name=priorityClassName&quot;</span>`<br><br>    <span class="hljs-comment">// MinResources defines the minimal resource of members/tasks to run the pod group;</span><br>    <span class="hljs-comment">// if there&#x27;s not enough resources to start all tasks, the scheduler</span><br>    <span class="hljs-comment">// will not start anyone.</span><br>    MinResources *v1.ResourceList `json:<span class="hljs-string">&quot;minResources,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,4,opt,name=minResources&quot;</span>`<br>&#125;<br><br><span class="hljs-comment">// PodGroupStatus represents the current state of a pod group.</span><br>type PodGroupStatus struct &#123;<br>    <span class="hljs-comment">// Current phase of PodGroup.</span><br>    Phase PodGroupPhase `json:<span class="hljs-string">&quot;phase,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,1,opt,name=phase&quot;</span>`<br><br>    <span class="hljs-comment">// The conditions of PodGroup.</span><br>    <span class="hljs-comment">// +optional</span><br>    Conditions []PodGroupCondition `json:<span class="hljs-string">&quot;conditions,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,2,opt,name=conditions&quot;</span>`<br><br>    <span class="hljs-comment">// The number of actively running pods.</span><br>    <span class="hljs-comment">// +optional</span><br>    Running <span class="hljs-type">int32</span> `json:<span class="hljs-string">&quot;running,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,3,opt,name=running&quot;</span>`<br><br>    <span class="hljs-comment">// The number of pods which reached phase Succeeded.</span><br>    <span class="hljs-comment">// +optional</span><br>    Succeeded <span class="hljs-type">int32</span> `json:<span class="hljs-string">&quot;succeeded,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,4,opt,name=succeeded&quot;</span>`<br><br>    <span class="hljs-comment">// The number of pods which reached phase Failed.</span><br>    <span class="hljs-comment">// +optional</span><br>    Failed <span class="hljs-type">int32</span> `json:<span class="hljs-string">&quot;failed,omitempty&quot;</span> protobuf:<span class="hljs-string">&quot;bytes,5,opt,name=failed&quot;</span>`<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="PodGroup-Controller如何管理Pod"><a href="#PodGroup-Controller如何管理Pod" class="headerlink" title="PodGroup Controller如何管理Pod"></a>PodGroup Controller如何管理Pod</h3><p>查看pkg&#x2F;controllers&#x2F;podgroup&#x2F;pg_controller.go相关内容：<br>哪些Pod会被其管理：</p>
+<ul>
+<li><p>&#x20;pod.Spec.SchedulerName符合Volcano对应的调度器</p>
+</li>
+<li><p>pod.Annotation中有scheduling.k8s.io&#x2F;group-name，且名字等于podGroup，如果没有就会创建一个对应的podGroup</p>
+</li>
+<li><p>可能还需要”volcano.sh&#x2F;task-spec”&#x3D;</p>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/kubeflow/" class="category-chain-item">kubeflow</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/k8s/" class="print-no-link">#k8s</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Kubeflow Trainer梳理</div>
+      <div>http://example.com/2025/04/01/Kubeflow Trainer梳理/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年4月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/04/09/K8s%20Informer%E4%BB%8B%E7%BB%8D/" title="Kubernetes Informer介绍">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Kubernetes Informer介绍</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/02/OSPPExperience/" title="2024开源之夏参与经验总结">
+                        <span class="hidden-mobile">2024开源之夏参与经验总结</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

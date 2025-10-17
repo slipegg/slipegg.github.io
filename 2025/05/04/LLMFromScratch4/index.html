@@ -1,0 +1,922 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="概览构建大模型的全景图如下，本文介绍了如何训练大模型以及如何重加载已有的预训练过的大模型参数。  介绍的脉络如下：  介绍Evaluating generative text modelsUsing GPT to generate text简单回顾一下GPT模型，其结构的关键参数如下所示： 123456789101112131415161718192021import torchfrom prev">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【从零构建大模型】四、对模型进行无监督训练">
+<meta property="og:url" content="http://example.com/2025/05/04/LLMFromScratch4/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="概览构建大模型的全景图如下，本文介绍了如何训练大模型以及如何重加载已有的预训练过的大模型参数。  介绍的脉络如下：  介绍Evaluating generative text modelsUsing GPT to generate text简单回顾一下GPT模型，其结构的关键参数如下所示： 123456789101112131415161718192021import torchfrom prev">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/05/04/LLMFromScratch4/image-4.png">
+<meta property="og:image" content="http://example.com/2025/05/04/LLMFromScratch4/image-3.png">
+<meta property="og:image" content="http://example.com/2025/05/04/LLMFromScratch4/image-1.png">
+<meta property="og:image" content="http://example.com/2025/05/04/LLMFromScratch4/image-2.png">
+<meta property="og:image" content="http://example.com/2025/05/04/LLMFromScratch4/image.png">
+<meta property="article:published_time" content="2025-05-04T12:53:03.000Z">
+<meta property="article:modified_time" content="2025-10-17T05:28:17.008Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2025/05/04/LLMFromScratch4/image-4.png">
+  
+  
+  
+  <title>【从零构建大模型】四、对模型进行无监督训练 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【从零构建大模型】四、对模型进行无监督训练"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-05-04 20:53" pubdate>
+          2025年5月4日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          23k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          114 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【从零构建大模型】四、对模型进行无监督训练</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h1><p>构建大模型的全景图如下，本文介绍了如何训练大模型以及如何重加载已有的预训练过的大模型参数。</p>
+<p><img src="/2025/05/04/LLMFromScratch4/image-4.png" srcset="/img/loading.gif" lazyload></p>
+<p>介绍的脉络如下：</p>
+<p><img src="/2025/05/04/LLMFromScratch4/image-3.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><h2 id="Evaluating-generative-text-models"><a href="#Evaluating-generative-text-models" class="headerlink" title="Evaluating generative text models"></a>Evaluating generative text models</h2><h3 id="Using-GPT-to-generate-text"><a href="#Using-GPT-to-generate-text" class="headerlink" title="Using GPT to generate text"></a>Using GPT to generate text</h3><p>简单回顾一下GPT模型，其结构的关键参数如下所示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">from</span> previous_chapters <span class="hljs-keyword">import</span> GPTModel<br><span class="hljs-comment"># If the `previous_chapters.py` file is not available locally,</span><br><span class="hljs-comment"># you can import it from the `llms-from-scratch` PyPI package.</span><br><span class="hljs-comment"># For details, see: https://github.com/rasbt/LLMs-from-scratch/tree/main/pkg</span><br><span class="hljs-comment"># E.g.,</span><br><span class="hljs-comment"># from llms_from_scratch.ch04 import GPTModel</span><br><br>GPT_CONFIG_124M = &#123;<br>    <span class="hljs-string">&quot;vocab_size&quot;</span>: <span class="hljs-number">50257</span>,   <span class="hljs-comment"># Vocabulary size</span><br>    <span class="hljs-string">&quot;context_length&quot;</span>: <span class="hljs-number">256</span>, <span class="hljs-comment"># Shortened context length (orig: 1024)</span><br>    <span class="hljs-string">&quot;emb_dim&quot;</span>: <span class="hljs-number">768</span>,        <span class="hljs-comment"># Embedding dimension</span><br>    <span class="hljs-string">&quot;n_heads&quot;</span>: <span class="hljs-number">12</span>,         <span class="hljs-comment"># Number of attention heads</span><br>    <span class="hljs-string">&quot;n_layers&quot;</span>: <span class="hljs-number">12</span>,        <span class="hljs-comment"># Number of layers</span><br>    <span class="hljs-string">&quot;drop_rate&quot;</span>: <span class="hljs-number">0.1</span>,      <span class="hljs-comment"># Dropout rate</span><br>    <span class="hljs-string">&quot;qkv_bias&quot;</span>: <span class="hljs-literal">False</span>      <span class="hljs-comment"># Query-key-value bias</span><br>&#125;<br><br>torch.manual_seed(<span class="hljs-number">123</span>)<br>model = GPTModel(GPT_CONFIG_124M)<br>model.<span class="hljs-built_in">eval</span>();  <span class="hljs-comment"># Disable dropout during inference</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意在现在流行的LLM中往往已经不给<code>nn.Linear</code>加入bias层。为了降低计算开销把上下文长度从1024缩减到了256。</p>
+</blockquote>
+<p>一个简单的对输入输出进行解码器的函数如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> tiktoken<br><span class="hljs-keyword">from</span> previous_chapters <span class="hljs-keyword">import</span> generate_text_simple<br><br><span class="hljs-comment"># Alternatively:</span><br><span class="hljs-comment"># from llms_from_scratch.ch04 import generate_text_simple</span><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">text_to_token_ids</span>(<span class="hljs-params">text, tokenizer</span>):<br>    encoded = tokenizer.encode(text, allowed_special=&#123;<span class="hljs-string">&#x27;&lt;|endoftext|&gt;&#x27;</span>&#125;)<br>    encoded_tensor = torch.tensor(encoded).unsqueeze(<span class="hljs-number">0</span>) <span class="hljs-comment"># add batch dimension</span><br>    <span class="hljs-keyword">return</span> encoded_tensor<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">token_ids_to_text</span>(<span class="hljs-params">token_ids, tokenizer</span>):<br>    flat = token_ids.squeeze(<span class="hljs-number">0</span>) <span class="hljs-comment"># remove batch dimension</span><br>    <span class="hljs-keyword">return</span> tokenizer.decode(flat.tolist())<br><br>start_context = <span class="hljs-string">&quot;Every effort moves you&quot;</span><br>tokenizer = tiktoken.get_encoding(<span class="hljs-string">&quot;gpt2&quot;</span>)<br><br>token_ids = generate_text_simple(<br>    model=model,<br>    idx=text_to_token_ids(start_context, tokenizer),<br>    max_new_tokens=<span class="hljs-number">10</span>,<br>    context_size=GPT_CONFIG_124M[<span class="hljs-string">&quot;context_length&quot;</span>]<br>)<br><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Output text:\n&quot;</span>, token_ids_to_text(token_ids, tokenizer))<br><span class="hljs-comment"># Output text:</span><br><span class="hljs-comment">#  Every effort moves you rentingetic wasnم refres RexMeCHicular stren</span><br></code></pre></td></tr></table></figure>
+
+<p>可以看到现在没有被训了的模型的输出还是很混乱的。</p>
+<h3 id="Calculating-the-text-generation-loss-cross-entropy-and-perplexity"><a href="#Calculating-the-text-generation-loss-cross-entropy-and-perplexity" class="headerlink" title="Calculating the text generation loss: cross-entropy and perplexity"></a>Calculating the text generation loss: cross-entropy and perplexity</h3><p>假设现在一个batch中有两个训练实例，那么其target就是相应的右移一位的结果，如下所示。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">inputs = torch.tensor([[<span class="hljs-number">16833</span>, <span class="hljs-number">3626</span>, <span class="hljs-number">6100</span>],   <span class="hljs-comment"># [&quot;every effort moves&quot;,</span><br>                       [<span class="hljs-number">40</span>,    <span class="hljs-number">1107</span>, <span class="hljs-number">588</span>]])   <span class="hljs-comment">#  &quot;I really like&quot;]</span><br><br>targets = torch.tensor([[<span class="hljs-number">3626</span>, <span class="hljs-number">6100</span>, <span class="hljs-number">345</span>  ],  <span class="hljs-comment"># [&quot; effort moves you&quot;,</span><br>                        [<span class="hljs-number">1107</span>,  <span class="hljs-number">588</span>, <span class="hljs-number">11311</span>]]) <span class="hljs-comment">#  &quot; really like chocolate&quot;]</span><br></code></pre></td></tr></table></figure>
+
+<p>最后在经过模型前向传播后我们会得到每一个batch中各个前缀的推理结果，这个结果的维度是字典中各个token的概览，简单地通过softmax获取最高可能性的token就可以得到推理的结果，如下所示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">with</span> torch.no_grad():<br>    logits = model(inputs)<br><br>probas = torch.softmax(logits, dim=-<span class="hljs-number">1</span>) <span class="hljs-comment"># Probability of each token in vocabulary</span><br><span class="hljs-built_in">print</span>(probas.shape) <span class="hljs-comment"># Shape: (batch_size, num_tokens, vocab_size)</span><br><span class="hljs-comment"># 输出</span><br><span class="hljs-comment"># torch.Size([2, 3, 50257])</span><br><br>token_ids = torch.argmax(probas, dim=-<span class="hljs-number">1</span>, keepdim=<span class="hljs-literal">True</span>)<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Token IDs:\n&quot;</span>, token_ids)<br><span class="hljs-comment"># 输出</span><br><span class="hljs-comment"># Token IDs:</span><br><span class="hljs-comment">#  tensor([[[16657],</span><br><span class="hljs-comment">#          [  339],</span><br><span class="hljs-comment">#          [42826]],</span><br><span class="hljs-comment"># </span><br><span class="hljs-comment">#         [[49906],</span><br><span class="hljs-comment">#          [29669],</span><br><span class="hljs-comment">#          [41751]]])</span><br>         <br>         <br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Targets batch 1: <span class="hljs-subst">&#123;token_ids_to_text(targets[<span class="hljs-number">0</span>], tokenizer)&#125;</span>&quot;</span>)<br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Outputs batch 1: <span class="hljs-subst">&#123;token_ids_to_text(token_ids[<span class="hljs-number">0</span>].flatten(), tokenizer)&#125;</span>&quot;</span>)<br><span class="hljs-comment"># Targets batch 1:  effort moves you</span><br><span class="hljs-comment"># Outputs batch 1:  Armed heNetflix</span><br></code></pre></td></tr></table></figure>
+
+<p>现在的输出是混乱的，我们需要计算其与我们想要的target之间的距离，直接去看我们的target的token在输出中预测的概率即可，因为我们最后是希望其对应的概率是1。</p>
+<p>而由于在训练过程中优化概率的对数比优化概率本身更加容易，所以我们会对概率取一个对数，又因为我们一般都是说最小化某个值，所以我们再取一个负数修改目标为最小化。而这也叫做<code>cross_entropy</code>（交叉熵）。</p>
+<blockquote>
+<p>更通用的交叉墒的公式为：</p>
+<p>$$H(y, \hat{y}) &#x3D; -\sum_{i&#x3D;1}^{C} y_i \log(\hat{y}_i)$$</p>
+<p>由于我们这目标是唯一的一个target，而其他token的目标概率都为0，所以就可以只关注目标y这一个。</p>
+</blockquote>
+<p>纯手写的计算方法如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python">text_idx = <span class="hljs-number">0</span><br>target_probas_1 = probas[text_idx, [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>], targets[text_idx]]<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Text 1:&quot;</span>, target_probas_1)<br><span class="hljs-comment"># Text 1: tensor([7.4540e-05, 3.1061e-05, 1.1563e-05])</span><br><br>text_idx = <span class="hljs-number">1</span><br>target_probas_2 = probas[text_idx, [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>], targets[text_idx]]<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Text 2:&quot;</span>, target_probas_2)<br><span class="hljs-comment"># Text 2: tensor([1.0337e-05, 5.6776e-05, 4.7559e-06])</span><br><br><span class="hljs-comment"># Compute logarithm of all token probabilities</span><br>log_probas = torch.log(torch.cat((target_probas_1, target_probas_2)))<br><span class="hljs-built_in">print</span>(log_probas)<br><span class="hljs-comment"># tensor([ -9.5042, -10.3796, -11.3677, -11.4798,  -9.7764, -12.2561])</span><br><br><span class="hljs-comment"># Calculate the average probability for each token</span><br>avg_log_probas = torch.mean(log_probas)<br>neg_avg_log_probas = avg_log_probas * -<span class="hljs-number">1</span><br><span class="hljs-built_in">print</span>(neg_avg_log_probas)<br><span class="hljs-comment"># tensor(10.7940)</span><br></code></pre></td></tr></table></figure>
+
+<p>直接调用pytorch的写法如下，稍微不同的一点在于我们需要先将其展开，消去batch维度：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python">logits_flat = logits.flatten(<span class="hljs-number">0</span>, <span class="hljs-number">1</span>)<br>targets_flat = targets.flatten()<br><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Flattened logits:&quot;</span>, logits_flat.shape)<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Flattened targets:&quot;</span>, targets_flat.shape)<br><br><span class="hljs-comment"># Flattened logits: torch.Size([6, 50257])</span><br><span class="hljs-comment"># Flattened targets: torch.Size([6])</span><br><br>loss = torch.nn.functional.cross_entropy(logits_flat, targets_flat)<br><span class="hljs-built_in">print</span>(loss)<br><span class="hljs-comment"># tensor(10.7940)</span><br></code></pre></td></tr></table></figure>
+
+<p>此外直接对交叉墒求指数就可以得到困惑度，它代表了大模型对输出的不确定性，越低的困惑度就更接近真实的分布，如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">perplexity = torch.exp(loss)<br><span class="hljs-built_in">print</span>(perplexity)<br><span class="hljs-comment"># tensor(48725.8203)</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="Calculating-the-training-and-validation-set-losses"><a href="#Calculating-the-training-and-validation-set-losses" class="headerlink" title="Calculating the training and validation set losses"></a>Calculating the training and validation set losses</h3><p>在训练过程中会将数据分为训练集和测试集，最简单的分法就是直接将文本按比例进行划分，如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> previous_chapters <span class="hljs-keyword">import</span> create_dataloader_v1<br><span class="hljs-comment"># Alternatively:</span><br><span class="hljs-comment"># from llms_from_scratch.ch02 import create_dataloader_v1</span><br><br><span class="hljs-comment"># Train/validation ratio</span><br>train_ratio = <span class="hljs-number">0.90</span><br>split_idx = <span class="hljs-built_in">int</span>(train_ratio * <span class="hljs-built_in">len</span>(text_data))<br>train_data = text_data[:split_idx]<br>val_data = text_data[split_idx:]<br><br><br>torch.manual_seed(<span class="hljs-number">123</span>)<br><br>train_loader = create_dataloader_v1(<br>    train_data,<br>    batch_size=<span class="hljs-number">2</span>,<br>    max_length=GPT_CONFIG_124M[<span class="hljs-string">&quot;context_length&quot;</span>],<br>    stride=GPT_CONFIG_124M[<span class="hljs-string">&quot;context_length&quot;</span>],<br>    drop_last=<span class="hljs-literal">True</span>,<br>    shuffle=<span class="hljs-literal">True</span>,<br>    num_workers=<span class="hljs-number">0</span><br>)<br><br>val_loader = create_dataloader_v1(<br>    val_data,<br>    batch_size=<span class="hljs-number">2</span>,<br>    max_length=GPT_CONFIG_124M[<span class="hljs-string">&quot;context_length&quot;</span>],<br>    stride=GPT_CONFIG_124M[<span class="hljs-string">&quot;context_length&quot;</span>],<br>    drop_last=<span class="hljs-literal">False</span>,<br>    shuffle=<span class="hljs-literal">False</span>,<br>    num_workers=<span class="hljs-number">0</span><br>)<br></code></pre></td></tr></table></figure>
+
+<p>然后计算每一个batch的的损失方法以及一个数据集中指定batch数量的损失的方法如下所示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">calc_loss_batch</span>(<span class="hljs-params">input_batch, target_batch, model, device</span>):<br>    input_batch, target_batch = input_batch.to(device), target_batch.to(device)<br>    logits = model(input_batch)<br>    loss = torch.nn.functional.cross_entropy(logits.flatten(<span class="hljs-number">0</span>, <span class="hljs-number">1</span>), target_batch.flatten())<br>    <span class="hljs-keyword">return</span> loss<br>    <br><span class="hljs-keyword">def</span> <span class="hljs-title function_">calc_loss_loader</span>(<span class="hljs-params">data_loader, model, device, num_batches=<span class="hljs-literal">None</span></span>):<br>    total_loss = <span class="hljs-number">0.</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(data_loader) == <span class="hljs-number">0</span>:<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">float</span>(<span class="hljs-string">&quot;nan&quot;</span>)<br>    <span class="hljs-keyword">elif</span> num_batches <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        num_batches = <span class="hljs-built_in">len</span>(data_loader)<br>    <span class="hljs-keyword">else</span>:<br>        <span class="hljs-comment"># Reduce the number of batches to match the total number of batches in the data loader</span><br>        <span class="hljs-comment"># if num_batches exceeds the number of batches in the data loader</span><br>        num_batches = <span class="hljs-built_in">min</span>(num_batches, <span class="hljs-built_in">len</span>(data_loader))<br>    <span class="hljs-keyword">for</span> i, (input_batch, target_batch) <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(data_loader):<br>        <span class="hljs-keyword">if</span> i &lt; num_batches:<br>            loss = calc_loss_batch(input_batch, target_batch, model, device)<br>            total_loss += loss.item()<br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-keyword">break</span><br>    <span class="hljs-keyword">return</span> total_loss / num_batches<br></code></pre></td></tr></table></figure>
+
+<p>此时直接计算整个训练集和测试集的损失如下所示，可以看到都是比较大的损失：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">with</span> torch.no_grad(): <span class="hljs-comment"># Disable gradient tracking for efficiency because we are not training, yet</span><br>    train_loss = calc_loss_loader(train_loader, model, device)<br>    val_loss = calc_loss_loader(val_loader, model, device)<br><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Training loss:&quot;</span>, train_loss)<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Validation loss:&quot;</span>, val_loss)<br><span class="hljs-comment"># Training loss: 10.987583372328016</span><br><span class="hljs-comment"># Validation loss: 10.98110580444336</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="Training-an-LLM"><a href="#Training-an-LLM" class="headerlink" title="Training an LLM"></a>Training an LLM</h2><p>暂时不考虑一些高阶的大模型训练方法，其整体的训练流程如下：</p>
+<p><img src="/2025/05/04/LLMFromScratch4/image-1.png" srcset="/img/loading.gif" lazyload></p>
+<p>训练代码如下：</p>
+<ul>
+<li><p>与之前相比新加的内容为添加了loss.backward()进行反向传播获得梯度</p>
+</li>
+<li><p>添加了optimizer.step() 进行参数更新</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_model_simple</span>(<span class="hljs-params">model, train_loader, val_loader, optimizer, device, num_epochs,</span><br><span class="hljs-params">                       eval_freq, eval_iter, start_context, tokenizer</span>):<br>    <span class="hljs-comment"># Initialize lists to track losses and tokens seen</span><br>    train_losses, val_losses, track_tokens_seen = [], [], []<br>    tokens_seen, global_step = <span class="hljs-number">0</span>, -<span class="hljs-number">1</span><br><br>    <span class="hljs-comment"># Main training loop</span><br>    <span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_epochs):<br>        model.train()  <span class="hljs-comment"># Set model to training mode</span><br>        <br>        <span class="hljs-keyword">for</span> input_batch, target_batch <span class="hljs-keyword">in</span> train_loader:<br>            optimizer.zero_grad() <span class="hljs-comment"># Reset loss gradients from previous batch iteration</span><br>            loss = calc_loss_batch(input_batch, target_batch, model, device)<br>            loss.backward() <span class="hljs-comment"># Calculate loss gradients</span><br>            optimizer.step() <span class="hljs-comment"># Update model weights using loss gradients</span><br>            tokens_seen += input_batch.numel()<br>            global_step += <span class="hljs-number">1</span><br><br>            <span class="hljs-comment"># Optional evaluation step</span><br>            <span class="hljs-keyword">if</span> global_step % eval_freq == <span class="hljs-number">0</span>:<br>                train_loss, val_loss = evaluate_model(<br>                    model, train_loader, val_loader, device, eval_iter)<br>                train_losses.append(train_loss)<br>                val_losses.append(val_loss)<br>                track_tokens_seen.append(tokens_seen)<br>                <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Ep <span class="hljs-subst">&#123;epoch+<span class="hljs-number">1</span>&#125;</span> (Step <span class="hljs-subst">&#123;global_step:06d&#125;</span>): &quot;</span><br>                      <span class="hljs-string">f&quot;Train loss <span class="hljs-subst">&#123;train_loss:<span class="hljs-number">.3</span>f&#125;</span>, Val loss <span class="hljs-subst">&#123;val_loss:<span class="hljs-number">.3</span>f&#125;</span>&quot;</span>)<br><br>        <span class="hljs-comment"># Print a sample text after each epoch</span><br>        generate_and_print_sample(<br>            model, tokenizer, device, start_context<br>        )<br><br>    <span class="hljs-keyword">return</span> train_losses, val_losses, track_tokens_seen<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate_model</span>(<span class="hljs-params">model, train_loader, val_loader, device, eval_iter</span>):<br>    model.<span class="hljs-built_in">eval</span>()<br>    <span class="hljs-keyword">with</span> torch.no_grad():<br>        train_loss = calc_loss_loader(train_loader, model, device, num_batches=eval_iter)<br>        val_loss = calc_loss_loader(val_loader, model, device, num_batches=eval_iter)<br>    model.train()<br>    <span class="hljs-keyword">return</span> train_loss, val_loss<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">generate_and_print_sample</span>(<span class="hljs-params">model, tokenizer, device, start_context</span>):<br>    model.<span class="hljs-built_in">eval</span>()<br>    context_size = model.pos_emb.weight.shape[<span class="hljs-number">0</span>]<br>    encoded = text_to_token_ids(start_context, tokenizer).to(device)<br>    <span class="hljs-keyword">with</span> torch.no_grad():<br>        token_ids = generate_text_simple(<br>            model=model, idx=encoded,<br>            max_new_tokens=<span class="hljs-number">50</span>, context_size=context_size<br>        )<br>    decoded_text = token_ids_to_text(token_ids, tokenizer)<br>    <span class="hljs-built_in">print</span>(decoded_text.replace(<span class="hljs-string">&quot;\n&quot;</span>, <span class="hljs-string">&quot; &quot;</span>))  <span class="hljs-comment"># Compact print format</span><br>    model.train()<br>    <br></code></pre></td></tr></table></figure>
+
+<p>我们这里采用经典的AdamW优化器，调用上述代码进行训练的代码如下：</p>
+<ul>
+<li>可以看到随着训练的持续，模型可以输出一些更加通顺的句子</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs python"><br><span class="hljs-comment"># Note:</span><br><span class="hljs-comment"># Uncomment the following code to calculate the execution time</span><br><span class="hljs-keyword">import</span> time<br>start_time = time.time()<br><br>torch.manual_seed(<span class="hljs-number">123</span>)<br>model = GPTModel(GPT_CONFIG_124M)<br>model.to(device)<br>optimizer = torch.optim.AdamW(model.parameters(), lr=<span class="hljs-number">0.0004</span>, weight_decay=<span class="hljs-number">0.1</span>)<br><br>num_epochs = <span class="hljs-number">10</span><br>train_losses, val_losses, tokens_seen = train_model_simple(<br>    model, train_loader, val_loader, optimizer, device,<br>    num_epochs=num_epochs, eval_freq=<span class="hljs-number">5</span>, eval_iter=<span class="hljs-number">5</span>,<br>    start_context=<span class="hljs-string">&quot;Every effort moves you&quot;</span>, tokenizer=tokenizer<br>)<br><br><span class="hljs-comment"># Note:</span><br><span class="hljs-comment"># Uncomment the following code to show the execution time</span><br>end_time = time.time()<br>execution_time_minutes = (end_time - start_time) / <span class="hljs-number">60</span><br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Training completed in <span class="hljs-subst">&#123;execution_time_minutes:<span class="hljs-number">.2</span>f&#125;</span> minutes.&quot;</span>)<br><br><span class="hljs-comment"># 输出</span><br>Ep <span class="hljs-number">1</span> (Step <span class="hljs-number">000000</span>): Train loss <span class="hljs-number">9.783</span>, Val loss <span class="hljs-number">9.927</span><br>Ep <span class="hljs-number">1</span> (Step 000005): Train loss <span class="hljs-number">7.985</span>, Val loss <span class="hljs-number">8.335</span><br>Every effort moves you,,,,,,,,,,,,.                                     <br>Ep <span class="hljs-number">2</span> (Step <span class="hljs-number">0000</span>10): Train loss <span class="hljs-number">6.753</span>, Val loss <span class="hljs-number">7.048</span><br>Ep <span class="hljs-number">2</span> (Step 000015): Train loss <span class="hljs-number">6.114</span>, Val loss <span class="hljs-number">6.573</span><br>Every effort moves you, <span class="hljs-keyword">and</span>,, <span class="hljs-keyword">and</span>, <span class="hljs-keyword">and</span>,,,,, <span class="hljs-keyword">and</span>, <span class="hljs-keyword">and</span>,,,,,,,,,,,,,, <span class="hljs-keyword">and</span>,,,, <span class="hljs-keyword">and</span>,, <span class="hljs-keyword">and</span>,,,,, <span class="hljs-keyword">and</span>,,,,,,<br>Ep <span class="hljs-number">3</span> (Step 000020): Train loss <span class="hljs-number">5.525</span>, Val loss <span class="hljs-number">6.490</span><br>Ep <span class="hljs-number">3</span> (Step 000025): Train loss <span class="hljs-number">5.324</span>, Val loss <span class="hljs-number">6.387</span><br>Every effort moves you, <span class="hljs-keyword">and</span> to the picture.                      <span class="hljs-string">&quot;I, and the of the of the&#x27;s the honour, and, and I had been, and I</span><br><span class="hljs-string">Ep 4 (Step 000030): Train loss 4.761, Val loss 6.360</span><br><span class="hljs-string">Ep 4 (Step 000035): Train loss 4.461, Val loss 6.258</span><br><span class="hljs-string">Every effort moves you of the to the picture--as of the picture--as I had been &quot;</span> it was his <span class="hljs-string">&quot; I was the     &quot;</span>I was his I had been the his pictures--<span class="hljs-keyword">and</span> it the picture <span class="hljs-keyword">and</span> I had been the picture of<br>Ep <span class="hljs-number">5</span> (Step 000040): Train loss <span class="hljs-number">3.833</span>, Val loss <span class="hljs-number">6.196</span><br>Every effort moves you know the <span class="hljs-string">&quot;Oh, and he was not the fact by his last word.         &quot;</span>I was.      <span class="hljs-string">&quot;Oh, I felt a little a little the    </span><br><span class="hljs-string">Ep 6 (Step 000045): Train loss 3.352, Val loss 6.139</span><br><span class="hljs-string">Ep 6 (Step 000050): Train loss 2.861, Val loss 6.112</span><br><span class="hljs-string">Every effort moves you know; and my dear, and he was not the fact with a little of the house of the fact of the fact, and.                       </span><br><span class="hljs-string">Ep 7 (Step 000055): Train loss 2.347, Val loss 6.138</span><br><span class="hljs-string">Ep 7 (Step 000060): Train loss 2.084, Val loss 6.179</span><br><span class="hljs-string">Every effort moves you know,&quot;</span> was one of the picture <span class="hljs-keyword">for</span> nothing--I told Mrs.  <span class="hljs-string">&quot;I looked--as of the fact, and I felt him--his back his head to the donkey. &quot;</span>Oh, and_--because he had always _<br>Ep <span class="hljs-number">8</span> (Step 000065): Train loss <span class="hljs-number">1.521</span>, Val loss <span class="hljs-number">6.176</span><br>Ep <span class="hljs-number">8</span> (Step 000070): Train loss <span class="hljs-number">1.272</span>, Val loss <span class="hljs-number">6.178</span><br>Every effort moves you?<span class="hljs-string">&quot; &quot;</span>I didn<span class="hljs-string">&#x27;t bear the picture--I told me.  &quot;I looked up, and went on groping and Mrs. I was back the head to look up at the honour being _mine_--because he was when I</span><br><span class="hljs-string">Ep 9 (Step 000075): Train loss 1.000, Val loss 6.277</span><br><span class="hljs-string">Ep 9 (Step 000080): Train loss 0.718, Val loss 6.281</span><br><span class="hljs-string">Every effort moves you?&quot;  &quot;Yes--quite insensible to the irony. She wanted him vindicated--and by me!&quot;  He laughed again, and threw back his head to look up at the sketch of the donkey. &quot;There were days when I</span><br><span class="hljs-string">Ep 10 (Step 000085): Train loss 0.506, Val loss 6.325</span><br><span class="hljs-string">Every effort moves you?&quot;  &quot;Yes--quite insensible to the irony. She wanted him vindicated--and by me!&quot;  He laughed again, and threw back his head to the donkey again. I saw that, and down the room, when I</span><br><span class="hljs-string">Training completed in 4.03 minutes.</span><br></code></pre></td></tr></table></figure>
+
+<p>绘制训练集的loss与验证集的loss如下，可以发现整个模型训练过程中训练集的loss在一直快速下降，但是验证集的loss后面就基本保持不变了，说明其实是有发生过拟合的。</p>
+<p><img src="/2025/05/04/LLMFromScratch4/image-2.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="Decoding-strategies-to-control-randomness"><a href="#Decoding-strategies-to-control-randomness" class="headerlink" title="Decoding strategies to control randomness"></a>Decoding strategies to control randomness</h2><p>这里介绍一下如何控制输出随机性的内容。上面介绍的输出实际上对于相同的输入一直都是相同的输出，我们希望能够有更加多样化的输出内容。</p>
+<h3 id="Temperature-scaling"><a href="#Temperature-scaling" class="headerlink" title="Temperature scaling"></a>Temperature scaling</h3><p>一个方法就是通过对概率采样来得到输出，因为我们现在最后已经有了各个token的概率，这样概率大的自然采用得到的概率也就更大，代码实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs python">vocab = &#123; <br>    <span class="hljs-string">&quot;closer&quot;</span>: <span class="hljs-number">0</span>,<br>    <span class="hljs-string">&quot;every&quot;</span>: <span class="hljs-number">1</span>, <br>    <span class="hljs-string">&quot;effort&quot;</span>: <span class="hljs-number">2</span>, <br>    <span class="hljs-string">&quot;forward&quot;</span>: <span class="hljs-number">3</span>,<br>    <span class="hljs-string">&quot;inches&quot;</span>: <span class="hljs-number">4</span>,<br>    <span class="hljs-string">&quot;moves&quot;</span>: <span class="hljs-number">5</span>, <br>    <span class="hljs-string">&quot;pizza&quot;</span>: <span class="hljs-number">6</span>,<br>    <span class="hljs-string">&quot;toward&quot;</span>: <span class="hljs-number">7</span>,<br>    <span class="hljs-string">&quot;you&quot;</span>: <span class="hljs-number">8</span>,<br>&#125; <br><br>inverse_vocab = &#123;v: k <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> vocab.items()&#125;<br><br><span class="hljs-comment"># Suppose input is &quot;every effort moves you&quot;, and the LLM</span><br><span class="hljs-comment"># returns the following logits for the next token:</span><br>next_token_logits = torch.tensor(<br>    [<span class="hljs-number">4.51</span>, <span class="hljs-number">0.89</span>, -<span class="hljs-number">1.90</span>, <span class="hljs-number">6.75</span>, <span class="hljs-number">1.63</span>, -<span class="hljs-number">1.62</span>, -<span class="hljs-number">1.89</span>, <span class="hljs-number">6.28</span>, <span class="hljs-number">1.79</span>]<br>)<br>probas = torch.softmax(next_token_logits, dim=<span class="hljs-number">0</span>)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">print_sampled_tokens</span>(<span class="hljs-params">probas</span>):<br>    torch.manual_seed(<span class="hljs-number">123</span>) <span class="hljs-comment"># Manual seed for reproducibility</span><br>    sample = [torch.multinomial(probas, num_samples=<span class="hljs-number">1</span>).item() <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">1_000</span>)]<br>    sampled_ids = torch.bincount(torch.tensor(sample), minlength=<span class="hljs-built_in">len</span>(probas))<br>    <span class="hljs-keyword">for</span> i, freq <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(sampled_ids):<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;<span class="hljs-subst">&#123;freq&#125;</span> x <span class="hljs-subst">&#123;inverse_vocab[i]&#125;</span>&quot;</span>)<br><br>print_sampled_tokens(probas)<br><span class="hljs-comment"># 输出</span><br><span class="hljs-number">71</span> x closer<br><span class="hljs-number">2</span> x every<br><span class="hljs-number">0</span> x effort<br><span class="hljs-number">544</span> x forward<br><span class="hljs-number">2</span> x inches<br><span class="hljs-number">1</span> x moves<br><span class="hljs-number">0</span> x pizza<br><span class="hljs-number">376</span> x toward<br><span class="hljs-number">4</span> x you<br></code></pre></td></tr></table></figure>
+
+<p>此外我们可以控制Temperature scaling（温度缩放）来进一步控制概率分布的整体情况，其做法就是在输出的概率进行softmax前除以一个temperature。</p>
+<ul>
+<li><p>如果temperature大于1那么就会使得各个概率被缩小，整体分布比较平缓</p>
+</li>
+<li><p>如果temperature小于1那么就会使得各个概率被放大，整体分布比较尖锐</p>
+</li>
+</ul>
+<p>代码实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">softmax_with_temperature</span>(<span class="hljs-params">logits, temperature</span>):<br>    scaled_logits = logits / temperature<br>    <span class="hljs-keyword">return</span> torch.softmax(scaled_logits, dim=<span class="hljs-number">0</span>)<br><br><span class="hljs-comment"># Temperature values</span><br>temperatures = [<span class="hljs-number">1</span>, <span class="hljs-number">0.1</span>, <span class="hljs-number">5</span>]  <span class="hljs-comment"># Original, higher confidence, and lower confidence</span><br><br><span class="hljs-comment"># Calculate scaled probabilities</span><br>scaled_probas = [softmax_with_temperature(next_token_logits, T) <span class="hljs-keyword">for</span> T <span class="hljs-keyword">in</span> temperatures]<br></code></pre></td></tr></table></figure>
+
+<p>同一个概率分布下不同的temperature控制下的概率分布情况如下所示：</p>
+<p><img src="/2025/05/04/LLMFromScratch4/image.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="Top-k-sampling"><a href="#Top-k-sampling" class="headerlink" title="Top-k sampling"></a>Top-k sampling</h3><p>通过采样得到输出有可能得到概率较低的输出，这实际上可能确实是错误的输出，所以我们可以将top-k以外的输出概率都置为0来避免这种情况，其实际在处理时也就是在softmax之前将top-k以外的概率置为-inf，代码实现如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python">top_k = <span class="hljs-number">3</span><br>top_logits, top_pos = torch.topk(next_token_logits, top_k)<br><br>new_logits = torch.where(<br>    condition=next_token_logits &lt; top_logits[-<span class="hljs-number">1</span>],<br>    <span class="hljs-built_in">input</span>=torch.tensor(<span class="hljs-built_in">float</span>(<span class="hljs-string">&quot;-inf&quot;</span>)), <br>    other=next_token_logits<br>)<br><br><span class="hljs-built_in">print</span>(new_logits)<br><span class="hljs-comment"># tensor([4.5100,   -inf,   -inf, 6.7500,   -inf,   -inf,   -inf, 6.2800,   -inf])</span><br><br>topk_probas = torch.softmax(new_logits, dim=<span class="hljs-number">0</span>)<br><span class="hljs-built_in">print</span>(topk_probas)<br><span class="hljs-comment"># tensor([0.0615, 0.0000, 0.0000, 0.5775, 0.0000, 0.0000, 0.0000, 0.3610, 0.0000])</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="Modifying-the-text-generation-function"><a href="#Modifying-the-text-generation-function" class="headerlink" title="Modifying the text generation function"></a>Modifying the text generation function</h3><p>通过结合上述两项技术就可以得到一个新的generate函数，如下所示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">generate</span>(<span class="hljs-params">model, idx, max_new_tokens, context_size, temperature=<span class="hljs-number">0.0</span>, top_k=<span class="hljs-literal">None</span>, eos_id=<span class="hljs-literal">None</span></span>):<br><br>    <span class="hljs-comment"># For-loop is the same as before: Get logits, and only focus on last time step</span><br>    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(max_new_tokens):<br>        idx_cond = idx[:, -context_size:]<br>        <span class="hljs-keyword">with</span> torch.no_grad():<br>            logits = model(idx_cond)<br>        logits = logits[:, -<span class="hljs-number">1</span>, :]<br><br>        <span class="hljs-comment"># New: Filter logits with top_k sampling</span><br>        <span class="hljs-keyword">if</span> top_k <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            <span class="hljs-comment"># Keep only top_k values</span><br>            top_logits, _ = torch.topk(logits, top_k)<br>            min_val = top_logits[:, -<span class="hljs-number">1</span>]<br>            logits = torch.where(logits &lt; min_val, torch.tensor(<span class="hljs-built_in">float</span>(<span class="hljs-string">&quot;-inf&quot;</span>)).to(logits.device), logits)<br><br>        <span class="hljs-comment"># New: Apply temperature scaling</span><br>        <span class="hljs-keyword">if</span> temperature &gt; <span class="hljs-number">0.0</span>:<br>            logits = logits / temperature<br><br>            <span class="hljs-comment"># Apply softmax to get probabilities</span><br>            probs = torch.softmax(logits, dim=-<span class="hljs-number">1</span>)  <span class="hljs-comment"># (batch_size, context_len)</span><br><br>            <span class="hljs-comment"># Sample from the distribution</span><br>            idx_next = torch.multinomial(probs, num_samples=<span class="hljs-number">1</span>)  <span class="hljs-comment"># (batch_size, 1)</span><br><br>        <span class="hljs-comment"># Otherwise same as before: get idx of the vocab entry with the highest logits value</span><br>        <span class="hljs-keyword">else</span>:<br>            idx_next = torch.argmax(logits, dim=-<span class="hljs-number">1</span>, keepdim=<span class="hljs-literal">True</span>)  <span class="hljs-comment"># (batch_size, 1)</span><br><br>        <span class="hljs-keyword">if</span> idx_next == eos_id:  <span class="hljs-comment"># Stop generating early if end-of-sequence token is encountered and eos_id is specified</span><br>            <span class="hljs-keyword">break</span><br><br>        <span class="hljs-comment"># Same as before: append sampled index to the running sequence</span><br>        idx = torch.cat((idx, idx_next), dim=<span class="hljs-number">1</span>)  <span class="hljs-comment"># (batch_size, num_tokens+1)</span><br><br>    <span class="hljs-keyword">return</span> idx<br>    <br>torch.manual_seed(<span class="hljs-number">123</span>)<br><br>token_ids = generate(<br>    model=model,<br>    idx=text_to_token_ids(<span class="hljs-string">&quot;Every effort moves you&quot;</span>, tokenizer),<br>    max_new_tokens=<span class="hljs-number">15</span>,<br>    context_size=GPT_CONFIG_124M[<span class="hljs-string">&quot;context_length&quot;</span>],<br>    top_k=<span class="hljs-number">25</span>,<br>    temperature=<span class="hljs-number">1.4</span><br>)<br><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Output text:\n&quot;</span>, token_ids_to_text(token_ids, tokenizer))<br><span class="hljs-comment"># Output text:</span><br><span class="hljs-comment">#  Every effort moves you know began to my surprise, a little it was the</span><br><span class="hljs-comment"># &quot;Ah enough</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="x20-Loading-and-saving-model-weights-in-PyTorch"><a href="#x20-Loading-and-saving-model-weights-in-PyTorch" class="headerlink" title="&#x20;Loading and saving model weights in PyTorch"></a>&#x20;Loading and saving model weights in PyTorch</h2><p>我们可以在训练过程中保存检查点，然后再有需要的时候再进行加载，从而支持断点续训的功能。</p>
+<p>注意为了能够继续训练，我们往往不止需要保持模型的权重还需要保存优化器中的权重。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python">torch.save(&#123;<br>    <span class="hljs-string">&quot;model_state_dict&quot;</span>: model.state_dict(),<br>    <span class="hljs-string">&quot;optimizer_state_dict&quot;</span>: optimizer.state_dict(),<br>    &#125;, <br>    <span class="hljs-string">&quot;model_and_optimizer.pth&quot;</span><br>)<br><br>checkpoint = torch.load(<span class="hljs-string">&quot;model_and_optimizer.pth&quot;</span>, weights_only=<span class="hljs-literal">True</span>)<br><br>model = GPTModel(GPT_CONFIG_124M)<br>model.load_state_dict(checkpoint[<span class="hljs-string">&quot;model_state_dict&quot;</span>])<br><br>optimizer = torch.optim.AdamW(model.parameters(), lr=<span class="hljs-number">0.0005</span>, weight_decay=<span class="hljs-number">0.1</span>)<br>optimizer.load_state_dict(checkpoint[<span class="hljs-string">&quot;optimizer_state_dict&quot;</span>])<br>model.train();<br></code></pre></td></tr></table></figure>
+
+<h2 id="Loading-pretrained-weights-from-OpenAI"><a href="#Loading-pretrained-weights-from-OpenAI" class="headerlink" title="Loading pretrained weights from OpenAI"></a>Loading pretrained weights from OpenAI</h2><p>我们可以直接通过gpt_download库来下载gpt-2的权重信息，下载方法如下（注意这里已经下好了）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># Relative import from the gpt_download.py contained in this folder</span><br><br><span class="hljs-keyword">from</span> gpt_download <span class="hljs-keyword">import</span> download_and_load_gpt2<br><span class="hljs-comment"># Alternatively:</span><br><span class="hljs-comment"># from llms_from_scratch.ch05 import download_and_load_gpt2</span><br><br>settings, params = download_and_load_gpt2(model_size=<span class="hljs-string">&quot;124M&quot;</span>, models_dir=<span class="hljs-string">&quot;gpt2&quot;</span>)<br><br><span class="hljs-comment"># File already exists and is up-to-date: gpt2/124M/checkpoint</span><br><span class="hljs-comment"># File already exists and is up-to-date: gpt2/124M/encoder.json</span><br><span class="hljs-comment"># File already exists and is up-to-date: gpt2/124M/hparams.json</span><br><span class="hljs-comment"># File already exists and is up-to-date: gpt2/124M/model.ckpt.data-00000-of-00001</span><br><span class="hljs-comment"># File already exists and is up-to-date: gpt2/124M/model.ckpt.index</span><br><span class="hljs-comment"># File already exists and is up-to-date: gpt2/124M/model.ckpt.meta</span><br><span class="hljs-comment"># File already exists and is up-to-date: gpt2/124M/vocab.bpe</span><br></code></pre></td></tr></table></figure>
+
+<p>查看一些关键文件的内容：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Settings:&quot;</span>, settings)<br><span class="hljs-comment"># Settings: &#123;&#x27;n_vocab&#x27;: 50257, &#x27;n_ctx&#x27;: 1024, &#x27;n_embd&#x27;: 768, &#x27;n_head&#x27;: 12, &#x27;n_layer&#x27;: 12&#125;</span><br><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Parameter dictionary keys:&quot;</span>, params.keys())<br><span class="hljs-comment"># Parameter dictionary keys: dict_keys([&#x27;blocks&#x27;, &#x27;b&#x27;, &#x27;g&#x27;, &#x27;wpe&#x27;, &#x27;wte&#x27;])</span><br><br><span class="hljs-built_in">print</span>(params[<span class="hljs-string">&quot;wte&quot;</span>])<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Token embedding weight tensor dimensions:&quot;</span>, params[<span class="hljs-string">&quot;wte&quot;</span>].shape)<br><br><span class="hljs-comment"># 输出</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">[[-0.11010301 -0.03926672  0.03310751 ... -0.1363697   0.01506208</span><br><span class="hljs-string">   0.04531523]</span><br><span class="hljs-string"> [ 0.04034033 -0.04861503  0.04624869 ...  0.08605453  0.00253983</span><br><span class="hljs-string">   0.04318958]</span><br><span class="hljs-string"> [-0.12746179  0.04793796  0.18410145 ...  0.08991534 -0.12972379</span><br><span class="hljs-string">  -0.08785918]</span><br><span class="hljs-string"> ...</span><br><span class="hljs-string"> [-0.04453601 -0.05483596  0.01225674 ...  0.10435229  0.09783269</span><br><span class="hljs-string">  -0.06952604]</span><br><span class="hljs-string"> [ 0.1860082   0.01665728  0.04611587 ... -0.09625227  0.07847701</span><br><span class="hljs-string">  -0.02245961]</span><br><span class="hljs-string"> [ 0.05135201 -0.02768905  0.0499369  ...  0.00704835  0.15519823</span><br><span class="hljs-string">   0.12067825]]</span><br><span class="hljs-string">Token embedding weight tensor dimensions: (50257, 768)</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>可以看到embedding层确实就是我们之前说的支持50257种token，每个token的维度为768。</p>
+<p>我们可以直接将下载到的模型的权重加载进我们自定义的相同结构的模型中：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># Define model configurations in a dictionary for compactness</span><br>model_configs = &#123;<br>    <span class="hljs-string">&quot;gpt2-small (124M)&quot;</span>: &#123;<span class="hljs-string">&quot;emb_dim&quot;</span>: <span class="hljs-number">768</span>, <span class="hljs-string">&quot;n_layers&quot;</span>: <span class="hljs-number">12</span>, <span class="hljs-string">&quot;n_heads&quot;</span>: <span class="hljs-number">12</span>&#125;,<br>    <span class="hljs-string">&quot;gpt2-medium (355M)&quot;</span>: &#123;<span class="hljs-string">&quot;emb_dim&quot;</span>: <span class="hljs-number">1024</span>, <span class="hljs-string">&quot;n_layers&quot;</span>: <span class="hljs-number">24</span>, <span class="hljs-string">&quot;n_heads&quot;</span>: <span class="hljs-number">16</span>&#125;,<br>    <span class="hljs-string">&quot;gpt2-large (774M)&quot;</span>: &#123;<span class="hljs-string">&quot;emb_dim&quot;</span>: <span class="hljs-number">1280</span>, <span class="hljs-string">&quot;n_layers&quot;</span>: <span class="hljs-number">36</span>, <span class="hljs-string">&quot;n_heads&quot;</span>: <span class="hljs-number">20</span>&#125;,<br>    <span class="hljs-string">&quot;gpt2-xl (1558M)&quot;</span>: &#123;<span class="hljs-string">&quot;emb_dim&quot;</span>: <span class="hljs-number">1600</span>, <span class="hljs-string">&quot;n_layers&quot;</span>: <span class="hljs-number">48</span>, <span class="hljs-string">&quot;n_heads&quot;</span>: <span class="hljs-number">25</span>&#125;,<br>&#125;<br><br><span class="hljs-comment"># Copy the base configuration and update with specific model settings</span><br>model_name = <span class="hljs-string">&quot;gpt2-small (124M)&quot;</span>  <span class="hljs-comment"># Example model name</span><br>NEW_CONFIG = GPT_CONFIG_124M.copy()<br>NEW_CONFIG.update(model_configs[model_name])<br>NEW_CONFIG.update(&#123;<span class="hljs-string">&quot;context_length&quot;</span>: <span class="hljs-number">1024</span>, <span class="hljs-string">&quot;qkv_bias&quot;</span>: <span class="hljs-literal">True</span>&#125;)<br><br>gpt = GPTModel(NEW_CONFIG)<br>gpt.<span class="hljs-built_in">eval</span>();<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">assign</span>(<span class="hljs-params">left, right</span>):<br>    <span class="hljs-keyword">if</span> left.shape != right.shape:<br>        <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">f&quot;Shape mismatch. Left: <span class="hljs-subst">&#123;left.shape&#125;</span>, Right: <span class="hljs-subst">&#123;right.shape&#125;</span>&quot;</span>)<br>    <span class="hljs-keyword">return</span> torch.nn.Parameter(torch.tensor(right))<br><br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">load_weights_into_gpt</span>(<span class="hljs-params">gpt, params</span>):<br>    gpt.pos_emb.weight = assign(gpt.pos_emb.weight, params[<span class="hljs-string">&#x27;wpe&#x27;</span>])<br>    gpt.tok_emb.weight = assign(gpt.tok_emb.weight, params[<span class="hljs-string">&#x27;wte&#x27;</span>])<br>    <br>    <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-built_in">len</span>(params[<span class="hljs-string">&quot;blocks&quot;</span>])):<br>        q_w, k_w, v_w = np.split(<br>            (params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;attn&quot;</span>][<span class="hljs-string">&quot;c_attn&quot;</span>])[<span class="hljs-string">&quot;w&quot;</span>], <span class="hljs-number">3</span>, axis=-<span class="hljs-number">1</span>)<br>        gpt.trf_blocks[b].att.W_query.weight = assign(<br>            gpt.trf_blocks[b].att.W_query.weight, q_w.T)<br>        gpt.trf_blocks[b].att.W_key.weight = assign(<br>            gpt.trf_blocks[b].att.W_key.weight, k_w.T)<br>        gpt.trf_blocks[b].att.W_value.weight = assign(<br>            gpt.trf_blocks[b].att.W_value.weight, v_w.T)<br><br>        q_b, k_b, v_b = np.split(<br>            (params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;attn&quot;</span>][<span class="hljs-string">&quot;c_attn&quot;</span>])[<span class="hljs-string">&quot;b&quot;</span>], <span class="hljs-number">3</span>, axis=-<span class="hljs-number">1</span>)<br>        gpt.trf_blocks[b].att.W_query.bias = assign(<br>            gpt.trf_blocks[b].att.W_query.bias, q_b)<br>        gpt.trf_blocks[b].att.W_key.bias = assign(<br>            gpt.trf_blocks[b].att.W_key.bias, k_b)<br>        gpt.trf_blocks[b].att.W_value.bias = assign(<br>            gpt.trf_blocks[b].att.W_value.bias, v_b)<br><br>        gpt.trf_blocks[b].att.out_proj.weight = assign(<br>            gpt.trf_blocks[b].att.out_proj.weight, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;attn&quot;</span>][<span class="hljs-string">&quot;c_proj&quot;</span>][<span class="hljs-string">&quot;w&quot;</span>].T)<br>        gpt.trf_blocks[b].att.out_proj.bias = assign(<br>            gpt.trf_blocks[b].att.out_proj.bias, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;attn&quot;</span>][<span class="hljs-string">&quot;c_proj&quot;</span>][<span class="hljs-string">&quot;b&quot;</span>])<br><br>        gpt.trf_blocks[b].ff.layers[<span class="hljs-number">0</span>].weight = assign(<br>            gpt.trf_blocks[b].ff.layers[<span class="hljs-number">0</span>].weight, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;mlp&quot;</span>][<span class="hljs-string">&quot;c_fc&quot;</span>][<span class="hljs-string">&quot;w&quot;</span>].T)<br>        gpt.trf_blocks[b].ff.layers[<span class="hljs-number">0</span>].bias = assign(<br>            gpt.trf_blocks[b].ff.layers[<span class="hljs-number">0</span>].bias, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;mlp&quot;</span>][<span class="hljs-string">&quot;c_fc&quot;</span>][<span class="hljs-string">&quot;b&quot;</span>])<br>        gpt.trf_blocks[b].ff.layers[<span class="hljs-number">2</span>].weight = assign(<br>            gpt.trf_blocks[b].ff.layers[<span class="hljs-number">2</span>].weight, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;mlp&quot;</span>][<span class="hljs-string">&quot;c_proj&quot;</span>][<span class="hljs-string">&quot;w&quot;</span>].T)<br>        gpt.trf_blocks[b].ff.layers[<span class="hljs-number">2</span>].bias = assign(<br>            gpt.trf_blocks[b].ff.layers[<span class="hljs-number">2</span>].bias, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;mlp&quot;</span>][<span class="hljs-string">&quot;c_proj&quot;</span>][<span class="hljs-string">&quot;b&quot;</span>])<br><br>        gpt.trf_blocks[b].norm1.scale = assign(<br>            gpt.trf_blocks[b].norm1.scale, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;ln_1&quot;</span>][<span class="hljs-string">&quot;g&quot;</span>])<br>        gpt.trf_blocks[b].norm1.shift = assign(<br>            gpt.trf_blocks[b].norm1.shift, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;ln_1&quot;</span>][<span class="hljs-string">&quot;b&quot;</span>])<br>        gpt.trf_blocks[b].norm2.scale = assign(<br>            gpt.trf_blocks[b].norm2.scale, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;ln_2&quot;</span>][<span class="hljs-string">&quot;g&quot;</span>])<br>        gpt.trf_blocks[b].norm2.shift = assign(<br>            gpt.trf_blocks[b].norm2.shift, <br>            params[<span class="hljs-string">&quot;blocks&quot;</span>][b][<span class="hljs-string">&quot;ln_2&quot;</span>][<span class="hljs-string">&quot;b&quot;</span>])<br><br>    gpt.final_norm.scale = assign(gpt.final_norm.scale, params[<span class="hljs-string">&quot;g&quot;</span>])<br>    gpt.final_norm.shift = assign(gpt.final_norm.shift, params[<span class="hljs-string">&quot;b&quot;</span>])<br>    gpt.out_head.weight = assign(gpt.out_head.weight, params[<span class="hljs-string">&quot;wte&quot;</span>])<br>    <br>    <br>load_weights_into_gpt(gpt, params)<br>gpt.to(device);<br></code></pre></td></tr></table></figure>
+
+<p>然后进行调用和输出</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python">torch.manual_seed(<span class="hljs-number">123</span>)<br><br>token_ids = generate(<br>    model=gpt,<br>    idx=text_to_token_ids(<span class="hljs-string">&quot;Every effort moves you&quot;</span>, tokenizer).to(device),<br>    max_new_tokens=<span class="hljs-number">25</span>,<br>    context_size=NEW_CONFIG[<span class="hljs-string">&quot;context_length&quot;</span>],<br>    top_k=<span class="hljs-number">50</span>,<br>    temperature=<span class="hljs-number">1.5</span><br>)<br><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Output text:\n&quot;</span>, token_ids_to_text(token_ids, tokenizer))<br><span class="hljs-comment">#  Every effort moves you toward an equal share for each vote plus half. Inequality is often not an accurate representation of human worth; to know the</span><br></code></pre></td></tr></table></figure>
+
+<p>实际上还有许多其他的模型权重的加载方法，这里先不再赘述。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://knowledge.zhaoweiguo.com/build/html/x-learning/books/ais/2024/build/_llm/_from/_scratch#understanding-llm">https://knowledge.zhaoweiguo.com/build/html/x-learning/books/ais/2024/build\_llm\_from\_scratch#understanding-llm</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【从零构建大模型】四、对模型进行无监督训练</div>
+      <div>http://example.com/2025/05/04/LLMFromScratch4/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年5月4日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/" title="GPU架构概览">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">GPU架构概览</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/05/03/LLMFromScratch3/" title="【从零构建大模型】三、从零实现一个 GPT 模型以生成文本">
+                        <span class="hidden-mobile">【从零构建大模型】三、从零实现一个 GPT 模型以生成文本</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

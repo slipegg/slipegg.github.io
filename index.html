@@ -266,15 +266,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/12/02/OSPPExperience/" target="_self">
-          2024开源之夏参与经验总结
+        <a href="/2025/08/24/k8s%20APIServer%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98/" target="_self">
+          【k8s APIServer 源码阅读（一）】-对象缓存
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/12/02/OSPPExperience/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/24/k8s%20APIServer%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98/" target="_self">
         <div>
-          背景最近参与了2024年中科院举办的开源之夏活动，完成了字节跳动开源的Godel Scheduler的”基于 Godel Scheduler 实现应用亲和&#x2F;反亲和以及均匀分布功能“的项目。这里做一个经验贴，希望能帮助到后面想要参与到这个项目中的人来。 项目报名下面这个是2024年整体的一个活动时间。  我印象中在4月29号之前就已经在陆陆续续放出会参与到开源之夏活动中的项目了，所以可以在
+          Cacher结构cacher的结构如下，已将注释翻译成了中文，关键的内容有  incoming chan watchCacheEvent：事件分发的管道  这里事件的结构如下：  123456789101112131415161718192021222324252627// watchCacheEvent is a single &quot;watch event&quot; that is s
         </div>
       </a>
 
@@ -282,69 +282,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-12-02 16:47" pubdate>
-              2024-12-02
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E5%BC%80%E6%BA%90%E4%B9%8B%E5%A4%8F/" class="category-chain-item">开源之夏</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%BC%80%E6%BA%90%E4%B9%8B%E5%A4%8F/">#开源之夏</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/11/19/k8sUseGPU/" target="_self">
-          如何在K8s集群中管理与使用GPU
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/11/19/k8sUseGPU/" target="_self">
-        <div>
-          背景随着人工智能的兴起，GPU作为重要的智算算力类型愈发受到重视，而Kubernetes（k8s）作为业界主流的集群管理系统，如何方便管理、使用GPU也是其需要解决的一大问题，故此收集整理了K8s管理与使用GPU的相关资料以学习。 物理机如何使用GPU如果给一台普通的物理机，例如我们日常用的笔记本电脑应该如何使用GPU呢。其主要涉及到两个插件的安装，分别是Nvidia Driver和CUDA To
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-11-19 10:50" pubdate>
-              2024-11-19
+            <time datetime="2025-08-24 20:53" pubdate>
+              2025-08-24
             </time>
           </div>
         
@@ -364,7 +303,7 @@
   
     <span>></span>
     
-  <a href="/categories/k8s/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  <a href="/categories/k8s/ApiServer/" class="category-chain-item">ApiServer</a>
   
   
 
@@ -383,10 +322,6 @@
             
               <a href="/tags/k8s/">#k8s</a>
             
-              <a href="/tags/GPU/">#GPU</a>
-            
-              <a href="/tags/AI/">#AI</a>
-            
           </div>
         
       </div>
@@ -399,15 +334,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/09/13/InternLM/" target="_self">
-          InternLM 书生大模型实战营
+        <a href="/2025/08/19/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%BA%8C%E3%80%91-%E8%8A%82%E7%82%B9%E7%8A%B6%E6%80%81%E4%B8%8A%E6%8A%A5/" target="_self">
+          【k8s kubelet 源代码阅读（二）】-节点状态上报
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/09/13/InternLM/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/19/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%BA%8C%E3%80%91-%E8%8A%82%E7%82%B9%E7%8A%B6%E6%80%81%E4%B8%8A%E6%8A%A5/" target="_self">
         <div>
-          1. 入门岛1.1 第一关 Linux 基础知识闯关任务 完成SSH连接与端口映射并运行hello_world.pyhello_world运行截图：  访问截图：  可选任务2 使用 VSCODE 远程连接开发机并创建一个conda环境创建一个名为py310的conda环境，安装python3.10  1.2 第二关 Python 基础知识闯关任务 Python实现wordcountwordcou
+          主处理流程在kubelet的Run中会调用相应的代码进行节点状态更新，代码如下： 123456789101112131415161718192021222324252627282930if kl.kubeClient != nil &#123;    // Start two go-routines to update the status.    //    // The first will
         </div>
       </a>
 
@@ -415,8 +350,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-09-13 21:57" pubdate>
-              2024-09-13
+            <time datetime="2025-08-19 20:53" pubdate>
+              2025-08-19
             </time>
           </div>
         
@@ -431,8 +366,15 @@
     
       <span class="category-chain">
         
-  <a href="/categories/%E4%B9%A6%E7%94%9F%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E6%88%98%E8%90%A5/" class="category-chain-item">书生大模型实战营</a>
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
   
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/kubelet/" class="category-chain-item">kubelet</a>
+  
+  
+
   
 
       </span>
@@ -446,9 +388,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/InternLM/">#InternLM</a>
-            
-              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+              <a href="/tags/k8s/">#k8s</a>
             
           </div>
         
@@ -462,15 +402,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/08/18/MegaScalePapaerRead/" target="_self">
-          【论文阅读】{MegaScale}:Scaling Large Language Model Training to More Than 10,000 {GPUs}
+        <a href="/2025/08/11/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-Pod%E7%AE%A1%E7%90%86/" target="_self">
+          【k8s kubelet 源代码阅读（一）】-Pod管理
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/08/18/MegaScalePapaerRead/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/11/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-Pod%E7%AE%A1%E7%90%86/" target="_self">
         <div>
-          论文基础信息论文地址： {MegaScale}: Scaling Large Language Model Training to More Than 10,000 {GPUs} 收录会议： 21st USENIX Symposium on Networked Systems Design and Implementation (NSDI 24)(CCF-A，计算机网络顶级会议) 作者机构： 字节
+          关键组件介绍probeManager当一个pod被kubelet感知到之后，就会调用probeManager的AddPod来为各个容器启动探针，监控状态变化。具体执行如下：  获取所有的pod.Spec.Containers以及pod中支持重新启动的initContainers，然后逐个处理  如果这个容器配置了StartupProbe或者ReadinessProbe或者LivenessProbe
         </div>
       </a>
 
@@ -478,8 +418,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-08-18 15:46" pubdate>
-              2024-08-18
+            <time datetime="2025-08-11 20:53" pubdate>
+              2025-08-11
             </time>
           </div>
         
@@ -494,8 +434,15 @@
     
       <span class="category-chain">
         
-  <a href="/categories/AI%E9%9B%86%E7%BE%A4/" class="category-chain-item">AI集群</a>
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
   
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/kubelet/" class="category-chain-item">kubelet</a>
+  
+  
+
   
 
       </span>
@@ -509,9 +456,73 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
+              <a href="/tags/k8s/">#k8s</a>
             
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/">#分布式训练</a>
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/07/12/pytorch-fsdp-2/" target="_self">
+          【pytorch-fsdp 源代码阅读（二）】-参数流转
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/07/12/pytorch-fsdp-2/" target="_self">
+        <div>
+          初始化 获取module下需要展开的tensors  将tensors放入到一个数组中，然后使用cat拼接到一起。这部分展开的数据会放到FlatParamHandle.flat_param中   123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-07-12 20:53" pubdate>
+              2025-07-12
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/FSDP/" class="category-chain-item">FSDP</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
             
               <a href="/tags/LLM/">#LLM</a>
             
@@ -527,15 +538,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/08/17/FluidPaper/" target="_self">
-          【论文阅读】Fluid:Dataset Abstraction and Elastic Acceleration for Cloud-native Deep Learning Training Jobs
+        <a href="/2025/07/02/pytorch-fsdp-1/" target="_self">
+          【pytorch-fsdp 源代码阅读（一）】-全流程概览
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/08/17/FluidPaper/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/07/02/pytorch-fsdp-1/" target="_self">
         <div>
-          论文基础信息论文地址： Fluid: Dataset Abstraction and Elastic Acceleration for Cloud-native Deep Learning Training Jobs 收录会议： 2022 IEEE 38th International Conference on Data Engineering (ICDE)(CCF-A，数据库领域顶会) 作者机
+          专有名词解释 warp：对模型进行包裹，使其具备fsdp的相关的分布式能力  shard: 对参数进行切分，得到每个rank sharded的参数  unshard: 将切分的参数allgather，得到完整的参数  reshard：将完整的参数释放，只保留每个rank的sharded的参数  sharded：切分后的参数  unsharded：完整的参数   fsdp概览如下图所示，首先对于Ze
         </div>
       </a>
 
@@ -543,8 +554,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-08-17 21:26" pubdate>
-              2024-08-17
+            <time datetime="2025-07-02 20:53" pubdate>
+              2025-07-02
             </time>
           </div>
         
@@ -559,190 +570,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/AI%E9%9B%86%E7%BE%A4/" class="category-chain-item">AI集群</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/%E9%9B%86%E7%BE%A4%E7%BC%93%E5%AD%98/">#集群缓存</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/06/23/ClashForDocker/" target="_self">
-          设置Clash代理，彻底解决linux系统Docker pull的问题
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/06/23/ClashForDocker/" target="_self">
-        <div>
-          因为当前政策的收紧，很多docker镜像网站和加速器都不能使用了，虽然目前还有一些可以使用，但是打游击战终究是不可靠的，在可以预见的将来肯定会更加难以下载docker镜像，而我也厌烦了各种docker pull失败，所以这里直接使用clash设置代理，翻入墙外来彻底解决这个问题。 安装配置Clash1. 下载Clash 由于原Clash已经删库跑路，所以可以使用镜像地址下载linux版本的clas
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-06-23 16:52" pubdate>
-              2024-06-23
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Docker/" class="category-chain-item">Docker</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Docker/">#Docker</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/06/09/CNCFIntroduction/" target="_self">
-          CNCF项目全景图介绍
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/06/09/CNCFIntroduction/" target="_self">
-        <div>
-          云原生计算基金会（CNCF）介绍CNCF(Cloud Native Computing Foundation)官网链接：https://www.cncf.io/ 官方的介绍如下：  云原生技术有利于各组织在公有云、私有云和混合云等新型动态环境中，构建和运行可弹性扩展的应用。云原生的代表技术包括容器、服务网格、微服务、不可变基础设施和声明式API。 这些技术能够构建容错性好、易于管理和便于观察的松耦
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-06-09 15:36" pubdate>
-              2024-06-09
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/05/12/k8sSource6/" target="_self">
-          【K8s源码分析（六）】-K8s中Pod拓扑分布约束（Pod Topology Spread Constraints）插件介绍
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/12/k8sSource6/" target="_self">
-        <div>
-          本次分析参考的K8s版本是v1.27.0。 前言在 k8s 集群调度中，亲和性相关的概念本质上都是控制 Pod 如何被调度 – 堆叠或打散。podAffinity 以及 podAntiAffinity 两个特性对 Pod 在不同拓扑域（拓扑键-拓扑值构成了一个拓扑域，例如region-east）的分布进行了一些控制，podAffinity 可以将无数个 Pod 调度到特定的某一个拓扑域，这是堆叠的
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-12 23:04" pubdate>
-              2024-05-12
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  <a href="/categories/LLM/FSDP/" class="category-chain-item">FSDP</a>
   
   
 
@@ -759,9 +592,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/k8s/">#k8s</a>
-            
-              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -775,15 +606,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/05/11/k8sSource5/" target="_self">
-          【K8s源码分析（五）】-K8s中Pod亲和性调度插件介绍
+        <a href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" target="_self">
+          【Picotron-Tutorial】上下文并行
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/11/k8sSource5/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" target="_self">
         <div>
-          本次分析参考的K8s版本是v1.27.0。 前言K8s调度器v1版的的默认的插件都在pkg/scheduler/apis/config/v1/default_plugins.go:30 中，如下 1234567891011121314151617181920212223242526272829303132// getDefaultPlugins returns the default set of
+          理论分析上下文并行的核心思想是将序列并行的方法（也就是沿序列长度进行拆分）的思路应用到已经采用张量并行的模块上。 对于上下文并行，就像序列并行一样，我们将沿序列维度拆分输入，但这次我们对整个模型进行拆分，而不仅仅是对之前Tensor+Sequence并行中涉及的部分模型。 拆分序列是横向的切割，所以不会影响大多数模块，如MLP和LayerNorm，因为它们对每个token的处理是独立的。 在计算梯
         </div>
       </a>
 
@@ -791,8 +622,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-11 16:10" pubdate>
-              2024-05-11
+            <time datetime="2025-06-28 20:53" pubdate>
+              2025-06-28
             </time>
           </div>
         
@@ -807,12 +638,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
   
   
 
@@ -829,9 +660,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/k8s/">#k8s</a>
-            
-              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -845,15 +674,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/05/10/k8sSource4/" target="_self">
-          【K8s源码分析（四）】-K8s调度器绑定周期介绍
+        <a href="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/" target="_self">
+          【Picotron-Tutorial】流水线并行
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/10/k8sSource4/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/" target="_self">
         <div>
-          本次分析参考的K8s版本是v1.27.0。 K8s的整体调度框架如下图所示。  bindeCycle顶层函数K8s调度器中绑定周期的函数bindingCycle在pkg/scheduler/schedule_one.go:225中，如下，补充了一些注释。 123456789101112131415161718192021222324252627282930313233343536373839404
+          Afab并行理论分析最简单的pipeline并行就是将模型划分为好几层，然后分别放置在不同的GPU上依次进行前向传播和后先传播，如下图所示。但是这带来的最大的问题是效率过低，存在很多空闲时刻。   一个16层模型的流水线并行示例，该模型分布在4块GPU上。数字表示层编号。  假设$t_f$ 和$t_b$ 分别是单个微批次在流水线的一个阶段上进行前向传播和反向传播所需的时间（通常假设 $t_b\ap
         </div>
       </a>
 
@@ -861,8 +690,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-05-10 16:38" pubdate>
-              2024-05-10
+            <time datetime="2025-06-24 20:53" pubdate>
+              2025-06-24
             </time>
           </div>
         
@@ -877,12 +706,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
   
   
 
@@ -899,9 +728,211 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/k8s/">#k8s</a>
+              <a href="/tags/LLM/">#LLM</a>
             
-              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/06/14/Picotron-Tutorial%20%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C/" target="_self">
+          【Picotron-Tutorial】数据并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/14/Picotron-Tutorial%20%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C/" target="_self">
+        <div>
+          原生数据并行理论分析在原生的数据并行中，每个数据并行的组都会自己处理自己的数据，这带来的一个问题在于我们需要及时同步训练过程中的梯度以及优化器的状态。 最原生的方法就是我们在前向传播后，在对每一个层进行反向传播后进行一次同步，如下图所示。由于梯度得到了及时的同步，所有优化器的状态自然也就会变得相同。  代码分析 修改dataloader为分布式，从而使得每个dp进程每次获取到的数据batch是不相
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-06-14 20:53" pubdate>
+              2025-06-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/06/07/Picotron-Tutorial%20Tensor%20Parallel/" target="_self">
+          【Picotron-Tutorial】Tensor并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/07/Picotron-Tutorial%20Tensor%20Parallel/" target="_self">
+        <div>
+          理论分析分析的对象 $$Y&#x3D;X@W$$ 列并行需要给每个GPU都复制一份X（往往都是早就有了），然后对于W进行列维度的切分。最后每个GPU会有不同列的结果，最后会对其进行all_gather拼接得到结果。  行并行对于行并行，由于W的行数减小了，所以X的列数也要跟着变，所以首先需要将X进行列维度的拆分，划分到各个GPU卡上，然后与W进行相乘，得到的结果再进行all_reduce。  ML
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-06-07 20:53" pubdate>
+              2025-06-07
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/" target="_self">
+          深度学习中反向传播及优化器使用详解
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/" target="_self">
+        <div>
+          反向传播偏导数参考资料：  https://wuli.wiki/online/ParDer.html  简要说明：  对于复合函数，如果要求其对于某一个参数的偏导数，那么就需要把其他参数看为常数，然后求导。  几何意义：可以认为是沿着某一个轴的导数。如下图所示，对于曲面 $$z&#x3D;f(x,y)$$对x的偏导就是求这个曲面上的某点对于x轴的斜率。    全微分参考资料：  https://w
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-06-01 20:53" pubdate>
+              2025-06-01
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -913,7 +944,7 @@
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="page-number" href="/page/3/#board">3</a><a class="page-number" href="/page/4/#board">4</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/#board">2</a><a class="page-number" href="/page/3/#board">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/#board">7</a><a class="extend next" rel="next" href="/page/2/#board"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
 

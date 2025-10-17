@@ -1,0 +1,926 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Cacher结构cacher的结构如下，已将注释翻译成了中文，关键的内容有  incoming chan watchCacheEvent：事件分发的管道  这里事件的结构如下：  123456789101112131415161718192021222324252627&#x2F;&#x2F; watchCacheEvent is a single &quot;watch event&quot; that is s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【k8s APIServer 源码阅读（一）】-对象缓存">
+<meta property="og:url" content="http://example.com/2025/08/24/k8s%20APIServer%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="Cacher结构cacher的结构如下，已将注释翻译成了中文，关键的内容有  incoming chan watchCacheEvent：事件分发的管道  这里事件的结构如下：  123456789101112131415161718192021222324252627&#x2F;&#x2F; watchCacheEvent is a single &quot;watch event&quot; that is s">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/08/24/k8s%20APIServer%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98/image.png">
+<meta property="article:published_time" content="2025-08-24T12:53:03.000Z">
+<meta property="article:modified_time" content="2025-10-17T06:36:43.955Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="k8s">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2025/08/24/k8s%20APIServer%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98/image.png">
+  
+  
+  
+  <title>【k8s APIServer 源码阅读（一）】-对象缓存 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【k8s APIServer 源码阅读（一）】-对象缓存"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-24 20:53" pubdate>
+          2025年8月24日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          17k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          85 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【k8s APIServer 源码阅读（一）】-对象缓存</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p><img src="/2025/08/24/k8s%20APIServer%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-%E5%AF%B9%E8%B1%A1%E7%BC%93%E5%AD%98/image.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="Cacher结构"><a href="#Cacher结构" class="headerlink" title="Cacher结构"></a>Cacher结构</h1><p>cacher的结构如下，已将注释翻译成了中文，关键的内容有</p>
+<ul>
+<li><p><code>incoming chan watchCacheEvent</code>：事件分发的管道</p>
+<ul>
+<li>这里事件的结构如下：</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// watchCacheEvent is a single &quot;watch event&quot; that is send to users of</span><br><span class="hljs-comment">// watchCache. Additionally to a typical &quot;watch.Event&quot; it contains</span><br><span class="hljs-comment">// the previous value of the object to enable proper filtering in the</span><br><span class="hljs-comment">// upper layers.</span><br><span class="hljs-keyword">type</span> watchCacheEvent <span class="hljs-keyword">struct</span> &#123;<br>    Type            watch.EventType<br>    Object          runtime.Object<br>    ObjLabels       labels.Set<br>    ObjFields       fields.Set<br>    PrevObject      runtime.Object<br>    PrevObjLabels   labels.Set<br>    PrevObjFields   fields.Set<br>    Key             <span class="hljs-type">string</span><br>    ResourceVersion <span class="hljs-type">uint64</span><br>    RecordTime      time.Time<br>&#125;<br><br><span class="hljs-comment">// EventType defines the possible types of events.</span><br><span class="hljs-keyword">type</span> EventType <span class="hljs-type">string</span><br><br><span class="hljs-keyword">const</span> (<br>    Added    EventType = <span class="hljs-string">&quot;ADDED&quot;</span><br>    Modified EventType = <span class="hljs-string">&quot;MODIFIED&quot;</span><br>    Deleted  EventType = <span class="hljs-string">&quot;DELETED&quot;</span><br>    Bookmark EventType = <span class="hljs-string">&quot;BOOKMARK&quot;</span><br>    Error    EventType = <span class="hljs-string">&quot;ERROR&quot;</span><br>)<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><code>resourcePrefix string</code>：存储API资源的路径前缀（如<code>/api/v1/pods</code>或<code>/apis/apps/v1/deployments</code>），确保不同资源类型的缓存相互独立</p>
+</li>
+<li><p><code>storage storage.Interface</code>：对存储接口的抽象，该接口由具体存储实现（如etcd3）提供，上层组件（如Cacher）通过此接口与存储交互：</p>
+<ul>
+<li><p>Cacher使用<code>Watch</code>方法监听底层存储变化</p>
+</li>
+<li><p>API服务器通过<code>Get</code>&#x2F;<code>GetList</code>满足LIST请求</p>
+</li>
+<li><p>控制器通过<code>GuaranteedUpdate</code>实现资源的安全更新</p>
+</li>
+</ul>
+</li>
+<li><p><code>watchCache *watchCache</code>：一个维护了当前kind的所有的资源变动事件的滑动窗口</p>
+</li>
+<li><p><code>reflector  *cache.Reflector</code>：回调函数，list并watch etcd 并将事件和资源存到watchCache这个滑动窗口中</p>
+</li>
+<li><p><code>versioner storage.Versioner</code>：处理资源的version相关信息</p>
+</li>
+<li><p><code>watchersBuffer []*cacheWatcher</code>：所有对该资源有watch需求的连接</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Cacher负责为给定资源提供WATCH和LIST请求服务</span><br><span class="hljs-comment">// 并基于底层存储内容在后台更新其缓存。</span><br><span class="hljs-comment">// Cacher实现了storage.Interface（尽管大多数调用只是委托给底层存储）</span><br><span class="hljs-keyword">type</span> Cacher <span class="hljs-keyword">struct</span> &#123;<br>        <span class="hljs-comment">// HighWaterMarks用于性能调试</span><br>        <span class="hljs-comment">// 重要：由于HighWaterMark使用sync/atomic，它必须位于结构体顶部，以解决32位平台上的bug</span><br>        <span class="hljs-comment">// 参见：https://golang.org/pkg/sync/atomic/了解更多信息</span><br>        incomingHWM storage.HighWaterMark<br>        <span class="hljs-comment">// 应分发给观察者的传入事件</span><br>        incoming <span class="hljs-keyword">chan</span> watchCacheEvent<br><br>        resourcePrefix <span class="hljs-type">string</span><br><br>        sync.RWMutex<br><br>        <span class="hljs-comment">// 在访问缓存器的缓存之前，等待ready状态变为ok</span><br>        <span class="hljs-comment">// 这对于防止用户访问未初始化或正在重新填充的结构是必要的</span><br>        <span class="hljs-comment">// 当缓存器暂停或停止时，ready需要设置为false</span><br>        <span class="hljs-comment">// 当初始化后缓存器准备好使用时，ready需要设置为true</span><br>        ready *ready<br><br>        <span class="hljs-comment">// 底层storage.Interface</span><br>        storage storage.Interface<br><br>        <span class="hljs-comment">// 底层缓存中对象的预期类型</span><br>        objectType reflect.Type<br>        <span class="hljs-comment">// 用于区分*unstructured.Unstructured（自定义资源定义）</span><br>groupResource schema.GroupResource<br><br>        <span class="hljs-comment">// 对象最近变更的“滑动窗口”和当前状态</span><br>        watchCache *watchCache<br>        reflector *cache.Reflector<br><br>        <span class="hljs-comment">// Versioner用于处理资源版本</span><br>        versioner storage.Versioner<br><br>        <span class="hljs-comment">// newFunc是创建新空对象的函数，用于存储Type类型的对象</span><br>        newFunc <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> runtime.Object<br><br>        <span class="hljs-comment">// newListFunc是创建新空列表用于存储Type类型对象</span><br>        newListFunc <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> runtime.Object<br><br>        <span class="hljs-comment">// indexedTrigger用于优化需要处理传入事件的观察者数量</span><br>        indexedTrigger *indexedTriggerFunc<br>        <span class="hljs-comment">// watchers将观察者感兴趣的触发函数值映射到观察者</span><br>        watcherIdx <span class="hljs-type">int</span><br>        watchers indexedWatchers<br><br>        <span class="hljs-comment">// 定义了分发事件时可用于等待未就绪观察者</span><br>        <span class="hljs-comment">// 然后关闭它们的时间预算</span><br>        dispatchTimeoutBudget timeBudget<br><br>        <span class="hljs-comment">// 处理优雅终止</span><br>        stopLock sync.RWMutex<br>        stopped <span class="hljs-type">bool</span><br>        stopCh <span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;<br>        stopWg sync.WaitGroup<br><br>        clock clock.Clock<br>        <span class="hljs-comment">// timer用于避免底层观察者中不必要的分配</span><br>        timer *time.Timer<br><br>        <span class="hljs-comment">// dispatching确定当前是否有任何事件正在分发中</span><br>        dispatching <span class="hljs-type">bool</span><br>        <span class="hljs-comment">// watchersBuffer是当前可能对当前分发事件感兴趣的观察者列表</span><br>        watchersBuffer []*cacheWatcher<br>        <span class="hljs-comment">// blockedWatchers是缓冲区当前已满的观察者列表</span><br>        blockedWatchers []*cacheWatcher<br>        <span class="hljs-comment">// watchersToStop当前分发期间应该停止但推迟到</span><br>        <span class="hljs-comment">// 当前事件分发结束才停止以避免与观察者关闭通道竞争</span><br>        watchersToStop []*cacheWatcher<br>        <span class="hljs-comment">// 维护超时队列以在观察者超时前发送书签事件</span><br>        <span class="hljs-comment">// 注意：访问此字段时必须受Cacher.lock保护</span><br>        bookmarkWatchers *watcherBookmarkTimeBuckets<br>        <span class="hljs-comment">// expiredBookmarkWatchers是已过期并需要安排下一个书签事件</span><br>        expiredBookmarkWatchers []*cacheWatcher<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<h1 id="Cache初始化"><a href="#Cache初始化" class="headerlink" title="Cache初始化"></a>Cache初始化</h1><p>初始化的流程如下：</p>
+<ol>
+<li><p>&#x20;配置验证与前置检查</p>
+</li>
+<li><p>索引触发器初始化（支持资源索引功能）</p>
+</li>
+<li><p>初始化Cacher，注意这里可以看到incoming的事件管道的容量只有100</p>
+</li>
+<li><p>给Cacher创建watchCache与reflector</p>
+</li>
+<li><p>后台触发<code>progressRequester</code>协程定期发送watch进度更新（bookmark事件），防止连接超时，并向客户端发送最新的资源版本信息。</p>
+</li>
+<li><p>后台触发<code>cacher.dispatchEvents()</code>协程处理<code>incoming</code>通道中的事件并推送给WATCH客户端</p>
+</li>
+<li><p><code>后台触发wait.Until</code>以1秒间隔执行<code>startCaching</code>，确保缓存持续同步</p>
+</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// NewCacherFromConfig creates a new Cacher responsible for servicing WATCH and LIST requests from</span><br><span class="hljs-comment">// its internal cache and updating its cache in the background based on the</span><br><span class="hljs-comment">// given configuration.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewCacherFromConfig</span><span class="hljs-params">(config Config)</span></span> (*Cacher, <span class="hljs-type">error</span>) &#123;<br>    stopCh := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;)<br>    obj := config.NewFunc()<br>    <span class="hljs-comment">// 1. 配置验证与前置检查</span><br>    <span class="hljs-keyword">if</span> err := runtime.CheckCodec(config.Codec, obj); err != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">&quot;storage codec doesn&#x27;t seem to match given type: %v&quot;</span>, err)<br>    &#125;<br><br>    <span class="hljs-comment">// 2. 索引触发器初始化（支持资源索引功能）</span><br>    <span class="hljs-keyword">var</span> indexedTrigger *indexedTriggerFunc<br>    <span class="hljs-keyword">if</span> config.IndexerFuncs != <span class="hljs-literal">nil</span> &#123;<br>        <span class="hljs-comment">// ... 索引器函数处理逻辑 ...</span><br>    &#125;<br><br>    <span class="hljs-comment">// Cacher结构体初始化</span><br>    cacher := &amp;Cacher&#123;<br>        resourcePrefix: config.ResourcePrefix,<br>        ready:          newReady(config.Clock),<br>        storage:        config.Storage,<br>        objectType:     reflect.TypeOf(obj),<br>        groupResource:  config.GroupResource,<br>        versioner:      config.Versioner,<br>        newFunc:        config.NewFunc,<br>        newListFunc:    config.NewListFunc,<br>        indexedTrigger: indexedTrigger,<br>        watcherIdx:     <span class="hljs-number">0</span>,<br>        watchers: indexedWatchers&#123;<br>            allWatchers:   <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[namespacedName]watchersMap),<br>            valueWatchers: <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]watchersMap),<br>        &#125;,<br>        incoming:              <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> watchCacheEvent, <span class="hljs-number">100</span>),<br>        dispatchTimeoutBudget: newTimeBudget(),<br>        stopCh:           stopCh,<br>        clock:            config.Clock,<br>        timer:            time.NewTimer(time.Duration(<span class="hljs-number">0</span>)),<br>        bookmarkWatchers: newTimeBucketWatchers(config.Clock, defaultBookmarkFrequency),<br>    &#125;<br><br>    <span class="hljs-comment">// 3. 缓存与同步机制初始化</span><br>    progressRequester := progress.NewConditionalProgressRequester(config.Storage.RequestWatchProgress)<br>    watchCache := newWatchCache(<br>        config.KeyFunc, cacher.processEvent, config.GetAttrsFunc, config.Versioner, <br>        config.Indexers, config.Clock,<br>    )<br>    listerWatcher := NewListerWatcher(config.Storage, config.ResourcePrefix, config.NewListFunc)<br>    reflector := cache.NewNamedReflector(<span class="hljs-string">&quot;storage/cacher.go:&quot;</span>+config.ResourcePrefix,<br>        listerWatcher, obj, watchCache, <span class="hljs-number">0</span>)<br>    reflector.WatchListPageSize = storageWatchListPageSize<br>    reflector.MaxInternalErrorRetryDuration = time.Second * <span class="hljs-number">30</span><br><br>    <span class="hljs-comment">// 4. 后台协程启动</span><br>    <span class="hljs-keyword">go</span> cacher.dispatchEvents()<br>    <span class="hljs-keyword">go</span> progressRequester.Run(stopCh)<br><br>    cacher.stopWg.Add(<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>        <span class="hljs-keyword">defer</span> cacher.stopWg.Done()<br>        <span class="hljs-keyword">defer</span> cacher.terminateAllWatchers()<br>        wait.Until(<br>            <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123; <span class="hljs-keyword">if</span> !cacher.isStopped() &#123; cacher.startCaching(stopCh) &#125; &#125;,<br>            time.Second, stopCh,<br>        )<br>    &#125;()<br><br>    <span class="hljs-keyword">return</span> cacher, <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="watchCache"><a href="#watchCache" class="headerlink" title="watchCache"></a>watchCache</h1><p>watchCache的结构如下，这里核心是使用了一个<code>cache []*watchCacheEvent</code>这个循环数组来缓存历史事件。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// watchCache实现了Store接口</span><br><span class="hljs-comment">// 但它依赖元素实现runtime.Object接口</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// watchCache是一个&quot;滑动窗口&quot;（具有有限容量），用于存储从watch中观察到的对象</span><br><span class="hljs-keyword">type</span> watchCache <span class="hljs-keyword">struct</span> &#123;<br>    sync.RWMutex<br><br>    <span class="hljs-comment">// 列表等待足够新资源版本的条件变量</span><br>    cond *sync.Cond<br><br>    <span class="hljs-comment">// 历史窗口的最大容量</span><br>    capacity <span class="hljs-type">int</span><br><br>    <span class="hljs-comment">// 事件缓存的动态容量上限</span><br>    upperBoundCapacity <span class="hljs-type">int</span><br><br>    <span class="hljs-comment">// 事件缓存的动态容量下限</span><br>    lowerBoundCapacity <span class="hljs-type">int</span><br><br>    <span class="hljs-comment">// keyFunc用于为给定对象获取底层存储中的键</span><br>    keyFunc <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(runtime.Object)</span></span> (<span class="hljs-type">string</span>, <span class="hljs-type">error</span>)<br><br>    <span class="hljs-comment">// getAttrsFunc用于获取对象的标签和字段</span><br>    getAttrsFunc <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(runtime.Object)</span></span> (labels.Set, fields.Set, <span class="hljs-type">error</span>)<br><br>    <span class="hljs-comment">// cache用作循环缓冲区 - 其&quot;当前&quot;内容存储在[start_index%capacity, end_index%capacity)范围内</span><br>    <span class="hljs-comment">// 因此&quot;当前&quot;内容正好有end_index-start_index个项目</span><br>    cache      []*watchCacheEvent<br>    startIndex <span class="hljs-type">int</span><br>    endIndex   <span class="hljs-type">int</span><br>    <span class="hljs-comment">// removedEventSinceRelist表示自上次重新列表以来，是否有任何事件已从`cache`循环缓冲区中删除</span><br>    removedEventSinceRelist <span class="hljs-type">bool</span><br><br>    <span class="hljs-comment">// store用于支持从&quot;缓存历史末尾&quot;（即最新缓存的watch事件之后的时刻）开始的LIST操作</span><br>    <span class="hljs-comment">// 这对于允许客户端从&quot;现在&quot;开始watch是必要的</span><br>    <span class="hljs-comment">// 注意：我们假设&lt;store&gt;是线程安全的</span><br>    store storeIndexer<br><br>    <span class="hljs-comment">// watchCache传播到的资源版本</span><br>    resourceVersion <span class="hljs-type">uint64</span><br><br>    <span class="hljs-comment">// 最后一次列表结果的资源版本（通过Replace()方法填充）</span><br>    listResourceVersion <span class="hljs-type">uint64</span><br><br>    <span class="hljs-comment">// 此处理程序在每次成功的Replace()方法结束时运行</span><br>    onReplace <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span><br><br>    <span class="hljs-comment">// 此处理程序在每次Add/Update/Delete方法结束时运行</span><br>    <span class="hljs-comment">// 此外还获取对象的先前值</span><br>    eventHandler <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*watchCacheEvent)</span></span><br><br>    <span class="hljs-comment">// 用于测试超时</span><br>    clock clock.Clock<br><br>    <span class="hljs-comment">// eventFreshDuration定义watch缓存将存储的最小watch历史时长</span><br>    eventFreshDuration time.Duration<br><br>    <span class="hljs-comment">// 底层的storage.Versioner</span><br>    versioner storage.Versioner<br><br>    <span class="hljs-comment">// cacher的组资源</span><br>    groupResource schema.GroupResource<br><br>    <span class="hljs-comment">// 用于测试缓存间隔失效</span><br>    indexValidator indexValidator<br><br>    <span class="hljs-comment">// 如果有请求等待watch变为最新，则请求进度通知</span><br>    waitingUntilFresh *progress.ConditionalProgressRequester<br><br>    <span class="hljs-comment">// 存储orderedLister的先前快照，以允许从先前的修订版本提供请求</span><br>    snapshots Snapshotter<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>此外还提供了<code>Add</code>、<code>Update</code>、<code>Delete</code>接口来给reflector暴露更改的接口，注意这里的函数只是进行了简单的包装，即将事件类型还有obj包装成了<code>watch.Event</code>，然后就使用了<code>processEvent</code>来处理。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// Add takes runtime.Object as an argument.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(w *watchCache)</span></span> Add(obj <span class="hljs-keyword">interface</span>&#123;&#125;) <span class="hljs-type">error</span> &#123;<br>    object, resourceVersion, err := w.objectToVersionedRuntimeObject(obj)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-keyword">return</span> err<br>    &#125;<br>    event := watch.Event&#123;Type: watch.Added, Object: object&#125;<br><br>    f := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(elem *storeElement)</span></span> <span class="hljs-type">error</span> &#123; <span class="hljs-keyword">return</span> w.store.Add(elem) &#125;<br>    <span class="hljs-keyword">return</span> w.processEvent(event, resourceVersion, f)<br>&#125;<br><br><span class="hljs-comment">// Update takes runtime.Object as an argument.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(w *watchCache)</span></span> Update(obj <span class="hljs-keyword">interface</span>&#123;&#125;) <span class="hljs-type">error</span> &#123;<br>    object, resourceVersion, err := w.objectToVersionedRuntimeObject(obj)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-keyword">return</span> err<br>    &#125;<br>    event := watch.Event&#123;Type: watch.Modified, Object: object&#125;<br><br>    f := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(elem *storeElement)</span></span> <span class="hljs-type">error</span> &#123; <span class="hljs-keyword">return</span> w.store.Update(elem) &#125;<br>    <span class="hljs-keyword">return</span> w.processEvent(event, resourceVersion, f)<br>&#125;<br><br><span class="hljs-comment">// Delete takes runtime.Object as an argument.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(w *watchCache)</span></span> Delete(obj <span class="hljs-keyword">interface</span>&#123;&#125;) <span class="hljs-type">error</span> &#123;<br>    object, resourceVersion, err := w.objectToVersionedRuntimeObject(obj)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-keyword">return</span> err<br>    &#125;<br>    event := watch.Event&#123;Type: watch.Deleted, Object: object&#125;<br><br>    f := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(elem *storeElement)</span></span> <span class="hljs-type">error</span> &#123; <span class="hljs-keyword">return</span> w.store.Delete(elem) &#125;<br>    <span class="hljs-keyword">return</span> w.processEvent(event, resourceVersion, f)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="watchCache-processEvent"><a href="#watchCache-processEvent" class="headerlink" title="watchCache.processEvent()"></a>watchCache.processEvent()</h2><p>其流程如下：</p>
+<ul>
+<li>首先在watch.Event的基础上添加更多的信息，诸如Fields、resourceVersion、RecordTime等，此外如果之前就有，那么也会获取到previous，最终组成watchCacheEvent。</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// processEvent is safe as long as there is at most one call to it in flight</span><br><span class="hljs-comment">// at any point in time.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(w *watchCache)</span></span> processEvent(event watch.Event, resourceVersion <span class="hljs-type">uint64</span>, updateFunc <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(*storeElement)</span></span> <span class="hljs-type">error</span>) <span class="hljs-type">error</span> &#123;<br>    metrics.EventsReceivedCounter.WithLabelValues(w.groupResource.String()).Inc()<br><br>    key, err := w.keyFunc(event.Object)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;couldn&#x27;t compute key: %v&quot;</span>, err)<br>    &#125;<br>    elem := &amp;storeElement&#123;Key: key, Object: event.Object&#125;<br>    elem.Labels, elem.Fields, err = w.getAttrsFunc(event.Object)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    wcEvent := &amp;watchCacheEvent&#123;<br>       Type:            event.Type,<br>       Object:          elem.Object,<br>       ObjLabels:       elem.Labels,<br>       ObjFields:       elem.Fields,<br>       Key:             key,<br>       ResourceVersion: resourceVersion,<br>       RecordTime:      w.clock.Now(),<br>    &#125;<br><br>    <span class="hljs-comment">// We can call w.store.Get() outside of a critical section,</span><br>    <span class="hljs-comment">// because the w.store itself is thread-safe and the only</span><br>    <span class="hljs-comment">// place where w.store is modified is below (via updateFunc)</span><br>    <span class="hljs-comment">// and these calls are serialized because reflector is processing</span><br>    <span class="hljs-comment">// events one-by-one.</span><br>    previous, exists, err := w.store.Get(elem)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-keyword">return</span> err<br>    &#125;<br>    <span class="hljs-keyword">if</span> exists &#123;<br>       previousElem := previous.(*storeElement)<br>       wcEvent.PrevObject = previousElem.Object<br>       wcEvent.PrevObjLabels = previousElem.Labels<br>       wcEvent.PrevObjFields = previousElem.Fields<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> err := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> <span class="hljs-type">error</span> &#123;<br>       w.Lock()<br>       <span class="hljs-keyword">defer</span> w.Unlock()<br><br>       w.updateCache(wcEvent)<br>       w.resourceVersion = resourceVersion<br>       <span class="hljs-keyword">defer</span> w.cond.Broadcast()<br><br>       err := updateFunc(elem)<br>       <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>          <span class="hljs-keyword">return</span> err<br>       &#125;<br>       <span class="hljs-keyword">if</span> w.snapshots != <span class="hljs-literal">nil</span> &#123;<br>          <span class="hljs-keyword">if</span> orderedLister, ordered := w.store.(orderedLister); ordered &#123;<br>             <span class="hljs-keyword">if</span> w.isCacheFullLocked() &#123;<br>                oldestRV := w.cache[w.startIndex%w.capacity].ResourceVersion<br>                w.snapshots.RemoveLess(oldestRV)<br>             &#125;<br>             w.snapshots.Add(w.resourceVersion, orderedLister)<br>          &#125;<br>       &#125;<br>       <span class="hljs-keyword">return</span> err<br>    &#125;(); err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-keyword">return</span> err<br>    &#125;<br><br>    <span class="hljs-comment">// Avoid calling event handler under lock.</span><br>    <span class="hljs-comment">// This is safe as long as there is at most one call to Add/Update/Delete and</span><br>    <span class="hljs-comment">// UpdateResourceVersion in flight at any point in time, which is true now,</span><br>    <span class="hljs-comment">// because reflector calls them synchronously from its main thread.</span><br>    <span class="hljs-keyword">if</span> w.eventHandler != <span class="hljs-literal">nil</span> &#123;<br>       w.eventHandler(wcEvent)<br>    &#125;<br>    metrics.RecordResourceVersion(w.groupResource.String(), resourceVersion)<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+<h1 id="cacher-dispatchEvents"><a href="#cacher-dispatchEvents" class="headerlink" title="cacher.dispatchEvents()"></a><code>cacher.dispatchEvents()</code></h1><p>该方法实现了事件分发的主循环，处理来自底层存储的资源变更事件，并定期生成书签事件以维持watch连接活性，是API服务器缓存系统向客户端推送实时更新的关键组件。</p>
+<ul>
+<li><p>bookmarkTimer每s进行一次，但是为了避免过高的并发有0.25比例的随机扰动。</p>
+</li>
+<li><p>事件处理的主循环处理三种事件源：</p>
+<ul>
+<li><p>从<code>incoming</code>通道接收存储层事件（Added、Modified、Deleted、Bookmark、Error），然后将非BOOKMARK的事件（这类事件很频繁，亚秒级）进行分发，然后更新最后处理的资源版本lastProcessedResourceVersion</p>
+</li>
+<li><p>从<code>bookmarkTimer</code>定时器收到的事件，给cacher.version推送一个Bookmark事件的更新并附带最后处理的资源版本lastProcessedResourceVersion，从而让cacher.version更新这个object记录的ResourceVersion。</p>
+</li>
+<li><p>从<code>stopCh</code>收到事件执行优雅退出</p>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Cacher)</span></span> dispatchEvents() &#123;<br>    <span class="hljs-comment">// Jitter to help level out any aggregate load.</span><br>    bookmarkTimer := c.clock.NewTimer(wait.Jitter(time.Second, <span class="hljs-number">0.25</span>))<br>    <span class="hljs-keyword">defer</span> bookmarkTimer.Stop()<br><br>    <span class="hljs-comment">// The internal informer populates the RV as soon as it conducts</span><br>    <span class="hljs-comment">// The first successful sync with the underlying store.</span><br>    <span class="hljs-comment">// The cache must wait until this first sync is completed to be deemed ready.</span><br>    <span class="hljs-comment">// Since we cannot send a bookmark when the lastProcessedResourceVersion is 0,</span><br>    <span class="hljs-comment">// we poll aggressively for the first list RV before entering the dispatch loop.</span><br>    lastProcessedResourceVersion := <span class="hljs-type">uint64</span>(<span class="hljs-number">0</span>)<br>    <span class="hljs-keyword">if</span> err := wait.PollUntilContextCancel(wait.ContextForChannel(c.stopCh), <span class="hljs-number">10</span>*time.Millisecond, <span class="hljs-literal">true</span>, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(_ context.Context)</span></span> (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) &#123;<br>       <span class="hljs-keyword">if</span> rv := c.watchCache.getListResourceVersion(); rv != <span class="hljs-number">0</span> &#123;<br>          lastProcessedResourceVersion = rv<br>          <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span><br>       &#125;<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>    &#125;); err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-comment">// given the function above never returns error,</span><br>       <span class="hljs-comment">// the non-empty error means that the stopCh was closed</span><br>       <span class="hljs-keyword">return</span><br>    &#125;<br>    <span class="hljs-keyword">for</span> &#123;<br>       <span class="hljs-keyword">select</span> &#123;<br>       <span class="hljs-keyword">case</span> event, ok := &lt;-c.incoming:<br>          <span class="hljs-keyword">if</span> !ok &#123;<br>             <span class="hljs-keyword">return</span><br>          &#125;<br>          <span class="hljs-comment">// Don&#x27;t dispatch bookmarks coming from the storage layer.</span><br>          <span class="hljs-comment">// They can be very frequent (even to the level of subseconds)</span><br>          <span class="hljs-comment">// to allow efficient watch resumption on kube-apiserver restarts,</span><br>          <span class="hljs-comment">// and propagating them down may overload the whole system.</span><br>          <span class="hljs-comment">//</span><br>          <span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> If at some point we decide the performance and scalability</span><br>          <span class="hljs-comment">// footprint is acceptable, this is the place to hook them in.</span><br>          <span class="hljs-comment">// However, we then need to check if this was called as a result</span><br>          <span class="hljs-comment">// of a bookmark event or regular Add/Update/Delete operation by</span><br>          <span class="hljs-comment">// checking if resourceVersion here has changed.</span><br>          <span class="hljs-keyword">if</span> event.Type != watch.Bookmark &#123;<br>             c.dispatchEvent(&amp;event)<br>          &#125;<br>          lastProcessedResourceVersion = event.ResourceVersion<br>          metrics.EventsCounter.WithLabelValues(c.groupResource.String()).Inc()<br>       <span class="hljs-keyword">case</span> &lt;-bookmarkTimer.C():<br>          bookmarkTimer.Reset(wait.Jitter(time.Second, <span class="hljs-number">0.25</span>))<br>          bookmarkEvent := &amp;watchCacheEvent&#123;<br>             Type:            watch.Bookmark,<br>             Object:          c.newFunc(),<br>             ResourceVersion: lastProcessedResourceVersion,<br>          &#125;<br>          <span class="hljs-keyword">if</span> err := c.versioner.UpdateObject(bookmarkEvent.Object, bookmarkEvent.ResourceVersion); err != <span class="hljs-literal">nil</span> &#123;<br>             klog.Errorf(<span class="hljs-string">&quot;failure to set resourceVersion to %d on bookmark event %+v&quot;</span>, bookmarkEvent.ResourceVersion, bookmarkEvent.Object)<br>             <span class="hljs-keyword">continue</span><br>          &#125;<br>          c.dispatchEvent(bookmarkEvent)<br>       <span class="hljs-keyword">case</span> &lt;-c.stopCh:<br>          <span class="hljs-keyword">return</span><br>       &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="cacher-dispatchEvent"><a href="#cacher-dispatchEvent" class="headerlink" title="cacher.dispatchEvent()"></a>cacher.dispatchEvent()</h2><ul>
+<li><p>首先通过startDispatching构建<code>watchBuffer</code></p>
+</li>
+<li><p>如果分发的事件是Bookmark：</p>
+<ul>
+<li>给<code>watchBuffer</code>中的每个watcher通过nonblockingAdd添加，其会判断是否 event.ResourceVersion &gt;&#x3D; c.bookmarkAfterResourceVersion，只有是才会加入到cacher.input中。</li>
+</ul>
+</li>
+<li><p>如果是其他普通的事件：</p>
+<ul>
+<li><p>对每个watcher调用<code>nonblockingAdd</code>，成功则事件入队，失败则加入<code>blockedWatchers</code>列表</p>
+</li>
+<li><p>如果<code>blockedWatchers</code>列表有时事件则：</p>
+<ul>
+<li><p>超时预算管理：从<code>dispatchTimeoutBudget</code>获取可用超时时间，避免单个事件占用过多资源</p>
+</li>
+<li><p>带超时的阻塞分发：调用<code>watcher.add</code>并传入计时器，允许在超时前等待watcher处理</p>
+</li>
+<li><p>智能计时器复用：如果计时器触发则设为nil，避免后续watcher使用已过期的计时器</p>
+</li>
+<li><p>资源回收：返回未使用的超时时间到预算池，实现整体资源调控</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Cacher)</span></span> dispatchEvent(event *watchCacheEvent) &#123;<br>    c.startDispatching(event)<br>    <span class="hljs-keyword">defer</span> c.finishDispatching()<br>    <span class="hljs-comment">// Watchers stopped after startDispatching will be delayed to finishDispatching,</span><br><br>    <span class="hljs-comment">// Since add() can block, we explicitly add when cacher is unlocked.</span><br>    <span class="hljs-comment">// Dispatching event in nonblocking way first, which make faster watchers</span><br>    <span class="hljs-comment">// not be blocked by slower ones.</span><br>    <span class="hljs-comment">//</span><br>    <span class="hljs-comment">// Note: if we ever decide to cache the serialization of bookmark events,</span><br>    <span class="hljs-comment">// we will also need to modify the watchEncoder encoder</span><br>    <span class="hljs-keyword">if</span> event.Type == watch.Bookmark &#123;<br>       <span class="hljs-keyword">for</span> _, watcher := <span class="hljs-keyword">range</span> c.watchersBuffer &#123;<br>          watcher.nonblockingAdd(event)<br>       &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>       <span class="hljs-comment">// Set up caching of object serializations only for dispatching this event.</span><br>       <span class="hljs-comment">//</span><br>       <span class="hljs-comment">// Storing serializations in memory would result in increased memory usage,</span><br>       <span class="hljs-comment">// but it would help for caching encodings for watches started from old</span><br>       <span class="hljs-comment">// versions. However, we still don&#x27;t have a convincing data that the gain</span><br>       <span class="hljs-comment">// from it justifies increased memory usage, so for now we drop the cached</span><br>       <span class="hljs-comment">// serializations after dispatching this event.</span><br>       <span class="hljs-comment">//</span><br>       <span class="hljs-comment">// Given that CachingObject is just wrapping the object and not perfoming</span><br>       <span class="hljs-comment">// deep-copying (until some field is explicitly being modified), we create</span><br>       <span class="hljs-comment">// it unconditionally to ensure safety and reduce deep-copying.</span><br>       <span class="hljs-comment">//</span><br>       <span class="hljs-comment">// Make a shallow copy to allow overwriting Object and PrevObject.</span><br>       wcEvent := *event<br>       setCachingObjects(&amp;wcEvent, c.versioner)<br>       event = &amp;wcEvent<br><br>       c.blockedWatchers = c.blockedWatchers[:<span class="hljs-number">0</span>]<br>       <span class="hljs-keyword">for</span> _, watcher := <span class="hljs-keyword">range</span> c.watchersBuffer &#123;<br>          <span class="hljs-keyword">if</span> !watcher.nonblockingAdd(event) &#123;<br>             c.blockedWatchers = <span class="hljs-built_in">append</span>(c.blockedWatchers, watcher)<br>          &#125;<br>       &#125;<br><br>       <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(c.blockedWatchers) &gt; <span class="hljs-number">0</span> &#123;<br>          <span class="hljs-comment">// dispatchEvent is called very often, so arrange</span><br>          <span class="hljs-comment">// to reuse timers instead of constantly allocating.</span><br>          startTime := time.Now()<br>          timeout := c.dispatchTimeoutBudget.takeAvailable()<br>          c.timer.Reset(timeout)<br><br>          <span class="hljs-comment">// Send event to all blocked watchers. As long as timer is running,</span><br>          <span class="hljs-comment">// `add` will wait for the watcher to unblock. After timeout,</span><br>          <span class="hljs-comment">// `add` will not wait, but immediately close a still blocked watcher.</span><br>          <span class="hljs-comment">// Hence, every watcher gets the chance to unblock itself while timer</span><br>          <span class="hljs-comment">// is running, not only the first ones in the list.</span><br>          timer := c.timer<br>          <span class="hljs-keyword">for</span> _, watcher := <span class="hljs-keyword">range</span> c.blockedWatchers &#123;<br>             <span class="hljs-keyword">if</span> !watcher.add(event, timer) &#123;<br>                <span class="hljs-comment">// fired, clean the timer by set it to nil.</span><br>                timer = <span class="hljs-literal">nil</span><br>             &#125;<br>          &#125;<br><br>          <span class="hljs-comment">// Stop the timer if it is not fired</span><br>          <span class="hljs-keyword">if</span> timer != <span class="hljs-literal">nil</span> &amp;&amp; !timer.Stop() &#123;<br>             <span class="hljs-comment">// Consume triggered (but not yet received) timer event</span><br>             <span class="hljs-comment">// so that future reuse does not get a spurious timeout.</span><br>             &lt;-timer.C<br>          &#125;<br><br>          c.dispatchTimeoutBudget.returnUnused(timeout - time.Since(startTime))<br>       &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *cacheWatcher)</span></span> nonblockingAdd(event *watchCacheEvent) <span class="hljs-type">bool</span> &#123;<br>    <span class="hljs-comment">// if the bookmarkAfterResourceVersion hasn&#x27;t been seen</span><br>    <span class="hljs-comment">// we will try to deliver a bookmark event every second.</span><br>    <span class="hljs-comment">// the following check will discard a bookmark event</span><br>    <span class="hljs-comment">// if it is &lt; than the bookmarkAfterResourceVersion</span><br>    <span class="hljs-comment">// so that we don&#x27;t pollute the input channel</span><br>    <span class="hljs-keyword">if</span> event.Type == watch.Bookmark &amp;&amp; event.ResourceVersion &lt; c.bookmarkAfterResourceVersion &#123;<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>    &#125;<br>    <span class="hljs-keyword">select</span> &#123;<br>    <span class="hljs-keyword">case</span> c.input &lt;- event:<br>       c.markBookmarkAfterRvAsReceived(event)<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>    <span class="hljs-keyword">default</span>:<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/ApiServer/" class="category-chain-item">ApiServer</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/k8s/" class="print-no-link">#k8s</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【k8s APIServer 源码阅读（一）】-对象缓存</div>
+      <div>http://example.com/2025/08/24/k8s APIServer源码阅读【一】-对象缓存/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年8月24日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/08/19/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%BA%8C%E3%80%91-%E8%8A%82%E7%82%B9%E7%8A%B6%E6%80%81%E4%B8%8A%E6%8A%A5/" title="【k8s kubelet 源代码阅读（二）】-节点状态上报">
+                        <span class="hidden-mobile">【k8s kubelet 源代码阅读（二）】-节点状态上报</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

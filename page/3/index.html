@@ -266,15 +266,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/03/19/MIT6-824lab2B/" target="_self">
-          【MIT6.824】lab2B-log replication 实现笔记
+        <a href="/2025/04/12/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83-%E4%BC%98%E5%8C%96%E5%99%A8/" target="_self">
+          大模型训练-优化器整理
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/19/MIT6-824lab2B/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/12/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83-%E4%BC%98%E5%8C%96%E5%99%A8/" target="_self">
         <div>
-          引言lab2B的实验要求如下： Implement the leader and follower code to append new log entries, so that the go test -run 2B tests pass.  Hint: Run git pull to get the latest lab software. Hint: Your first goal shou
+          优化器指的是对于我们的一堆模型参数 θ ，以及一个损失函数 Lθ) ，如何找到找到 L(θ) 的最小值。 SGD随机梯度下降 Stochastic Gradient Descent SGD 是最为基础的梯度下降方法。 其核心思路是：在每一步迭代中，用当前的梯度，按着负梯度方向把参数“推”一点，直到 loss 变得更小。 对于一个模型参数 θ，目标是最小化损失函数 L(θ)，SGD 每一步的更新公式
         </div>
       </a>
 
@@ -282,8 +282,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-19 21:31" pubdate>
-              2024-03-19
+            <time datetime="2025-04-12 20:53" pubdate>
+              2025-04-12
             </time>
           </div>
         
@@ -298,12 +298,12 @@
     
       <span class="category-chain">
         
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
   
   
     <span>></span>
     
-  <a href="/categories/MIT6-824/Lab/" class="category-chain-item">Lab</a>
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
   
   
 
@@ -320,11 +320,7 @@
           <div class="post-meta">
             <i class="iconfont icon-tags"></i>
             
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/Go/">#Go</a>
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -338,15 +334,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/03/14/ShadowResources/" target="_self">
-          【论文阅读】Not All Resources are Visible:Exploiting Fragmented Shadow Resources in Shared-State Scheduler Architecture
+        <a href="/2025/04/09/K8s%20Informer%E4%BB%8B%E7%BB%8D/" target="_self">
+          Kubernetes Informer介绍
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/14/ShadowResources/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/09/K8s%20Informer%E4%BB%8B%E7%BB%8D/" target="_self">
         <div>
-          论文信息论文地址： Not All Resources are Visible: Exploiting Fragmented Shadow Resources in Shared-State Scheduler Architecture 收录会议： 云计算顶会-ACM Symposium on Cloud Computing(SoCC2023) 作者： 交通大学-李超教授团队 背景资源：一个集群中
+          背景之前面试多次被问到过k8s的informer中如果请求丢失了会发生什么，感觉这应该是Operator中的经典面试题。正好也整理一下这方面的内容。 这个问题类似于：  在 Kubernetes 系统中，组件之间的通过 HTTP 协议进行通信，在不依赖任何中间件的情况下需要保证消息的实时性、可靠性、顺序性等。那么 Kubernetes 是如何做到的呢？答案就是 Informer 机制，尤其是其中定
         </div>
       </a>
 
@@ -354,8 +350,8 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-14 15:34" pubdate>
-              2024-03-14
+            <time datetime="2025-04-09 20:53" pubdate>
+              2025-04-09
             </time>
           </div>
         
@@ -370,7 +366,339 @@
     
       <span class="category-chain">
         
-  <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" class="category-chain-item">论文阅读</a>
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/04/01/Kubeflow%20Trainer%E6%A2%B3%E7%90%86/" target="_self">
+          Kubeflow Trainer梳理
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/01/Kubeflow%20Trainer%E6%A2%B3%E7%90%86/" target="_self">
+        <div>
+          仓库链接：https://github.com/kubeflow/trainer 主要的结构体介绍TrainJob12345678910111213// TrainJob represents configuration of a training job.type TrainJob struct &#123;    metav1.TypeMeta `json:&quot;,inline&quot
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-04-01 20:53" pubdate>
+              2025-04-01
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/kubeflow/" class="category-chain-item">kubeflow</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/12/02/OSPPExperience/" target="_self">
+          2024开源之夏参与经验总结
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/12/02/OSPPExperience/" target="_self">
+        <div>
+          背景最近参与了2024年中科院举办的开源之夏活动，完成了字节跳动开源的Godel Scheduler的”基于 Godel Scheduler 实现应用亲和&#x2F;反亲和以及均匀分布功能“的项目。这里做一个经验贴，希望能帮助到后面想要参与到这个项目中的人来。 项目报名下面这个是2024年整体的一个活动时间。  我印象中在4月29号之前就已经在陆陆续续放出会参与到开源之夏活动中的项目了，所以可以在
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-12-02 16:47" pubdate>
+              2024-12-02
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E5%BC%80%E6%BA%90%E4%B9%8B%E5%A4%8F/" class="category-chain-item">开源之夏</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%BC%80%E6%BA%90%E4%B9%8B%E5%A4%8F/">#开源之夏</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/11/19/k8sUseGPU/" target="_self">
+          如何在K8s集群中管理与使用GPU
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/11/19/k8sUseGPU/" target="_self">
+        <div>
+          背景随着人工智能的兴起，GPU作为重要的智算算力类型愈发受到重视，而Kubernetes（k8s）作为业界主流的集群管理系统，如何方便管理、使用GPU也是其需要解决的一大问题，故此收集整理了K8s管理与使用GPU的相关资料以学习。 物理机如何使用GPU如果给一台普通的物理机，例如我们日常用的笔记本电脑应该如何使用GPU呢。其主要涉及到两个插件的安装，分别是Nvidia Driver和CUDA To
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-11-19 10:50" pubdate>
+              2024-11-19
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+              <a href="/tags/GPU/">#GPU</a>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/09/13/InternLM/" target="_self">
+          InternLM 书生大模型实战营
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/09/13/InternLM/" target="_self">
+        <div>
+          1. 入门岛1.1 第一关 Linux 基础知识闯关任务 完成SSH连接与端口映射并运行hello_world.pyhello_world运行截图：  访问截图：  可选任务2 使用 VSCODE 远程连接开发机并创建一个conda环境创建一个名为py310的conda环境，安装python3.10  1.2 第二关 Python 基础知识闯关任务 Python实现wordcountwordcou
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-09-13 21:57" pubdate>
+              2024-09-13
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E4%B9%A6%E7%94%9F%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E6%88%98%E8%90%A5/" class="category-chain-item">书生大模型实战营</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/InternLM/">#InternLM</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/08/18/MegaScalePapaerRead/" target="_self">
+          【论文阅读】{MegaScale}:Scaling Large Language Model Training to More Than 10,000 {GPUs}
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/08/18/MegaScalePapaerRead/" target="_self">
+        <div>
+          论文基础信息论文地址： {MegaScale}: Scaling Large Language Model Training to More Than 10,000 {GPUs} 收录会议： 21st USENIX Symposium on Networked Systems Design and Implementation (NSDI 24)(CCF-A，计算机网络顶级会议) 作者机构： 字节
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-08-18 15:46" pubdate>
+              2024-08-18
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI%E9%9B%86%E7%BE%A4/" class="category-chain-item">AI集群</a>
   
   
 
@@ -387,7 +715,9 @@
             
               <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
             
-              <a href="/tags/%E9%9B%86%E7%BE%A4%E8%B0%83%E5%BA%A6/">#集群调度</a>
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E8%AE%AD%E7%BB%83/">#分布式训练</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
@@ -401,15 +731,15 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2024/03/02/colorfulEcho/" target="_self">
-          Linux控制台输出多种样式彩色字符及原理解析
+        <a href="/2024/08/17/FluidPaper/" target="_self">
+          【论文阅读】Fluid:Dataset Abstraction and Elastic Acceleration for Cloud-native Deep Learning Training Jobs
         </a>
       </h2>
 
       
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/02/colorfulEcho/" target="_self">
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/08/17/FluidPaper/" target="_self">
         <div>
-          1. 前言之前在做MIT6.824的实验的时候，有助教资料在说明如何输出彩色的字符来让日志更加清晰。所以对Linux控制台如何输出多种样式的彩色字符以及它的原理产生了兴趣，学习了之后在这里记录一下。 2. 原理Linux控制台输出彩色字符的原理是通过ANSI转义码来实现的。ANSI转义码是一种控制字符，用于控制文本终端的行为。包括但不限于控制光标位置、颜色、清屏等。 下面这是一段输出蓝色字符的控制
+          论文基础信息论文地址： Fluid: Dataset Abstraction and Elastic Acceleration for Cloud-native Deep Learning Training Jobs 收录会议： 2022 IEEE 38th International Conference on Data Engineering (ICDE)(CCF-A，数据库领域顶会) 作者机
         </div>
       </a>
 
@@ -417,8 +747,132 @@
         
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-02 20:51" pubdate>
-              2024-03-02
+            <time datetime="2024-08-17 21:26" pubdate>
+              2024-08-17
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/AI%E9%9B%86%E7%BE%A4/" class="category-chain-item">AI集群</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
+            
+              <a href="/tags/%E9%9B%86%E7%BE%A4%E7%BC%93%E5%AD%98/">#集群缓存</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/06/23/ClashForDocker/" target="_self">
+          设置Clash代理，彻底解决linux系统Docker pull的问题
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/06/23/ClashForDocker/" target="_self">
+        <div>
+          因为当前政策的收紧，很多docker镜像网站和加速器都不能使用了，虽然目前还有一些可以使用，但是打游击战终究是不可靠的，在可以预见的将来肯定会更加难以下载docker镜像，而我也厌烦了各种docker pull失败，所以这里直接使用clash设置代理，翻入墙外来彻底解决这个问题。 安装配置Clash1. 下载Clash 由于原Clash已经删库跑路，所以可以使用镜像地址下载linux版本的clas
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-06-23 16:52" pubdate>
+              2024-06-23
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Docker/" class="category-chain-item">Docker</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Docker/">#Docker</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/06/09/CNCFIntroduction/" target="_self">
+          CNCF项目全景图介绍
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/06/09/CNCFIntroduction/" target="_self">
+        <div>
+          云原生计算基金会（CNCF）介绍CNCF(Cloud Native Computing Foundation)官网链接：https://www.cncf.io/ 官方的介绍如下：  云原生技术有利于各组织在公有云、私有云和混合云等新型动态环境中，构建和运行可弹性扩展的应用。云原生的代表技术包括容器、服务网格、微服务、不可变基础设施和声明式API。 这些技术能够构建容错性好、易于管理和便于观察的松耦
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-06-09 15:36" pubdate>
+              2024-06-09
             </time>
           </div>
         
@@ -444,490 +898,6 @@
 
           </div>
         
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Linux/">#Linux</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/03/01/ubuntuInstallGo/" target="_self">
-          在Unbuntu上安装Go以及解决Vscode上Go插件无法安装的问题
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/01/ubuntuInstallGo/" target="_self">
-        <div>
-          1. 下载 Go 压缩包在写这篇文章的时候，Go 的最新版为 1.22.0。在我们下载安装包时，请浏览Go 官方下载页面,并且检查一下是否有新的版本可用。 以 root 或者其他 sudo 用户身份运行下面的命令，下载并且解压 Go 二进制文件到&#x2F;usr&#x2F;local目录： 1wget -c https://dl.google.com/go/go1.22.0.linux-amd6
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-01 23:28" pubdate>
-              2024-03-01
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%BD%AC%E8%BD%BD/">#转载</a>
-            
-              <a href="/tags/Go/">#Go</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/03/01/centosInstallPython/" target="_self">
-          在CentOS上使用源码安装Python3.7，不与系统Python2.7冲突，同时支持pip3（脚本安装，亲测有效）
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/01/centosInstallPython/" target="_self">
-        <div>
-          该脚本主要是在Centos系统上使用源码安装Python3.7，安装后可以调用python3和pip3来进行使用，同时不与系统Python2.7冲突，还额外加入了腾讯的pip源来加速pip3下载包。 脚本使用方法如下：  创建文件 install_py37.sh，写入以下 shell 脚本 赋予执行权限，chmox +x install_py37.sh 执行脚本，./install_py37.sh
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-01 23:15" pubdate>
-              2024-03-01
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%BD%AC%E8%BD%BD/">#转载</a>
-            
-              <a href="/tags/Python/">#Python</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/02/27/MIT6-824lab2A/" target="_self">
-          【MIT6.824】lab2A实现笔记
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/02/27/MIT6-824lab2A/" target="_self">
-        <div>
-          引言实现了MIT6.824中的lab2A，即leader选举的部分。 Raft结构及初始化为一个Raft中的节点增加的变量主要有：  currentTerm: 当前任期 votedFor: 为谁投票, -1表示没有投票，注意一个任期只能投一次票 state: 当前节点的状态 heartbeatTimeout: 心跳超时计数器 electionTimeout: 选举超时计数器  1234567891
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-02-27 22:54" pubdate>
-              2024-02-27
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/MIT6-824/Lab/" class="category-chain-item">Lab</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/Go/">#Go</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/12/26/RaftPaperRead/" target="_self">
-          【论文阅读】In Search of an Understandable Consensus Algorithm
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/12/26/RaftPaperRead/" target="_self">
-        <div>
-          引言共识一致性算法常用在分布式系统中，一个系统会有一个领导者，如GFS，我们需要有多个领导者副本来提高系统的容错性。但是之前的共识性算法经常采用Paxos，但是该算法很难理解。所以本文的作者重点面向可理解性提出了一个新的共识性算法Raft。主要做法是将大步骤分解成小步骤，然后尽量降低复杂度。 在具体关注其实现之前强烈建议去raft可视化中去学习一下基本的流程，以对其有个大概的印象，然后还可以参考这
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-12-26 10:50" pubdate>
-              2023-12-26
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/MIT6-824/%E8%AE%BA%E6%96%87/" class="category-chain-item">论文</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/12/12/Fault-TolerantVirtualMachinesPaperRead/" target="_self">
-          【论文阅读】The Design of a Practical System for Fault-Tolerant Virtual Machines
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/12/12/Fault-TolerantVirtualMachinesPaperRead/" target="_self">
-        <div>
-          为了更有效的做论文阅读笔记，之后都打算将每篇论文笔记的内容控制在较少的字数范围内，毕竟原论文摆在那里，将其翻译照抄过来也没什么意思，将论文读薄才是最重要的。( •̀ ω •́ )✧ “The Design of a Practical System for Fault-Tolerant Virtual Machines”是MIT6.824推荐阅读的论文之一，它介绍了一种通过主备机制来进行单核虚拟机
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-12-12 16:40" pubdate>
-              2023-12-12
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/MIT6-824/%E8%AE%BA%E6%96%87/" class="category-chain-item">论文</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/12/05/TheGoogleFileSystemPaperRead/" target="_self">
-          【论文阅读】The Google file System
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/12/05/TheGoogleFileSystemPaperRead/" target="_self">
-        <div>
-          The Google file System论文是MIT6.824中推荐阅读的论文，他是Google早期的三大论文之一，由于课程并不需要实现这个系统，所以就对整部论文中的关键点进行介绍总结。 相关背景为了满足Google快速增长的数据处理需求，Google需要自己构建一套文件系统——The Google file System(GFS)。而这套文件系统也必须是分布式的文件系统才足以满足要求，但是我
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-12-05 17:21" pubdate>
-              2023-12-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/MIT6-824/%E8%AE%BA%E6%96%87/" class="category-chain-item">论文</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/GFS/">#GFS</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/12/01/IDEA%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91%E9%80%89%E9%A1%B9%E4%B8%A2%E5%A4%B1%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95/" target="_self">
-          IDEA远程开发选项丢失修复方法
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/12/01/IDEA%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91%E9%80%89%E9%A1%B9%E4%B8%A2%E5%A4%B1%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95/" target="_self">
-        <div>
-          今天打开IDEA发现远程开发选项没有了：  发现全网也没有什么提到过这个错误的，所有捣鼓了好久还进行了IDEA的重装也一直都没有解决，最后查看IDEA官方的介绍文档才发现了问题所在：Remote Development Gateway插件被关闭了 故而解决方法就是点击IDEA的设置选项卡，在插件(plugs)选项中重新勾选Remote Development Gateway来启用该插件即可  点击
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-12-01 17:03" pubdate>
-              2023-12-01
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/IDEA/">#IDEA</a>
-            
-          </div>
         
       </div>
     </article>
@@ -937,7 +907,7 @@
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <a class="extend prev" rel="prev" href="/page/2/#board"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/#board">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/#board">4</a><a class="extend next" rel="next" href="/page/4/#board"><i class="iconfont icon-arrowright"></i></a>
+      <a class="extend prev" rel="prev" href="/page/2/#board"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/#board">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/#board">4</a><a class="page-number" href="/page/5/#board">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/#board">7</a><a class="extend next" rel="next" href="/page/4/#board"><i class="iconfont icon-arrowright"></i></a>
     </span>
   </nav>
 

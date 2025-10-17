@@ -1,0 +1,1063 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="GPU架构概览物理体系架构下图是A100的物理体系架构：  绿色部分是计算核心   在 NVidia 的 GPU 里，最基本的处理单元是SP（Streaming Processor），A100中，64SP会组成一个SM（streaming Multiprocessor），SM是GPU中调度的基础单元，A100中总共具有108个SM，所以得到共有108*64&#x3D;6192个计算核心。   中间">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GPU架构概览">
+<meta property="og:url" content="http://example.com/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="GPU架构概览物理体系架构下图是A100的物理体系架构：  绿色部分是计算核心   在 NVidia 的 GPU 里，最基本的处理单元是SP（Streaming Processor），A100中，64SP会组成一个SM（streaming Multiprocessor），SM是GPU中调度的基础单元，A100中总共具有108个SM，所以得到共有108*64&#x3D;6192个计算核心。   中间">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-5.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-4.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-3.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-2.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image.png">
+<meta property="og:image" content="http://example.com/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-1.png">
+<meta property="article:published_time" content="2025-05-10T12:53:03.000Z">
+<meta property="article:modified_time" content="2025-10-17T05:30:26.150Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-5.png">
+  
+  
+  
+  <title>GPU架构概览 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="GPU架构概览"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-05-10 20:53" pubdate>
+          2025年5月10日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">GPU架构概览</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="GPU架构概览"><a href="#GPU架构概览" class="headerlink" title="GPU架构概览"></a>GPU架构概览</h1><h2 id="物理体系架构"><a href="#物理体系架构" class="headerlink" title="物理体系架构"></a>物理体系架构</h2><p>下图是A100的物理体系架构：</p>
+<ul>
+<li>绿色部分是计算核心</li>
+</ul>
+<blockquote>
+<p>在 NVidia 的 GPU 里，最基本的处理单元是SP（Streaming Processor），A100中，64SP会组成一个SM（streaming Multiprocessor），SM是GPU中调度的基础单元，A100中总共具有108个SM，所以得到共有108*64&#x3D;6192个计算核心。</p>
+</blockquote>
+<ul>
+<li><p>中间蓝色部分是L2缓存</p>
+</li>
+<li><p>最上面是PCIE层，通过PCIE接口以外设的方式集成到服务器上。</p>
+</li>
+<li><p>最下面是NVLink，它是多个GPU间进行通信的组件，会对GPU之间的通信做些优化</p>
+</li>
+<li><p>两侧的HBM2就是显存，目前的A100的显存有两种40G and 80G</p>
+</li>
+</ul>
+<p><img src="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-5.png" srcset="/img/loading.gif" lazyload></p>
+<p>SM是核心的计算元件，下图是A100的SM的结构，可以看到：</p>
+<ul>
+<li><p>存在一个192KB的L1级的Cache</p>
+</li>
+<li><p>各计算单元SP&#x2F;CUDA Core存在一个L0级的指令Cache</p>
+</li>
+</ul>
+<blockquote>
+<p>在 Fermi 架构之后，SP 被改称为 CUDA Core，通过 CUDA 来控制具体的指令执行。</p>
+</blockquote>
+<ul>
+<li><p>计算单元存在适配 FP16、BF16、TF32、FP64、INT8、INT4 和 Binary 等各类数据类型运算的<strong>向量</strong>运行单元</p>
+</li>
+<li><p>计算单元存在一个额外的Tensor core去进行<strong>张量</strong>计算</p>
+</li>
+</ul>
+<blockquote>
+<p>每个TensorCore提供一个4x4x4矩阵处理数组，它执行操作D&#x3D;A*B+C，其中A、B、C和D是4×4矩阵。每个TensorCore每个时钟周期可以执行64个浮点FMA混合精度操作，而在一个SM中有多个TensorCore。</p>
+<p>张量核心与普通的 CUDA 核心其实有很大的区别，<strong>CUDA 核心在每个时钟周期都可以准确的执行一次整数或者浮点数的运算</strong>，时钟的速度和核心的数量都会影响整体性能。<strong>张量核心通过牺牲一定的精度可以在每个时钟计算执行一次 4 x 4 的矩阵运算</strong>。</p>
+</blockquote>
+<ul>
+<li><p>计算单元还存在一个Warp调度器负责调度执行可运行的Warp</p>
+</li>
+<li><p>计算单元有专门的特殊函数的计算单元（Special Functions Unit、SPU），（超越函数和数学函数,反平方根、正余弦啥的）</p>
+</li>
+<li><p>计算单元还存在Dispatch Unit作为指令分发单元</p>
+</li>
+</ul>
+<p><img src="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-4.png" srcset="/img/loading.gif" lazyload></p>
+<p>其内存架构如下图所示：</p>
+<ul>
+<li><p>最外层是HBM内存，大小为80GB</p>
+</li>
+<li><p>然后还有一个SM共享的L2 Cache，大小为40MB</p>
+</li>
+<li><p>每个SM有一个L1级的Cache，大小为192KB</p>
+</li>
+<li><p>每个SM的寄存器也可以视作一个缓存，大小为256KB</p>
+</li>
+<li><p>GPU与CPU之间通过PCIe进行通信</p>
+</li>
+</ul>
+<p><img src="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-3.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="CUDA编程模型下的逻辑体系结构"><a href="#CUDA编程模型下的逻辑体系结构" class="headerlink" title="CUDA编程模型下的逻辑体系结构"></a>CUDA编程模型下的逻辑体系结构</h2><h3 id="CUDA简介"><a href="#CUDA简介" class="headerlink" title="CUDA简介"></a>CUDA简介</h3><p>一个CUDA程序的可以分为两个部分: 在CPU上运行的<code>Host</code>程序；在GPU上运行的<code>Device</code>程序。两者拥有各自的存储器。GPU上运行的函数又被叫做<code>kernel</code>函数，通过<code>global</code>关键字声名，例如：</p>
+<p>可以看到在程序中我们需要声明用多少个block，每个block中使用多少线程。线程可以使用1维、2维、3维的线程索引(thread index)来标识，block也可以使用1维、2维、3维的索引。例如在上面的启动命令<code>kernel&lt;&lt;&lt;numBlocks, threadsPerBlock&gt;&gt;&gt;()</code>中就分别制定了block的数量以及每个block中threads的数量。然后在具体的kernel计算就可以根据相关id计算出要取第几位的数。</p>
+<h3 id="计算线程模型简介"><a href="#计算线程模型简介" class="headerlink" title="计算线程模型简介"></a>计算线程模型简介</h3><p>在CUDA架构下，线程的组织结构可以统一成如下所示：</p>
+<p><img src="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-2.png" srcset="/img/loading.gif" lazyload></p>
+<p>总的来说，CUDA 可以分为 Grid，Block 和 Thread 三个层次结构：</p>
+<ul>
+<li><p>线程层次结构Ⅰ-Grid：Kernel 在 device 上执行时，实际上是启动很多线程，一个 Kernel 所启动的所有线程称为一个网格（grid），同一个网格上的线程共享相同的全局内存空间，grid 是线程结构的第一层次。</p>
+</li>
+<li><p>线程层次结构Ⅱ-Block：Grid 分为多个线程块（block），一个 block 里面包含很多线程，Block 之间并行执行，并且无法通信，也没有执行顺序，每个 block 包含共享内存（shared memory），可以共享里面的 Thread。</p>
+</li>
+<li><p>线程层次结Ⅲ-Thread：CUDA 并行程序实际上会被多个 threads 执行，多个 threads 会被群组成一个线程 block，同一个 block 中 threads 可以同步，也可以通过 shared memory 通信。</p>
+</li>
+</ul>
+<p><strong>将这些线程与硬件进行对应的关系如下所示：</strong></p>
+<table>
+<thead>
+<tr>
+<th><strong>软件</strong></th>
+<th><strong>硬件</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Thread</td>
+<td>SP&#x2F;CUDA Core</td>
+</tr>
+<tr>
+<td>Block</td>
+<td>SM</td>
+</tr>
+<tr>
+<td>Grid</td>
+<td>一组SM</td>
+</tr>
+</tbody></table>
+<p>注意往往32个Thread会组成一个Warp，Warp的调度流程如下：</p>
+<ol>
+<li><p>线程启动后，被分组成若干个 warp（每 32 个线程为一组）</p>
+</li>
+<li><p>每个 warp 被分配到某个 SM 上执行</p>
+</li>
+<li><p>SM 的 warp scheduler 轮询多个 warp，选择 ready warp 发射指令</p>
+</li>
+</ol>
+<blockquote>
+<p>同一个warp中的thread可以以任意顺序执行，active warps被SM资源限制。当一个warp空闲时，SM就可以调度驻留在该SM中另一个可用warp。在并发的warp之间切换是没什么消耗的，因为硬件资源早就被分配到所有thread和block，所以新调度的warp的状态已经存储在SM中了。</p>
+<p>GPU 的线程切换只是切换了寄存器组（一个 SM 中有高达 64k 个寄存器），延迟超级低，几乎没有成本。一个 CUDA Core 可以随时在八个线程之间反复横跳，哪个线程数据准备好了就执行哪个。&#x20;</p>
+</blockquote>
+<ul>
+<li>warp 内所有线程执行同一条指令，但使用不同数据（即 data-parallel）</li>
+</ul>
+<blockquote>
+<p>GPU 控制部件面积比较小，为了节约控制器，<strong>一个 Warp 内部的所有 CUDA Core 的 PC（程序计数器）一直是同步的，但是访存地址是可以不同的，每个核心还可以有自己独立的寄存器组，它们使用不同的数据执行相同的命令</strong>，这种执行方式叫做 SIMT（Single Instruction Multi Trhead）。</p>
+</blockquote>
+<ul>
+<li>遇到分支时，warp divergence 会导致串行化执行不同路径</li>
+</ul>
+<blockquote>
+<p>极端情况下，每一个Core的指令流都不一样，那么甚至还可能导致一个 Warp 中仅有一个 Core 在工作，效率降低为 1&#x2F;32.</p>
+<p><img src="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image.png" srcset="/img/loading.gif" lazyload></p>
+</blockquote>
+<h3 id="内存模型简介"><a href="#内存模型简介" class="headerlink" title="内存模型简介"></a>内存模型简介</h3><p><code>CUDA threads</code>在执行时，可以访问多个<code>memory spaces</code>，每个线程有自己的私有的<code>local memory</code>。每个block有一个<code>shared memory</code>，block的所有线程都可以访问。最后，所有线程都可以访问<code>global memory</code>。</p>
+<p><img src="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/image-1.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="历史架构演进"><a href="#历史架构演进" class="headerlink" title="历史架构演进"></a>历史架构演进</h1><table>
+<thead>
+<tr>
+<th>架构名称</th>
+<th>中文名字</th>
+<th>发布时间</th>
+<th>核心参数</th>
+<th>特点&amp;优势</th>
+<th>纳米制程</th>
+<th>代表型号</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fermi</td>
+<td>费米</td>
+<td>2010</td>
+<td>16 个 SM，每个 SM 包含 32 个 CUDA Cores，一共 512 CUDA Cores</td>
+<td>首个完整 GPU 计算架构，支持与共享存储结合的 Cache 层次 GPU 架构，支持 ECC GPU 架构</td>
+<td>40&#x2F;28nm, 30 亿晶体管</td>
+<td>Quadro 7000</td>
+</tr>
+<tr>
+<td>Kepler</td>
+<td>开普勒</td>
+<td>2012</td>
+<td>15 个 SMX，每个 SMX 包括 192 个 FP32+64 个 FP64 CUDA Cores</td>
+<td>游戏性能大幅提升，首次支持 GPU Direct 技术</td>
+<td>28nm, 71 亿晶体管</td>
+<td>K80, K40M</td>
+</tr>
+<tr>
+<td>Maxwell</td>
+<td>麦克斯韦</td>
+<td>2014</td>
+<td>16 个 SM，每个 SM 包括 4 个处理块，每个处理块包括 32 个 CUDA Cores+8 个 LD&#x2F;ST Unit + 8 SFU</td>
+<td>每组 SM 单元从 192 个减少到每组 128 个，每个 SMM 单元拥有更多逻辑控制电路</td>
+<td>28nm, 80 亿晶体管</td>
+<td>M5000, M4000GTX 9XX 系列</td>
+</tr>
+<tr>
+<td>Pascal</td>
+<td>帕斯卡</td>
+<td>2016</td>
+<td>GP100 有 60 个 SM，每个 SM 包括 64 个 CUDA Cores，32 个 DP Cores</td>
+<td>NVLink 第一代，双向互联带宽 160GB&#x2F;s，P100 拥有 56 个 SM HBM</td>
+<td>16nm, 153 亿晶体管</td>
+<td>P100, P6000, TTX1080</td>
+</tr>
+<tr>
+<td>Volta</td>
+<td>伏特</td>
+<td>2017</td>
+<td>80 个 SM，每个 SM 包括 32 个 FP64+64 Int32+64 FP32+8 个 Tensor Cores</td>
+<td>NVLink2.0，Tensor Cores 第一代，支持 AI 运算，NVSwitch1.0</td>
+<td>12nm, 211 亿晶体管</td>
+<td>V100, TiTan V</td>
+</tr>
+<tr>
+<td>Turing</td>
+<td>图灵</td>
+<td>2018</td>
+<td>102 核心 92 个 SM，SM 重新设计，每个 SM 包含 64 个 Int32+64 个 FP32+8 个 Tensor Cores</td>
+<td>Tensor Core2.0，RT Core 第一代</td>
+<td>12nm, 186 亿晶体管</td>
+<td>T4，2080TI, RTX 5000</td>
+</tr>
+<tr>
+<td>Ampere</td>
+<td>安培</td>
+<td>2020</td>
+<td>108 个 SM，每个 SM 包含 64 个 FP32+64 个 INT32+32 个 FP64+4 个 Tensor Cores</td>
+<td>Tensor Core3.0，RT Core2.0，NVLink3.0，结构稀疏性矩阵 MIG1.0</td>
+<td>7nm, 283 亿晶体管</td>
+<td>A100, A30 系列</td>
+</tr>
+<tr>
+<td>Hopper</td>
+<td>赫柏</td>
+<td>2022</td>
+<td>132 个 SM，每个 SM 包含 128 个 FP32+64 个 INT32+64 个 FP64+4 个 Tensor Cores</td>
+<td>Tensor Core4.0，NVLink4.0，结构稀疏性矩阵 MIG2.0</td>
+<td>4nm, 800 亿晶体管</td>
+<td>H100</td>
+</tr>
+<tr>
+<td>Blackwell</td>
+<td>布莱克韦尔</td>
+<td>2024</td>
+<td>-</td>
+<td>Tensor Core5.0，NVLink5.0, 第二代 Transformer 引擎，支持 RAS</td>
+<td>4NP, 2080 亿晶体管</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>具体可以看这个：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/chenzomi12/AISystem/blob/main/02Hardware/03GPUBase/04History.md">https://github.com/chenzomi12/AISystem/blob/main/02Hardware/03GPUBase/04History.md</a></p>
+<ul>
+<li><p><strong>京东算法中台：</strong>&#x6536;推广、大模型、多模态。计算引擎、算力、调度、容错。团队规模60、70。</p>
+</li>
+<li><p>通用模型</p>
+</li>
+<li><p>数据、数据模型框架衔接，样本中心。</p>
+</li>
+<li><p>算法数据。批流一体，数据存储，数据使用</p>
+</li>
+<li><p>算力引擎：100B-》1000B</p>
+</li>
+<li><p>稀疏参数：行为流特征，从100GB到万GB。</p>
+</li>
+<li><p>模型断点续训练，数据怎么断点，如何细粒度恢复。向量化表示。</p>
+</li>
+<li><p><strong>京东上班节奏：10点～晚8点。绝大多数不加班。</strong></p>
+</li>
+</ul>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><p><a target="_blank" rel="noopener" href="https://hustcat.github.io/gpu-architecture/">https://hustcat.github.io/gpu-architecture/</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/319355296/answer/2193938981">https://www.zhihu.com/question/319355296/answer/2193938981</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/8435687930">https://zhuanlan.zhihu.com/p/8435687930</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/chenzomi12/AISystem/blob/main/02Hardware/03GPUBase">https://github.com/chenzomi12/AISystem/blob/main/02Hardware/03GPUBase</a></p>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>GPU架构概览</div>
+      <div>http://example.com/2025/05/10/GPU架构简介/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年5月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/05/25/Pytorch%20torch.distributed%20%E5%8F%8ANCCL%E5%88%9D%E6%8E%A2/" title="Pytorch torch.distributed 及NCCL初探">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Pytorch torch.distributed 及NCCL初探</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/05/04/LLMFromScratch4/" title="【从零构建大模型】四、对模型进行无监督训练">
+                        <span class="hidden-mobile">【从零构建大模型】四、对模型进行无监督训练</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

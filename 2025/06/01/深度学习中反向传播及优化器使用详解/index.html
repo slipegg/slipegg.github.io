@@ -1,0 +1,946 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="反向传播偏导数参考资料：  https:&#x2F;&#x2F;wuli.wiki&#x2F;online&#x2F;ParDer.html  简要说明：  对于复合函数，如果要求其对于某一个参数的偏导数，那么就需要把其他参数看为常数，然后求导。  几何意义：可以认为是沿着某一个轴的导数。如下图所示，对于曲面 $$z&#x3D;f(x,y)$$对x的偏导就是求这个曲面上的某点对于x轴的斜率。    全微分参考资料：  https:&#x2F;&#x2F;w">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度学习中反向传播及优化器使用详解">
+<meta property="og:url" content="http://example.com/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="反向传播偏导数参考资料：  https:&#x2F;&#x2F;wuli.wiki&#x2F;online&#x2F;ParDer.html  简要说明：  对于复合函数，如果要求其对于某一个参数的偏导数，那么就需要把其他参数看为常数，然后求导。  几何意义：可以认为是沿着某一个轴的导数。如下图所示，对于曲面 $$z&#x3D;f(x,y)$$对x的偏导就是求这个曲面上的某点对于x轴的斜率。    全微分参考资料：  https:&#x2F;&#x2F;w">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/image-1.png">
+<meta property="og:image" content="http://example.com/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/image-2.png">
+<meta property="og:image" content="http://example.com/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/image.png">
+<meta property="article:published_time" content="2025-06-01T12:53:03.000Z">
+<meta property="article:modified_time" content="2025-10-17T06:33:13.692Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/image-1.png">
+  
+  
+  
+  <title>深度学习中反向传播及优化器使用详解 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="深度学习中反向传播及优化器使用详解"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-06-01 20:53" pubdate>
+          2025年6月1日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          39 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深度学习中反向传播及优化器使用详解</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="反向传播"><a href="#反向传播" class="headerlink" title="反向传播"></a>反向传播</h1><h2 id="偏导数"><a href="#偏导数" class="headerlink" title="偏导数"></a>偏导数</h2><p><strong>参考资料：</strong></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://wuli.wiki/online/ParDer.html">https://wuli.wiki/online/ParDer.html</a></li>
+</ul>
+<p><strong>简要说明：</strong></p>
+<ul>
+<li><p>对于复合函数，如果要求其对于某一个参数的偏导数，那么就需要把其他参数看为常数，然后求导。</p>
+</li>
+<li><p>几何意义：可以认为是沿着某一个轴的导数。如下图所示，对于曲面 $$z&#x3D;f(x,y)$$对x的偏导就是求这个曲面上的某点对于x轴的斜率。</p>
+</li>
+</ul>
+<p><img src="/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/image-1.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="全微分"><a href="#全微分" class="headerlink" title="全微分"></a>全微分</h2><p><strong>参考资料：</strong></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://wuli.wiki/online/TDiff.html">https://wuli.wiki/online/TDiff.html</a></li>
+</ul>
+<p><strong>简要说明：</strong></p>
+<ul>
+<li><p>对于多元函数，若每个参数都进行微小的变化，那么整个函数的z变化就是：$$\mathrm{d}z&#x3D;\sum_{i&#x3D;1}^N\frac{\partial f}{\partial x_i}\mathrm{~d}x_i$$</p>
+</li>
+<li><p>几何意义：对于曲面 $$z&#x3D;f(x,y)$$，若它在 $$(x_0, y_0)$$附近的曲面光滑，那么考虑一个足够小的区域，可以把这附近近似为一个平面，若在$x$与$y$方向都都进行小幅的移动，则$z$的增量就等于先在$x$方向进行移动的增量再加上$y$方向移动的增量。</p>
+</li>
+</ul>
+<h2 id="链式法则"><a href="#链式法则" class="headerlink" title="链式法则"></a>链式法则</h2><p><strong>参考资料：</strong></p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://wuli.wiki/online/PChain.html">https://wuli.wiki/online/PChain.html</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/85147199">https://zhuanlan.zhihu.com/p/85147199</a></p>
+</li>
+</ul>
+<p><strong>简要说明：</strong></p>
+<ul>
+<li><p>证明：</p>
+<ul>
+<li><p>假设现在有函数： $$z(x,y)&#x3D;f[u(x,y),v(x,y)]$$</p>
+</li>
+<li><p>根据全微分关系有： $$\mathrm{d}z&#x3D;\frac{\partial f}{\partial u}\operatorname{d}u+\frac{\partial f}{\partial v}\operatorname{d}v$$</p>
+</li>
+<li><p>对于 $du$、$dv$又有：</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>$$\mathrm{d}u &#x3D; \frac{\partial u}{\partial x},\mathrm{d}x + \frac{\partial u}{\partial y},\mathrm{d}y,\quad<br>\mathrm{d}v &#x3D; \frac{\partial v}{\partial x},\mathrm{d}x + \frac{\partial v}{\partial y},\mathrm{d}y$$</p>
+<ul>
+<li><p>带入可得： $$\begin{gathered}<br>\mathbf{d}z&#x3D;\frac{\partial f}{\partial u}{\left(\frac{\partial u}{\partial x}\right.}\mathrm{d}x+\frac{\partial u}{\partial y}\left.\mathrm{d}y\right)+\frac{\partial f}{\partial v}{\left(\frac{\partial v}{\partial x}\right.}\mathrm{d}x+\frac{\partial v}{\partial y}\left.\mathrm{d}y\right) \ &#x3D;\left(\frac{\partial f}{\partial u}\frac{\partial u}{\partial x}+\frac{\partial f}{\partial v}\frac{\partial v}{\partial x}\right)\mathrm{d}x+\left(\frac{\partial f}{\partial u}\frac{\partial u}{\partial y}+\frac{\partial f}{\partial v}\frac{\partial v}{\partial y}\right)\mathrm{d}y<br>\end{gathered}$$</p>
+</li>
+<li><p>根据全微分的定义就可以得到：</p>
+</li>
+</ul>
+<p>
+$$
+\begin{aligned}
+\frac{\partial z}{\partial x}
+  &= \frac{\partial f}{\partial u}\frac{\partial u}{\partial x}
+   + \frac{\partial f}{\partial v}\frac{\partial v}{\partial x}, \\
+\frac{\partial z}{\partial y}
+  &= \frac{\partial f}{\partial u}\frac{\partial u}{\partial y}
+   + \frac{\partial f}{\partial v}\frac{\partial v}{\partial y}.
+\end{aligned}
+$$
+</p>
+
+<ul>
+<li><p>拓展到任意多变量的情况：<br>$$z(x_1,\ldots,x_N)&#x3D;f[u_1(x_1,\ldots,x_N),\ldots,u_M(x_1,\ldots,x_N)]$$</p>
+</li>
+<li><p>我们就可以得到链式法则：$$\Large\frac{\partial z}{\partial x_i}&#x3D;\sum_j\frac{\partial f}{\partial u_j}\frac{\partial u_j}{\partial x_i}$$</p>
+</li>
+</ul>
+<h2 id="举例分析"><a href="#举例分析" class="headerlink" title="举例分析"></a>举例分析</h2><p>假设现在有一个计算式为 ( e &#x3D; (a + b) * (b + 1) )，可以首先取 ( c &#x3D; a + b )、( d &#x3D; b + 1 )，<br>从而将其转化为 ( e &#x3D; c * d )，然后根据链式法则可以求 ( b ) 的偏导：</p>
+<p>
+$$\frac{\partial e}{\partial b}=\frac{\partial e}{\partial c}\frac{\partial c}{\partial b}+\frac{\partial e}{\partial d}\frac{\partial d}{\partial b}=d*1+c*1=(b+1)+(a+b)$$。
+</p>
+
+<p>取 $a&#x3D;3, b&#x3D;2$，将计算图绘制如下：</p>
+<p><img src="/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/image-2.png" srcset="/img/loading.gif" lazyload></p>
+<blockquote>
+<p>该图中是将数值作为了节点，将运算符作为了边。注意也有一些说法是反过来的。</p>
+</blockquote>
+<p>在计算图中我们可以将各个变量的值计算出来，然后进行反向传播，计算去其对于各个变量的偏导数。对于 $b$，带入链式法则的公司，得到其偏导为: </p>
+<p>
+$$
+\frac{\partial e}{\partial b}
+= \frac{\partial e}{\partial c}\frac{\partial c}{\partial b}
++ \frac{\partial e}{\partial d}\frac{\partial d}{\partial b}
+= 3 \times 1 + 5 \times 1 = 8
+$$
+</p>
+
+<p>带入计算图中可以更为简单地理解为其偏导就是各个链路的偏导乘积的和。所以如果我们需要同时计算 $a$和 $b$的偏导，我们可以将e节点认定为1，然后进行反向传播，求出各节点的偏导，然后进行复用，如下图所示：</p>
+<p><img src="/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/image.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="举例pytorch验证"><a href="#举例pytorch验证" class="headerlink" title="举例pytorch验证"></a>举例pytorch验证</h2><p>使用pytorch实现上述的计算式，如下，最后的输出与我们上述分析的一致。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br><span class="hljs-comment"># 定义变量 a 和 b，并开启自动求导</span><br>a = torch.tensor(<span class="hljs-number">3.0</span>, requires_grad=<span class="hljs-literal">True</span>)<br>b = torch.tensor(<span class="hljs-number">2.0</span>, requires_grad=<span class="hljs-literal">True</span>)<br><br><span class="hljs-comment"># 构造计算式 e = (a + b)(b + 1)</span><br>c = a + b<br>d = b + <span class="hljs-number">1</span><br>e = c * d  <span class="hljs-comment"># e = (a + b) * (b + 1)</span><br><br><span class="hljs-comment"># 保留计算过程的梯度，默认pytorch只保留叶子节点的，所以需要主动设置</span><br>c.retain_grad()<br>d.retain_grad()<br>e.retain_grad()<br><br><span class="hljs-comment"># 反向传播求导</span><br>e.backward()<br><br><span class="hljs-comment"># 打印结果</span><br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;e = <span class="hljs-subst">&#123;e.item()&#125;</span>&quot;</span>)<br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;∂e/∂e = <span class="hljs-subst">&#123;e.grad.item()&#125;</span>&quot;</span>) <br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;∂e/∂c = <span class="hljs-subst">&#123;c.grad.item()&#125;</span>&quot;</span>) <br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;∂e/∂d = <span class="hljs-subst">&#123;d.grad.item()&#125;</span>&quot;</span>) <br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;∂e/∂a = <span class="hljs-subst">&#123;a.grad.item()&#125;</span>&quot;</span>)  <span class="hljs-comment"># 应该是 d = b + 1 = 3</span><br><span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;∂e/∂b = <span class="hljs-subst">&#123;b.grad.item()&#125;</span>&quot;</span>)  <span class="hljs-comment"># 应该是 (∂e/∂c)*(∂c/∂b) + (∂e/∂d)*(∂d/∂b) = d + c = 3 + 5 = 8</span><br><br><span class="hljs-comment"># 输出</span><br><span class="hljs-comment"># e = 15.0</span><br><span class="hljs-comment"># ∂e/∂e = 1.0</span><br><span class="hljs-comment"># ∂e/∂c = 3.0</span><br><span class="hljs-comment"># ∂e/∂d = 5.0</span><br><span class="hljs-comment"># ∂e/∂a = 3.0</span><br><span class="hljs-comment"># ∂e/∂b = 8.0</span><br></code></pre></td></tr></table></figure>
+
+<h1 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h1><p>上述我们知道了如何计算梯度，但是在实际的深度学习中，我们往往还需要构建模型，然后利用优化器对模型参数进行更新。</p>
+<p>所以进一步，我们需要：</p>
+<ol>
+<li><p>把 <code>b</code> 设为“模型参数”（可优化的变量）；</p>
+</li>
+<li><p>将 <code>e = (a + b)(b + 1)</code> 作为模型的“前向计算”；</p>
+</li>
+<li><p>定义损失函数（比如 <code>loss = e ** 2</code>，希望 <code>e</code> 趋近于 0）；</p>
+</li>
+<li><p>使用 <code>optimizer</code> 优化变量 <code>b</code>。</p>
+</li>
+</ol>
+<p>完整代码及输出如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><span class="hljs-keyword">import</span> torch.optim <span class="hljs-keyword">as</span> optim<br><br><span class="hljs-comment"># 假设 a 是常数，b 是我们要学习的参数</span><br>a = torch.tensor(<span class="hljs-number">3.0</span>)<br><br><span class="hljs-comment"># 将 b 作为参数需要被优化，requires_grad=True</span><br>b = torch.tensor(<span class="hljs-number">2.0</span>, requires_grad=<span class="hljs-literal">True</span>)<br><br><span class="hljs-comment"># 构建优化器，优化目标是 b</span><br>optimizer = optim.SGD([b], lr=<span class="hljs-number">0.01</span>)<br><br><span class="hljs-comment"># 训练目标：希望 e 趋近于 0，所以目标是最小化 loss = e^2</span><br><span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">20</span>):<br>    optimizer.zero_grad()  <span class="hljs-comment"># 清除旧梯度</span><br><br>    <span class="hljs-comment"># 前向计算</span><br>    c = a + b<br>    d = b + <span class="hljs-number">1</span><br>    e = c * d<br><br>    <span class="hljs-comment"># 构造损失函数（比如希望 e 接近 0）</span><br>    loss = e ** <span class="hljs-number">2</span>  <span class="hljs-comment"># 损失函数 L = e^2</span><br><br>    <span class="hljs-comment"># 反向传播</span><br>    loss.backward()<br><br>    <span class="hljs-comment"># 梯度更新</span><br>    optimizer.step()<br><br>    <span class="hljs-comment"># 打印当前值</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Epoch <span class="hljs-subst">&#123;epoch+<span class="hljs-number">1</span>:2d&#125;</span>: ∂loss/∂b = <span class="hljs-subst">&#123;b.grad.item():<span class="hljs-number">.4</span>f&#125;</span>, b = <span class="hljs-subst">&#123;b.item():<span class="hljs-number">.4</span>f&#125;</span>, e = <span class="hljs-subst">&#123;e.item():<span class="hljs-number">.4</span>f&#125;</span>, loss = <span class="hljs-subst">&#123;loss.item():<span class="hljs-number">.4</span>f&#125;</span>&quot;</span>)<br><br><span class="hljs-comment"># Epoch  1: ∂loss/∂b = 240.0000, b = -0.4000, e = 15.0000, loss = 225.0000</span><br><span class="hljs-comment"># Epoch  2: ∂loss/∂b = 9.9840, b = -0.4998, e = 1.5600, loss = 2.4336</span><br><span class="hljs-comment"># Epoch  3: ∂loss/∂b = 7.5037, b = -0.5749, e = 1.2505, loss = 1.5637</span><br><span class="hljs-comment"># Epoch  4: ∂loss/∂b = 5.8771, b = -0.6336, e = 1.0310, loss = 1.0629</span><br><span class="hljs-comment"># Epoch  5: ∂loss/∂b = 4.7381, b = -0.6810, e = 0.8669, loss = 0.7515</span><br><span class="hljs-comment"># Epoch  6: ∂loss/∂b = 3.9025, b = -0.7201, e = 0.7397, loss = 0.5471</span><br><span class="hljs-comment"># Epoch  7: ∂loss/∂b = 3.2678, b = -0.7527, e = 0.6383, loss = 0.4074</span><br><span class="hljs-comment"># Epoch  8: ∂loss/∂b = 2.7723, b = -0.7805, e = 0.5557, loss = 0.3088</span><br><span class="hljs-comment"># Epoch  9: ∂loss/∂b = 2.3771, b = -0.8042, e = 0.4873, loss = 0.2375</span><br><span class="hljs-comment"># Epoch 10: ∂loss/∂b = 2.0561, b = -0.8248, e = 0.4299, loss = 0.1848</span><br><span class="hljs-comment"># Epoch 11: ∂loss/∂b = 1.7916, b = -0.8427, e = 0.3811, loss = 0.1453</span><br><span class="hljs-comment"># Epoch 12: ∂loss/∂b = 1.5709, b = -0.8584, e = 0.3393, loss = 0.1151</span><br><span class="hljs-comment"># Epoch 13: ∂loss/∂b = 1.3846, b = -0.8723, e = 0.3032, loss = 0.0919</span><br><span class="hljs-comment"># Epoch 14: ∂loss/∂b = 1.2261, b = -0.8845, e = 0.2718, loss = 0.0739</span><br><span class="hljs-comment"># Epoch 15: ∂loss/∂b = 1.0900, b = -0.8954, e = 0.2443, loss = 0.0597</span><br><span class="hljs-comment"># Epoch 16: ∂loss/∂b = 0.9725, b = -0.9051, e = 0.2201, loss = 0.0484</span><br><span class="hljs-comment"># Epoch 17: ∂loss/∂b = 0.8702, b = -0.9138, e = 0.1987, loss = 0.0395</span><br><span class="hljs-comment"># Epoch 18: ∂loss/∂b = 0.7809, b = -0.9217, e = 0.1797, loss = 0.0323</span><br><span class="hljs-comment"># Epoch 19: ∂loss/∂b = 0.7023, b = -0.9287, e = 0.1628, loss = 0.0265</span><br><span class="hljs-comment"># Epoch 20: ∂loss/∂b = 0.6331, b = -0.9350, e = 0.1477, loss = 0.0218</span><br></code></pre></td></tr></table></figure>
+
+<p>注意我们这里定义了 $loss&#x3D;e^2$，所以在原计算图的最上面会多出一个节点，然后会多出一条边，这条边对应的偏导是 $\frac{\partial loss}{\partial e}&#x3D;2e$。</p>
+<p>对于Epoch 1，手动计算其相对于 $b$的导数为:</p>
+<p>
+$$2e*\frac{\partial e}{\partial b}=2*15*8=240$$
+</p>
+
+<p>然后因为采取的是SGD且学习率为0.01，所以更新 $b &#x3D; 2 - 0.01*240&#x3D; -0.4$。</p>
+<p>而一般来说，我们会将其封装成模型进行使用，如下所示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><span class="hljs-keyword">import</span> torch.optim <span class="hljs-keyword">as</span> optim<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">SimpleModel</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, init_b</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        self.b = nn.Parameter(torch.tensor(init_b))<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, a</span>):<br>        c = a + self.b<br>        d = self.b + <span class="hljs-number">1</span><br>        e = c * d<br>        <span class="hljs-keyword">return</span> e<br><br>a = torch.tensor(<span class="hljs-number">3.0</span>)<br>model = SimpleModel(init_b=<span class="hljs-number">2.0</span>)<br>optimizer = optim.SGD(model.parameters(), lr=<span class="hljs-number">0.01</span>)<br><br><span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">20</span>):<br>    optimizer.zero_grad()<br>    e = model(a)<br>    loss = e ** <span class="hljs-number">2</span><br>    loss.backward()<br>    optimizer.step()<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Epoch <span class="hljs-subst">&#123;epoch+<span class="hljs-number">1</span>:2d&#125;</span>: ∂loss/∂b = <span class="hljs-subst">&#123;model.b.grad.item():<span class="hljs-number">.4</span>f&#125;</span>, b = <span class="hljs-subst">&#123;model.b.item():<span class="hljs-number">.4</span>f&#125;</span>, e = <span class="hljs-subst">&#123;e.item():<span class="hljs-number">.4</span>f&#125;</span>, loss = <span class="hljs-subst">&#123;loss.item():<span class="hljs-number">.4</span>f&#125;</span>&quot;</span>)<br><br><span class="hljs-comment"># 输出结果：</span><br><span class="hljs-comment"># Epoch  1: ∂loss/∂b = 240.0000, b = -0.4000, e = 15.0000, loss = 225.0000</span><br><span class="hljs-comment"># Epoch  2: ∂loss/∂b = 9.9840, b = -0.4998, e = 1.5600, loss = 2.4336</span><br><span class="hljs-comment"># Epoch  3: ∂loss/∂b = 7.5037, b = -0.5749, e = 1.2505, loss = 1.5637</span><br><span class="hljs-comment"># Epoch  4: ∂loss/∂b = 5.8771, b = -0.6336, e = 1.0310, loss = 1.0629</span><br><span class="hljs-comment"># Epoch  5: ∂loss/∂b = 4.7381, b = -0.6810, e = 0.8669, loss = 0.7515</span><br><span class="hljs-comment"># Epoch  6: ∂loss/∂b = 3.9025, b = -0.7201, e = 0.7397, loss = 0.5471</span><br><span class="hljs-comment"># Epoch  7: ∂loss/∂b = 3.2678, b = -0.7527, e = 0.6383, loss = 0.4074</span><br><span class="hljs-comment"># Epoch  8: ∂loss/∂b = 2.7723, b = -0.7805, e = 0.5557, loss = 0.3088</span><br><span class="hljs-comment"># Epoch  9: ∂loss/∂b = 2.3771, b = -0.8042, e = 0.4873, loss = 0.2375</span><br><span class="hljs-comment"># Epoch 10: ∂loss/∂b = 2.0561, b = -0.8248, e = 0.4299, loss = 0.1848</span><br><span class="hljs-comment"># Epoch 11: ∂loss/∂b = 1.7916, b = -0.8427, e = 0.3811, loss = 0.1453</span><br><span class="hljs-comment"># Epoch 12: ∂loss/∂b = 1.5709, b = -0.8584, e = 0.3393, loss = 0.1151</span><br><span class="hljs-comment"># Epoch 13: ∂loss/∂b = 1.3846, b = -0.8723, e = 0.3032, loss = 0.0919</span><br><span class="hljs-comment"># Epoch 14: ∂loss/∂b = 1.2261, b = -0.8845, e = 0.2718, loss = 0.0739</span><br><span class="hljs-comment"># Epoch 15: ∂loss/∂b = 1.0900, b = -0.8954, e = 0.2443, loss = 0.0597</span><br><span class="hljs-comment"># Epoch 16: ∂loss/∂b = 0.9725, b = -0.9051, e = 0.2201, loss = 0.0484</span><br><span class="hljs-comment"># Epoch 17: ∂loss/∂b = 0.8702, b = -0.9138, e = 0.1987, loss = 0.0395</span><br><span class="hljs-comment"># Epoch 18: ∂loss/∂b = 0.7809, b = -0.9217, e = 0.1797, loss = 0.0323</span><br><span class="hljs-comment"># Epoch 19: ∂loss/∂b = 0.7023, b = -0.9287, e = 0.1628, loss = 0.0265</span><br><span class="hljs-comment"># Epoch 20: ∂loss/∂b = 0.6331, b = -0.9350, e = 0.1477, loss = 0.0218</span><br></code></pre></td></tr></table></figure>
+
+
+
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin/_43314579/article/details/88937475">https://blog.csdn.net/weixin\_43314579/article/details/88937475</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/85147199">https://zhuanlan.zhihu.com/p/85147199</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://wuli.wiki/online/PChain.html">https://wuli.wiki/online/PChain.html</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E9%93%BE%E5%BC%8F%E6%B3%95%E5%88%99">https://zh.wikipedia.org/wiki/%E9%93%BE%E5%BC%8F%E6%B3%95%E5%88%99</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/111402123">https://zhuanlan.zhihu.com/p/111402123</a></p>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深度学习中反向传播及优化器使用详解</div>
+      <div>http://example.com/2025/06/01/深度学习中反向传播及优化器使用详解/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年6月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/06/07/Picotron-Tutorial%20Tensor%20Parallel/" title="【Picotron-Tutorial】Tensor并行">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">【Picotron-Tutorial】Tensor并行</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/05/25/Pytorch%20torch.distributed%20%E5%8F%8ANCCL%E5%88%9D%E6%8E%A2/" title="Pytorch torch.distributed 及NCCL初探">
+                        <span class="hidden-mobile">Pytorch torch.distributed 及NCCL初探</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

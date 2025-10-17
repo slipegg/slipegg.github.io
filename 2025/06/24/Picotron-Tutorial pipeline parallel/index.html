@@ -1,0 +1,1016 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Afab并行理论分析最简单的pipeline并行就是将模型划分为好几层，然后分别放置在不同的GPU上依次进行前向传播和后先传播，如下图所示。但是这带来的最大的问题是效率过低，存在很多空闲时刻。   一个16层模型的流水线并行示例，该模型分布在4块GPU上。数字表示层编号。  假设$t_f$ 和$t_b$ 分别是单个微批次在流水线的一个阶段上进行前向传播和反向传播所需的时间（通常假设 $t_b\ap">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Picotron-Tutorial】流水线并行">
+<meta property="og:url" content="http://example.com/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="Afab并行理论分析最简单的pipeline并行就是将模型划分为好几层，然后分别放置在不同的GPU上依次进行前向传播和后先传播，如下图所示。但是这带来的最大的问题是效率过低，存在很多空闲时刻。   一个16层模型的流水线并行示例，该模型分布在4块GPU上。数字表示层编号。  假设$t_f$ 和$t_b$ 分别是单个微批次在流水线的一个阶段上进行前向传播和反向传播所需的时间（通常假设 $t_b\ap">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/image-2.png">
+<meta property="og:image" content="http://example.com/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/image.png">
+<meta property="og:image" content="http://example.com/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/image-1.png">
+<meta property="article:published_time" content="2025-06-24T12:53:03.000Z">
+<meta property="article:modified_time" content="2025-10-17T06:40:42.475Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/image-2.png">
+  
+  
+  
+  <title>【Picotron-Tutorial】流水线并行 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【Picotron-Tutorial】流水线并行"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-06-24 20:53" pubdate>
+          2025年6月24日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          21k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          104 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【Picotron-Tutorial】流水线并行</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Afab并行"><a href="#Afab并行" class="headerlink" title="Afab并行"></a>Afab并行</h1><h2 id="理论分析"><a href="#理论分析" class="headerlink" title="理论分析"></a>理论分析</h2><p>最简单的pipeline并行就是将模型划分为好几层，然后分别放置在不同的GPU上依次进行前向传播和后先传播，如下图所示。但是这带来的最大的问题是效率过低，存在很多空闲时刻。</p>
+<p><img src="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/image-2.png" srcset="/img/loading.gif" lazyload></p>
+<blockquote>
+<p><em>一个16层模型的流水线并行示例，该模型分布在4块GPU上。数字表示层编号。</em></p>
+</blockquote>
+<p>假设$t_f$ 和$t_b$ 分别是单个微批次在流水线的一个阶段上进行前向传播和反向传播所需的时间（通常假设 $t_b\approx2\times t_f$，这在上图中可以观察到）。如果我们能够完美并行化，理想总时间应为 $t &#x3D;t_b+t_f$。但由于流水线气泡的存在，额外的时间为$t_p &#x3D;(p-1)*(t_b+t_f)$其中$p$ 是流水线并行度，即上图中的GPU数量），即每个GPU在其他GPU计算时的等待时间。</p>
+<p>因此我们可以计算额外气泡时间与理想时间的比值：</p>
+<p>$$r_{bubble}&#x3D;\frac{(p-1)*(t_f+t_b)}{t_f+t_b}&#x3D;p-1$$</p>
+<p>当我们增加流水线阶段数时，气泡时间随之增加，GPU利用率下降。可以看出，在一个简单的实现中，流水线气泡可能会非常大！</p>
+<p>为此需要提出一些优化方法来减少流水线中的气泡。一个经典的方法就是<strong>全前向-全反向（AFAB, All-Forward-All-Backward）</strong>&#x8C03;度。其整体思路是与微批次（microbatches）相绑定的。在微批次中，我们需要先对微批次中的所有的样本进行前向传播和反向传播，得到梯度后对各样本的梯度进行平均，然后通过优化器更新参数。</p>
+<p>其优势在于前向和反向传播仍然是严格顺序的，因此可以保持模型训练代码的整体组织，使这种流水线并行实现方式成为最容易实现的一种。</p>
+<p><img src="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/image.png" srcset="/img/loading.gif" lazyload></p>
+<blockquote>
+<p>在之前的图表中，数字代表的是模型的层数，而从这一张图开始，所有流水线并行相关的图表中的数字都表示微批次。你可以将每个方块理解为包含多个层，就像前一张图所示的那样。</p>
+</blockquote>
+<p>在如此设计下，理想情况下处理m个批次所需要的时间为 $t_{id}&#x3D;m \times (t_f + t_b)$，实际过程中产生的气泡依旧为$(p-1)*(t_b+t_f)$，所以气泡比例为：</p>
+<p>$$r_{bubble}&#x3D;\frac{(p-1)*(t_f+t_b)}{m\times ({t_f+t_b})}&#x3D;p-1$$</p>
+<p>可以看到我们可以通过增加微批次的方法来减少气泡。</p>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><h3 id="1-pipeline-communicate"><a href="#1-pipeline-communicate" class="headerlink" title="1. pipeline_communicate"></a>1. pipeline_communicate</h3><p>实现了流水线并行中各个阶段之间点对点的发送和接收张量（激活值或梯度）的通用接口。</p>
+<ul>
+<li><p>其需要输入一个operation参数来表示操作的类型，包括有：</p>
+<ul>
+<li><p>recv_forward：接受前向传播的数据，如果是流水线第一个阶段，就不需要接受，直接返回none。</p>
+</li>
+<li><p>send_forward：发送前向传播的数据，如果是流水线最后一个阶段，就不需要发送，直接返回none。</p>
+</li>
+<li><p>recv_backward：</p>
+</li>
+<li><p>send_backward</p>
+</li>
+</ul>
+</li>
+<li><p>通过operation可以得到目标操作对象，然后就创建异步的点对点通信</p>
+</li>
+<li><p>等待通信操作完成</p>
+</li>
+<li><p>如果是recv操作，就需要返回接收到的数据</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># ... existing code ...</span><br>STEP, VERBOSE = <span class="hljs-number">0</span>, os.environ.get(<span class="hljs-string">&quot;VERBOSE&quot;</span>, <span class="hljs-string">&quot;0&quot;</span>) == <span class="hljs-string">&quot;1&quot;</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">pipeline_communicate</span>(<span class="hljs-params">operation, device, dtype, tensor=<span class="hljs-literal">None</span>, shapes=<span class="hljs-literal">None</span></span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    处理流水线阶段之间用于前向和反向传播的点对点通信。</span><br><span class="hljs-string">    </span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        operation (str): 通信操作的类型 (&#x27;recv_forward&#x27;, &#x27;send_forward&#x27;, </span><br><span class="hljs-string">                        &#x27;recv_backward&#x27;, &#x27;send_backward&#x27;)</span><br><span class="hljs-string">        device: 张量操作的目标设备 (例如, CPU, GPU)</span><br><span class="hljs-string">        dtype: 张量的数据类型</span><br><span class="hljs-string">        tensor: 用于发送操作的输入张量 (默认: None)</span><br><span class="hljs-string">        shapes: 用于接收张量的形状规格 (默认: None)</span><br><span class="hljs-string">    </span><br><span class="hljs-string">    Returns:</span><br><span class="hljs-string">        torch.Tensor or None: 接收操作返回接收到的张量，发送操作返回 None</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">global</span> STEP <span class="hljs-comment"># 用于调试，追踪通信步骤</span><br>    <span class="hljs-keyword">global</span> VERBOSE <span class="hljs-comment"># 控制是否打印详细日志</span><br>    <br>    <span class="hljs-comment"># --- 根据操作类型确定源/目标和行为 ---</span><br>    <span class="hljs-keyword">if</span> operation == <span class="hljs-string">&#x27;recv_forward&#x27;</span>:<br>        <span class="hljs-comment"># 如果是第一个流水线阶段，则在前向传播中无需接收</span><br>        <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_first_stage: <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span><br>        <span class="hljs-comment"># 创建一个空的张量用于接收数据，requires_grad=True 因为它将是后续计算图的一部分</span><br>        tensor = torch.empty(shapes, requires_grad=<span class="hljs-literal">True</span>, device=device, dtype=dtype)<br>        src = pgm.process_group_manager.pp_prev_rank <span class="hljs-comment"># 从前一个流水线阶段接收</span><br>    <br>    <span class="hljs-keyword">elif</span> operation == <span class="hljs-string">&#x27;send_forward&#x27;</span>:<br>        <span class="hljs-comment"># 如果是最后一个流水线阶段，则在前向传播中无需发送</span><br>        <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_last_stage: <span class="hljs-keyword">return</span><br>        dest = pgm.process_group_manager.pp_next_rank <span class="hljs-comment"># 发送到下一个流水线阶段</span><br>    <br>    <span class="hljs-keyword">elif</span> operation == <span class="hljs-string">&#x27;recv_backward&#x27;</span>:<br>        <span class="hljs-comment"># 如果是最后一个流水线阶段，则在反向传播中无需接收梯度</span><br>        <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_last_stage: <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span><br>        tensor = torch.empty(shapes, requires_grad=<span class="hljs-literal">True</span>, device=device, dtype=dtype) <span class="hljs-comment"># 接收的梯度也需要梯度</span><br>        src = pgm.process_group_manager.pp_next_rank <span class="hljs-comment"># 从下一个流水线阶段接收梯度</span><br>    <br>    <span class="hljs-keyword">elif</span> operation == <span class="hljs-string">&#x27;send_backward&#x27;</span>:<br>        <span class="hljs-comment"># 如果是第一个流水线阶段，则在反向传播中无需发送梯度</span><br>        <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_first_stage: <span class="hljs-keyword">return</span><br>        dest = pgm.process_group_manager.pp_prev_rank <span class="hljs-comment"># 将梯度发送到前一个流水线阶段</span><br><br>    <span class="hljs-comment"># --- 执行通信 ---</span><br>    is_send = operation.startswith(<span class="hljs-string">&#x27;send&#x27;</span>)<br>    peer_rank = dest <span class="hljs-keyword">if</span> is_send <span class="hljs-keyword">else</span> src <span class="hljs-comment"># 确定通信对方的 rank</span><br>    <br>    <span class="hljs-comment"># 创建点对点操作 (P2POp) 对象，使用异步发送 (isend) 或接收 (irecv)</span><br>    op = dist.P2POp(dist.isend <span class="hljs-keyword">if</span> is_send <span class="hljs-keyword">else</span> dist.irecv, tensor, peer_rank)<br>    <br>    <span class="hljs-keyword">if</span> VERBOSE: <br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;<span class="hljs-subst">&#123;operation&#125;</span> | <span class="hljs-subst">&#123;<span class="hljs-string">&#x27;sending&#x27;</span> <span class="hljs-keyword">if</span> is_send <span class="hljs-keyword">else</span> <span class="hljs-string">&#x27;receiving&#x27;</span>&#125;</span> <span class="hljs-subst">&#123;operation.split(<span class="hljs-string">&#x27;_&#x27;</span>)[<span class="hljs-number">1</span>]&#125;</span> &quot;</span><br>              <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;pgm.process_group_manager.pp_rank&#125;</span> <span class="hljs-subst">&#123;<span class="hljs-string">&#x27;→&#x27;</span> <span class="hljs-keyword">if</span> is_send <span class="hljs-keyword">else</span> <span class="hljs-string">&#x27;←&#x27;</span>&#125;</span> <span class="hljs-subst">&#123;peer_rank&#125;</span> | &quot;</span><br>              <span class="hljs-string">f&quot;STEP:<span class="hljs-subst">&#123;STEP&#125;</span> | RANK:<span class="hljs-subst">&#123;pgm.process_group_manager.pp_rank&#125;</span>&quot;</span>, flush=<span class="hljs-literal">True</span>)<br>    <br>    <span class="hljs-comment"># 执行批处理的异步发送/接收操作，并等待其完成</span><br>    <span class="hljs-comment"># 注意: dist.batch_isend_irecv 通常用于多个 P2POp，这里只用了一个</span><br>    [req.wait() <span class="hljs-keyword">for</span> req <span class="hljs-keyword">in</span> dist.batch_isend_irecv([op])]<br>    torch.cuda.synchronize() <span class="hljs-comment"># 确保 CUDA 操作完成</span><br>    <br>    <span class="hljs-keyword">if</span> VERBOSE: STEP += <span class="hljs-number">1</span><br>    <br>    <span class="hljs-keyword">return</span> tensor <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> is_send <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span> <span class="hljs-comment"># 如果是接收操作，返回接收到的张量</span><br><span class="hljs-comment"># ... existing code ...</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-PipelineParallel"><a href="#2-PipelineParallel" class="headerlink" title="2. PipelineParallel"></a>2. PipelineParallel</h3><ol>
+<li><p>在初始化时，会将decoder_layers进行划分，根据pp分离的数量得到每个gpu负责多少layers，然后得到每个gpu负责的layer的起始与结束的decoder layer。还会看当前进程是否是pipeline的第一个进程，如果是就包含embedding层，不然就使用nn.Identity()。nn.Identity()的作用是将输入原封不动地返回。还会看如果当前进程时pipeline的最后一个进程，那么就会加上final_norm和final_proj，不然也是用nn.Identity()代替。</p>
+</li>
+<li><p>在forward的时候，其输入有input、position_ids和hidden_states。如果hidden_states不为空，那么输入就是input_ids，不然输入就是hidden_states，然后对输入使用embedding，因为如果不是第一个pipeline，embedding都是nn.Identity()，所以是可以的。然后执行自己所属的decoder_layers，然后在执行final_norma和final_proj。</p>
+</li>
+<li><p>在backward的时候，输入是input_tensor（当前阶段输入的tensor）、output_tensor（当前阶段输出的tensor）和output_tensor_grad（关于output_tensor的梯度）</p>
+<ol>
+<li><p>首先需要设置input_tensor需要保存梯度，需要额外设置的原因在于原本非叶子结点是不保存的梯度的，但是现在模型进行了拆分，所以也需要保存。</p>
+</li>
+<li><p>然后需要查看output_tensor_grad是不是None，如果是None那就说明现在其实是在最后一个阶段，那就需要将其初始化为1</p>
+</li>
+<li><p>然后执行反向传播计算当前阶段的梯度。</p>
+</li>
+<li><p>然后如果不是第一个阶段，就继续往前传递梯度。</p>
+</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># ... existing code ...</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">PipelineParallel</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, model, config</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-comment"># 1. 分配层到当前 GPU</span><br>        layer_distribution = self.distribute_layers(config.num_hidden_layers)<br>        <br>        <span class="hljs-comment"># 2. 根据当前 GPU 是否为第一个/最后一个阶段，选择性地包含 embedding, final_norm, final_proj</span><br>        <span class="hljs-comment"># 如果不是对应阶段，则使用 nn.Identity() 作为占位符（无操作）</span><br>        self.embedding = model.embedding <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_first_stage <span class="hljs-keyword">else</span> nn.Identity()<br>        <span class="hljs-comment"># 只保留分配给当前 GPU 的 decoder_layers</span><br>        self.decoder_layers = nn.ModuleDict(&#123;<span class="hljs-built_in">str</span>(i): model.decoder_layers[i] <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> layer_distribution&#125;)<br>        self.final_norm = model.final_norm <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_last_stage <span class="hljs-keyword">else</span> nn.Identity()<br>        self.final_proj = model.final_proj <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_last_stage <span class="hljs-keyword">else</span> nn.Identity()<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">distribute_layers</span>(<span class="hljs-params">self, num_layers</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;计算当前流水线阶段应该负责哪些层。&quot;&quot;&quot;</span><br>        <span class="hljs-comment"># 计算每个 GPU 应分配的层数，处理余数</span><br>        layers_per_gpu = [num_layers // pgm.process_group_manager.pp_world_size + (<span class="hljs-number">1</span> <span class="hljs-keyword">if</span> i &lt; num_layers % pgm.process_group_manager.pp_world_size <span class="hljs-keyword">else</span> <span class="hljs-number">0</span>) <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(pgm.process_group_manager.pp_world_size)]<br>        <span class="hljs-comment"># 计算当前 GPU 的起始层索引</span><br>        start_layer = <span class="hljs-built_in">sum</span>(layers_per_gpu[:pgm.process_group_manager.pp_rank])<br>        <span class="hljs-comment"># 返回当前 GPU 负责的层索引列表</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">list</span>(<span class="hljs-built_in">range</span>(start_layer, start_layer + layers_per_gpu[pgm.process_group_manager.pp_rank]))<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, input_ids, position_ids, hidden_states</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;当前流水线阶段的前向传播。&quot;&quot;&quot;</span><br>        <span class="hljs-comment"># 如果 hidden_states 不为 None (来自前一阶段的激活)，则使用它；否则使用 input_ids (第一阶段)</span><br>        x = hidden_states <span class="hljs-keyword">if</span> hidden_states <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> input_ids<br>        x = self.embedding(x) <span class="hljs-comment"># 应用 embedding (如果存在)</span><br>        <span class="hljs-keyword">for</span> layer <span class="hljs-keyword">in</span> self.decoder_layers.values(): <span class="hljs-comment"># 通过分配给此阶段的 decoder 层</span><br>            x = layer(x, position_ids=position_ids)<br>        x = self.final_norm(x) <span class="hljs-comment"># 应用 final_norm (如果存在)</span><br>        <span class="hljs-keyword">return</span> self.final_proj(x) <span class="hljs-comment"># 应用 final_proj (如果存在) 并返回输出</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">backward</span>(<span class="hljs-params">self, input_tensor, output_tensor, output_tensor_grad</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;当前流水线阶段的反向传播。&quot;&quot;&quot;</span><br>        <span class="hljs-comment"># input_tensor: 当前阶段前向传播的输入激活</span><br>        <span class="hljs-comment"># output_tensor: 当前阶段前向传播的输出激活</span><br>        <span class="hljs-comment"># output_tensor_grad: 相对于 output_tensor 的梯度 (来自下一阶段或损失函数)</span><br>        <br>        <span class="hljs-keyword">if</span> input_tensor <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>: <br>            input_tensor.retain_grad() <span class="hljs-comment"># 确保 input_tensor 的梯度会被计算并存储</span><br>        <br>        <span class="hljs-comment"># 如果是最后一个阶段，且没有显式提供 output_tensor_grad，则初始化为全1张量</span><br>        <span class="hljs-keyword">if</span> output_tensor_grad <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            output_tensor_grad = torch.ones_like(output_tensor, memory_format=torch.preserve_format)<br>        <br>        <span class="hljs-comment"># 执行反向传播，计算当前阶段参数的梯度，以及相对于 input_tensor 的梯度</span><br>        torch.autograd.backward(output_tensor, grad_tensors=output_tensor_grad, retain_graph=<span class="hljs-literal">False</span>, create_graph=<span class="hljs-literal">False</span>)<br>        <br>        <span class="hljs-comment"># 返回相对于 input_tensor 的梯度，这个梯度将传递给前一个阶段</span><br>        <span class="hljs-keyword">return</span> input_tensor.grad <span class="hljs-keyword">if</span> input_tensor <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br><span class="hljs-comment"># ... existing code ...</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-train-step-pipeline-afab"><a href="#3-train-step-pipeline-afab" class="headerlink" title="3. train_step_pipeline_afab"></a>3. train_step_pipeline_afab</h3><p>这个函数实现了使用 AFAB（Activation Forward - Activation Backward）流水线调度策略的一个完整训练步骤。AFAB 策略意味着所有微批次首先完成完整的前向传播阶段，然后所有微批次再完成完整的反向传播阶段。</p>
+<p><strong>在前向传播阶段：</strong></p>
+<ol>
+<li><p>从前一个阶段接收前向传播的激活值。这里对于第一个阶段会直接返回None，对于其他阶段会阻塞，直到接收到了数据为止。</p>
+</li>
+<li><p>从data_loader获取当前微批次的数据。如果不是第一阶段获取到了前面的前向传播的激活值就放入<code>batch[&quot;hidden_states&quot;]</code>中</p>
+</li>
+<li><p>执行当前阶段的前向传播</p>
+</li>
+<li><p>将当前阶段的结果发送给下一个阶段，注意如果是最后一个阶段的话会直接返回None</p>
+</li>
+<li><p>如果是最后一个阶段，那么就根据输出和获取到的<code>batch[&quot;target_ids&quot;]</code>计算损失，注意需要将得到的loss除以data_loader.grad_acc_steps，以做到正确的累积。</p>
+</li>
+<li><p>存储当前微批次的输入和输出到数组中</p>
+</li>
+</ol>
+<p><strong>在反向传播阶段：</strong></p>
+<ol>
+<li><p>如果启用了数据并行，那么需要在最后一个mini_batch中设置<code>model.require_backward_grad_sync=true</code>,从而使得模型在反向传播的时候会与其他的数据并行的模型的梯度进行平均</p>
+</li>
+<li><p>等待后一个阶段的模型的反向传播的输出梯度，这里对于最后一个阶段的进程会直接返回1，但是对于其他的进程一开始会有阻塞。</p>
+</li>
+<li><p>弹出当前微批次在前向传播时保存的输入和输出激活</p>
+</li>
+<li><p>调用PipelineParallel的backward计算反向传播的梯度</p>
+</li>
+<li><p>将梯度传输给下一个阶段</p>
+</li>
+<li><p>最后返回平均的损失（打印logger用）</p>
+</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># ... existing code ...</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_step_pipeline_afab</span>(<span class="hljs-params">model, data_loader, tensor_shapes, device, dtype</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    使用 AFAB 流水线并行执行一个训练步骤。</span><br><span class="hljs-string">    实现分离的前向和反向传播阶段以优化内存使用。</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    logging_loss: torch.float32 = <span class="hljs-number">0.0</span> <span class="hljs-comment"># 用于记录损失</span><br>    input_tensors, output_tensors = [], [] <span class="hljs-comment"># 存储每个微批次在前向传播中的输入和输出激活，供反向传播使用</span><br>    requires_grad_sync = pgm.process_group_manager.dp_world_size &gt; <span class="hljs-number">1</span> <span class="hljs-comment"># 是否需要数据并行梯度同步</span><br><br>    <span class="hljs-comment"># === 全局前向传播阶段 ===</span><br>    <span class="hljs-comment"># 对梯度累积的每一步（即每个微批次）</span><br>    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(data_loader.grad_acc_steps):<br>        <span class="hljs-comment"># 1. 从前一个阶段接收前向传播的激活值 (如果不是第一阶段)</span><br>        input_tensor = pipeline_communicate(operation=<span class="hljs-string">&#x27;recv_forward&#x27;</span>, shapes=tensor_shapes, device=device, dtype=dtype)<br>        <br>        <span class="hljs-comment"># 2. 获取当前微批次的数据</span><br>        batch = <span class="hljs-built_in">next</span>(data_loader)<br>        <span class="hljs-comment"># 将接收到的 input_tensor (如果存在) 设置为当前批次的 hidden_states</span><br>        batch[<span class="hljs-string">&quot;hidden_states&quot;</span>] = input_tensor.to(device) <span class="hljs-keyword">if</span> input_tensor <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> input_tensor<br>        <br>        <span class="hljs-comment"># 3. 执行当前阶段的前向传播</span><br>        output_tensor = model.forward(input_ids=batch[<span class="hljs-string">&quot;input_ids&quot;</span>].to(device), position_ids=batch[<span class="hljs-string">&quot;position_ids&quot;</span>].to(device), hidden_states=batch[<span class="hljs-string">&quot;hidden_states&quot;</span>])<br>        <br>        <span class="hljs-comment"># 4. 将当前阶段的输出激活发送到下一个阶段 (如果不是最后阶段)</span><br>        pipeline_communicate(operation=<span class="hljs-string">&#x27;send_forward&#x27;</span>, tensor=output_tensor, device=device, dtype=dtype)<br>        <br>        <span class="hljs-comment"># 5. 如果是最后一个阶段，计算损失</span><br>        <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_last_stage:<br>            <span class="hljs-comment"># 注意: 这里的 output_tensor 是模型的 logits 输出</span><br>            <span class="hljs-comment"># F.cross_entropy 期望的输入形状是 (N, C, d1, ..., dk) 或 (N, C)，目标是 (N, d1, ..., dk) 或 (N)</span><br>            <span class="hljs-comment"># 通常模型的输出是 (batch_size, seq_len, vocab_size)，所以需要 transpose(1, 2) 变为 (batch_size, vocab_size, seq_len)</span><br>            loss_val = F.cross_entropy(output_tensor.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>), batch[<span class="hljs-string">&quot;target_ids&quot;</span>].to(device), reduction=<span class="hljs-string">&#x27;mean&#x27;</span>)<br>            logging_loss += loss_val.item() / data_loader.grad_acc_steps <span class="hljs-comment"># 累积并平均损失</span><br><br>        <span class="hljs-comment"># 6. 存储当前微批次的输入和输出激活，供反向传播使用</span><br>        input_tensors.append(input_tensor)<br>        output_tensors.append(output_tensor) <span class="hljs-comment"># 注意：对于最后一个阶段，这里存的是损失值 (标量张量)</span><br><br>    <span class="hljs-comment"># === 全局反向传播阶段 ===</span><br>    <span class="hljs-comment"># 按照前向传播的顺序，对每个微批次进行反向传播</span><br>    <span class="hljs-keyword">for</span> ith_microbatch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(data_loader.grad_acc_steps):<br>        <span class="hljs-comment"># 如果启用了数据并行，则只在梯度累积的最后一步同步梯度</span><br>        <span class="hljs-keyword">if</span> requires_grad_sync:<br>            is_last_iteration = (ith_microbatch == data_loader.grad_acc_steps - <span class="hljs-number">1</span>)<br>            model.require_backward_grad_sync = is_last_iteration <span class="hljs-comment"># 假设 model 有这个属性来控制DP同步</span><br>            <br>        <span class="hljs-comment"># 1. 从下一个阶段接收反向传播的梯度 (如果不是最后阶段)</span><br>        output_tensor_grad = pipeline_communicate(operation=<span class="hljs-string">&#x27;recv_backward&#x27;</span>, shapes=tensor_shapes, device=device, dtype=dtype)<br>        <br>        <span class="hljs-comment"># 2. 弹出当前微批次在前向传播时保存的输入和输出激活</span><br>        input_tensor, output_tensor = input_tensors.pop(<span class="hljs-number">0</span>), output_tensors.pop(<span class="hljs-number">0</span>)<br>        <br>        <span class="hljs-comment"># 3. 执行当前阶段的反向传播</span><br>        <span class="hljs-comment"># 对于最后一个阶段，output_tensor 是损失值，output_tensor_grad 应该是 None (或由 pipeline_communicate 返回 None)</span><br>        <span class="hljs-comment"># model.backward 会处理 output_tensor_grad 为 None 的情况 (通常初始化为 torch.ones_like)</span><br>        input_tensor_grad = model.backward(input_tensor, output_tensor, output_tensor_grad)<br>        <br>        <span class="hljs-comment"># 4. 将计算得到的输入梯度发送到前一个阶段 (如果不是第一阶段)</span><br>        pipeline_communicate(operation=<span class="hljs-string">&#x27;send_backward&#x27;</span>, tensor=input_tensor_grad, device=device, dtype=dtype)<br><br>    <span class="hljs-keyword">return</span> logging_loss <span class="hljs-comment"># 返回平均损失</span><br><span class="hljs-comment"># ... existing code ...</span><br></code></pre></td></tr></table></figure>
+
+<h1 id="1f1b并行"><a href="#1f1b并行" class="headerlink" title="1f1b并行"></a>1f1b并行</h1><h2 id="理论分析-1"><a href="#理论分析-1" class="headerlink" title="理论分析"></a>理论分析</h2><p>该调度方案称为 <em><strong>一前一后（1F1B）</strong></em>，因为在中间&#x2F;稳定状态下，交替执行一个前向传播和一个反向传播。其基本思想是尽早开始反向传播。该调度如下所示：</p>
+<p><img src="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/image-1.png" srcset="/img/loading.gif" lazyload></p>
+<p>如果仔细计算的话会发现气泡的大小仍然相同，因此训练效率并未显著提升。然而，我们仅需存储 $p$ 个微批次的激活（其中 $p$ 为流水线并行度），而不是 $m$（其中 $m$ 是微批次数量）。这主要是因为观察最后一个阶段的GPU4，如果要做到1f1b的调度，那么在微批次1的梯度返回给第一个GPU的时候，第 $p&#x3D;4$ 个微批次的激活就应该已经到达了GPU4，所以在此之前对于GPU1必然已经计算完了前$p&#x3D;4$ 个微批次的激活。这减少了在 AFAB 调度中遇到的激活内存爆炸问题。因此，我们可以增加更多微批次，从而实际减少气泡的影响。</p>
+<p>这种设置的主要复杂性（如上图所示）在于前向和反向传播不再是完全顺序执行的，各个GPU执行是并行交错执行的，每个GPU有自己调度的节奏，而不再能用同一套代码来统一控制了。这也是流水线并行通常需要对训练代码和建模代码进行大幅修改的原因之一。</p>
+<h2 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h2><h3 id="1-bidirectional-pipeline-communicate"><a href="#1-bidirectional-pipeline-communicate" class="headerlink" title="1. bidirectional_pipeline_communicate"></a>1. bidirectional_pipeline_communicate</h3><p>该函数的作用是 处理一个流水线阶段同时向其邻居阶段发送数据和从该邻居阶段接收数据的双向通信 。</p>
+<ol>
+<li><p>支持两种操作：</p>
+<ul>
+<li><p>send_fwd_recv_bwd：发送前向传播接收反向传播的数据</p>
+</li>
+<li><p>send_bwd_recv_fwd：发送反向传播并接收前向传播的数据</p>
+</li>
+</ul>
+</li>
+<li><p>处理边界条件，如果是第一层就不需要执行send_bwd_recv_fwd，如果是最后一层就不需要执行send_fwd_recv_bwd</p>
+</li>
+<li><p>确定通信的对象，如果是send_fwd_recv_bwd，那么对象就是下一个流水线的GPU，不然就是上一个</p>
+</li>
+<li><p>创建一个空的张量用于接收数据</p>
+</li>
+<li><p>设置并启动同时进行的异步发送和异步接收操作</p>
+</li>
+<li><p>两个 P2POp 对象：一个用于发送，一个用于接收。异步执行</p>
+</li>
+<li><p>等待两个异步执行操作结束</p>
+</li>
+<li><p>返回接收到的数据</p>
+</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># ... existing code ...</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">bidirectional_pipeline_communicate</span>(<span class="hljs-params">operation, send_tensor, recv_shapes, device, dtype</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    处理流水线阶段之间的双向通信，允许同时进行发送和接收操作。</span><br><span class="hljs-string">    </span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        operation (str): 双向操作的类型 (&#x27;send_fwd_recv_bwd&#x27; 或 &#x27;send_bwd_recv_fwd&#x27;)</span><br><span class="hljs-string">        send_tensor: 要发送的张量</span><br><span class="hljs-string">        recv_shapes: 要接收的张量的形状规格</span><br><span class="hljs-string">        device: 张量操作的目标设备</span><br><span class="hljs-string">        dtype: 张量的数据类型</span><br><span class="hljs-string">    </span><br><span class="hljs-string">    Returns:</span><br><span class="hljs-string">        torch.Tensor or None: 接收到的张量，如果在流水线的终端阶段则为 None</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-keyword">global</span> STEP <span class="hljs-comment"># 用于调试，追踪通信步骤</span><br>    <span class="hljs-keyword">global</span> VERBOSE <span class="hljs-comment"># 控制是否打印详细日志</span><br>    <br>    <span class="hljs-comment"># 1. 判断操作的主要方向 (是发送前向激活还是发送反向梯度)</span><br>    is_fwd = (operation == <span class="hljs-string">&#x27;send_fwd_recv_bwd&#x27;</span>)<br>    <br>    <span class="hljs-comment"># 2. 处理流水线的边界情况 (第一个或最后一个阶段)</span><br>    <span class="hljs-comment"># 如果是 &#x27;send_fwd_recv_bwd&#x27; (发送前向，接收反向) 且当前是最后一个阶段，</span><br>    <span class="hljs-comment"># 则没有下一个阶段可以发送前向激活，也没有下一个阶段可以接收反向梯度。</span><br>    <span class="hljs-keyword">if</span> (is_fwd <span class="hljs-keyword">and</span> pgm.process_group_manager.pp_is_last_stage) <span class="hljs-keyword">or</span> \<br>       (<span class="hljs-keyword">not</span> is_fwd <span class="hljs-keyword">and</span> pgm.process_group_manager.pp_is_first_stage): <br>        <span class="hljs-comment"># 如果是 &#x27;send_bwd_recv_fwd&#x27; (发送反向，接收前向) 且当前是第一个阶段，</span><br>        <span class="hljs-comment"># 则没有前一个阶段可以发送反向梯度，也没有前一个阶段可以接收前向激活。</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">None</span> <span class="hljs-comment"># 在这些边界情况下，不进行通信，直接返回 None</span><br>    <br>    <span class="hljs-comment"># 3. 确定通信对方的 rank (peer_rank)</span><br>    <span class="hljs-comment"># 如果是发送前向 (is_fwd is True)，则对方是下一个流水线阶段 (pp_next_rank)</span><br>    <span class="hljs-comment"># 如果是发送反向 (is_fwd is False)，则对方是上一个流水线阶段 (pp_prev_rank)</span><br>    peer_rank = pgm.process_group_manager.pp_next_rank <span class="hljs-keyword">if</span> is_fwd <span class="hljs-keyword">else</span> pgm.process_group_manager.pp_prev_rank<br>    <br>    <span class="hljs-comment"># 4. 创建一个空的张量用于接收数据</span><br>    <span class="hljs-comment"># requires_grad=True 是因为接收到的张量 (无论是前向激活还是反向梯度) 都将参与后续的梯度计算</span><br>    recv_tensor = torch.empty(recv_shapes, requires_grad=<span class="hljs-literal">True</span>, device=device, dtype=dtype)<br>    <br>    <span class="hljs-comment"># 5. 设置并启动同时进行的异步发送和异步接收操作</span><br>    <span class="hljs-comment"># dist.batch_isend_irecv 接收一个 P2POp (点对点操作) 列表</span><br>    <span class="hljs-comment"># 这里我们创建了两个 P2POp 对象：一个用于发送，一个用于接收，都与同一个 peer_rank 通信</span><br>    reqs = dist.batch_isend_irecv([<br>        dist.P2POp(dist.isend, send_tensor, peer_rank), <span class="hljs-comment"># 异步发送 send_tensor 给 peer_rank</span><br>        dist.P2POp(dist.irecv, recv_tensor, peer_rank)  <span class="hljs-comment"># 从 peer_rank 异步接收数据到 recv_tensor</span><br>    ])<br>    <br>    <span class="hljs-keyword">if</span> VERBOSE: <br>        <span class="hljs-comment"># 打印详细的通信日志</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;<span class="hljs-subst">&#123;operation&#125;</span> | sending <span class="hljs-subst">&#123;<span class="hljs-string">&#x27;next&#x27;</span> <span class="hljs-keyword">if</span> is_fwd <span class="hljs-keyword">else</span> <span class="hljs-string">&#x27;prev&#x27;</span>&#125;</span> &quot;</span><br>              <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;pgm.process_group_manager.pp_rank&#125;</span> -&gt; <span class="hljs-subst">&#123;peer_rank&#125;</span> | &quot;</span><br>              <span class="hljs-string">f&quot;receiving <span class="hljs-subst">&#123;<span class="hljs-string">&#x27;next&#x27;</span> <span class="hljs-keyword">if</span> is_fwd <span class="hljs-keyword">else</span> <span class="hljs-string">&#x27;prev&#x27;</span>&#125;</span> <span class="hljs-subst">&#123;peer_rank&#125;</span> -&gt; &quot;</span><br>              <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;pgm.process_group_manager.pp_rank&#125;</span> | STEP <span class="hljs-subst">&#123;STEP=&#125;</span> | &quot;</span><br>              <span class="hljs-string">f&quot;RANK:<span class="hljs-subst">&#123;pgm.process_group_manager.pp_rank&#125;</span>&quot;</span>, flush=<span class="hljs-literal">True</span>)<br>    <br>    <span class="hljs-comment"># 6. 等待发送和接收操作都完成</span><br>    <span class="hljs-comment"># [req.wait() for req in reqs] 会阻塞当前进程，直到 reqs 列表中的所有请求 (即发送和接收) 都完成</span><br>    [req.wait() <span class="hljs-keyword">for</span> req <span class="hljs-keyword">in</span> reqs]<br>    torch.cuda.synchronize() <span class="hljs-comment"># 确保所有在默认 CUDA 流上的操作完成，特别是在 GPU 通信后</span><br>    <br>    <span class="hljs-keyword">if</span> VERBOSE: STEP += <span class="hljs-number">1</span> <span class="hljs-comment"># 增加调试步骤计数器</span><br>    <br>    <span class="hljs-comment"># 7. 返回接收到的张量</span><br>    <span class="hljs-keyword">return</span> recv_tensor<br><span class="hljs-comment"># ... existing code ...</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-train-step-pipeline-1f1b"><a href="#2-train-step-pipeline-1f1b" class="headerlink" title="2. train_step_pipeline_1f1b"></a>2. train_step_pipeline_1f1b</h3><p>该函数实现了1f1b的调度策略，其旨在通过让每个流水线阶段（GPU）在稳定期同时处理一个微批次（micro-batch）的前向传播和另一个微批次的反向传播，并重叠计算与通信，来提高 GPU 的利用率并减少流水线“气泡”（即 GPU 空闲时间）。</p>
+<p>整个函数可以分为三个主要阶段：</p>
+<ol>
+<li><p>预热（Warmup）阶段 ：用前向传播任务填充流水线。</p>
+</li>
+<li><p>稳定（Steady State）阶段 ：核心的 1F1B 操作，每个阶段同时执行一个前向和一个反向传播。</p>
+</li>
+<li><p>冷却（Cooldown）阶段 ：清空流水线中剩余的反向传播任务。</p>
+</li>
+</ol>
+<p><strong>初始化阶段：</strong></p>
+<p>我们假设如上图所示，GPU数量为4，<code>pp_world_size</code>为4，<code>grad_acc_steps</code>&#x3D;8。</p>
+<ol>
+<li><p>计算预热阶段的微批次的数量：**&#x20;&#x20;**<code>num_warmup_microbatches = min(pgm.process_group_manager.pp_world_size - pgm.process_group_manager.pp_rank - 1, data_loader.grad_acc_steps)</code>。如果<code>pp_rank</code>是0，那么其对应的<code>num_warmup_microbatches</code>为3，如果<code>pp_rank</code>是3，那么对应的<code>num_warmup_microbatches</code>为0。</p>
+</li>
+<li><p>计算在预热阶段之后，需要在稳定状态下处理的微批次数：<code>num_microbatches_remaining = data_loader.grad_acc_steps - num_warmup_microbatches</code>。</p>
+</li>
+<li><p>判断是否需要数据并行, 如果需要就标记<code>requires_grad_sync=true</code>。</p>
+</li>
+</ol>
+<p><strong>预热阶段：</strong></p>
+<p>预热阶段整体与Afab中的实现前向传播类似。</p>
+<p>会执行<code>num_warmup_microbatches</code>次下面的操作来进行预热：</p>
+<ol>
+<li><p>通过recv_forward操作获取前一个阶段的input，注意对于第一阶段的pipeline，这会直接返回none，对于其他阶段会进行阻塞等待。</p>
+</li>
+<li><p>执行自定义的_forward_step函数，得倒output</p>
+<ol>
+<li><p>通过data_loader获取下一个batch</p>
+</li>
+<li><p>将input作为batch[“hidden_states”]</p>
+</li>
+<li><p>执行PipelineParallel的forward</p>
+</li>
+<li><p>如果是pipeline的最后一个阶段还需要计算loss并将loss作为output_tensor</p>
+</li>
+</ol>
+</li>
+<li><p>通过send_forward操作来发送输出</p>
+</li>
+<li><p>将input和output添加到数组中</p>
+</li>
+</ol>
+<p>如果<code>num_microbatches_remaining&gt;0</code>，即稳定状态下需要微批次那么就再执行recv_forward操作来收集input，这是作为稳定状态循环的开始，一般都需要</p>
+<p>如果启用了数据并行，那么还需要先设置require_backward_grad_sync为false，防止还没都最后一个梯度计算就开始执行了梯度平均。</p>
+<p><strong>稳定阶段：</strong></p>
+<p>在稳定阶段，每个GPU同时执行一个前向传播和反向传播</p>
+<ol>
+<li><p>执行刚刚最后收集到的input的前向传播_forward_step</p>
+</li>
+<li><p>执行send_fwd_recv_bwd操作发送前向传播的结果收集反向传播的梯度</p>
+</li>
+<li><p>将当前的input和output都放入到数组中</p>
+</li>
+<li><p>此时数组中的第一个input和第一个output是一对，直接取出</p>
+</li>
+<li><p>如果是在最后一个流水线阶段并且是稳定状态的最后一次迭代，那么就说明所有的微批次的反向传播在最后一个阶段都计算完了，设置require_backward_grad_sync为true</p>
+</li>
+<li><p>执行model.backward来计算反向传播</p>
+</li>
+<li><p>如果是流水线的最后一个阶段就执行send_backward发送回梯度，不然就执行send_bwd_recv_fwd，发送梯度，等待下一轮的激活值</p>
+</li>
+</ol>
+<p><strong>冷却阶段：</strong></p>
+<p>在冷却阶段需要把还剩余的梯度处理掉，因为之前预热阶段对<code>num_warmup_microbatches</code>批次只处理了前向传播，没有处理反向传播，所以这里需要把之前欠缺的反向传播补足。它会遍历需要的反向传播的次数：</p>
+<ol>
+<li><p>如果是最后一次迭代，就设置require_backward_grad_sync&#x3D;true，使得该批次的梯度可以得到平均</p>
+</li>
+<li><p>从数组中弹出input和output</p>
+</li>
+<li><p>调用recv_backward来接收上一个阶段的梯度</p>
+</li>
+<li><p>反向传播计算梯度</p>
+</li>
+<li><p>将计算得到梯度通过调用send_backward来将梯度传给前一个阶段</p>
+</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_step_pipeline_1f1b</span>(<span class="hljs-params">model, data_loader, tensor_shapes, device, dtype</span>):    <br>    <span class="hljs-comment"># 1. 初始化和计算微批次数量</span><br>    <span class="hljs-comment"># num_warmup_microbatches: 当前 rank 需要执行的纯前向传播的微批次数，以启动流水线。</span><br>    <span class="hljs-comment"># - 对于 rank 0，它是 pp_world_size - 1 (如果梯度累积步数足够多)。</span><br>    <span class="hljs-comment"># - 对于最后一个 rank (pp_world_size - 1)，它是 0。</span><br>    <span class="hljs-comment"># - 这是为了确保在第一个反向传播开始前，流水线被适当地“填充”。</span><br>    num_warmup_microbatches = <span class="hljs-built_in">min</span>(pgm.process_group_manager.pp_world_size - pgm.process_group_manager.pp_rank - <span class="hljs-number">1</span>, data_loader.grad_acc_steps)<br>    <br>    <span class="hljs-comment"># num_microbatches_remaining: 在预热阶段之后，需要在稳定状态下处理的微批次数。</span><br>    num_microbatches_remaining = data_loader.grad_acc_steps - num_warmup_microbatches<br>    <br>    logging_loss, input_tensors, output_tensors  = <span class="hljs-number">0.0</span>, [], [] <span class="hljs-comment"># 用于记录损失和存储中间的输入/输出张量</span><br>    requires_grad_sync = pgm.process_group_manager.dp_world_size &gt; <span class="hljs-number">1</span> <span class="hljs-comment"># 判断是否需要数据并行梯度同步</span><br>    <br>    <span class="hljs-comment"># 2. 定义内部辅助函数 _forward_step</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">_forward_step</span>(<span class="hljs-params">input_tensor</span>):<br>        batch = <span class="hljs-built_in">next</span>(data_loader) <span class="hljs-comment"># 获取下一个微批次数据</span><br>        <span class="hljs-comment"># 如果 input_tensor 不是 None (即不是第一个流水线阶段的第一次迭代)，则将其作为隐藏状态</span><br>        batch[<span class="hljs-string">&quot;hidden_states&quot;</span>] = input_tensor.to(device) <span class="hljs-keyword">if</span> input_tensor <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> input_tensor<br>        <span class="hljs-comment"># 执行模型的前向传播</span><br>        output_tensor = model.forward(input_ids=batch[<span class="hljs-string">&quot;input_ids&quot;</span>].to(device), position_ids=batch[<span class="hljs-string">&quot;position_ids&quot;</span>].to(device), hidden_states=batch[<span class="hljs-string">&quot;hidden_states&quot;</span>])<br>        <br>        <span class="hljs-comment"># 如果是最后一个流水线阶段，计算损失</span><br>        <span class="hljs-keyword">if</span> pgm.process_group_manager.pp_is_last_stage:<br>            <span class="hljs-comment"># output_tensor 此时是 logits，需要与 target_ids 计算交叉熵损失</span><br>            output_tensor = F.cross_entropy(output_tensor.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>), batch[<span class="hljs-string">&quot;target_ids&quot;</span>].to(device), reduction=<span class="hljs-string">&#x27;mean&#x27;</span>)<br>            <span class="hljs-keyword">nonlocal</span> logging_loss <span class="hljs-comment"># 允许修改外部作用域的 logging_loss</span><br>            logging_loss += output_tensor.item() / data_loader.grad_acc_steps <span class="hljs-comment"># 累积损失</span><br>        <span class="hljs-keyword">return</span> output_tensor <span class="hljs-comment"># 返回当前阶段的输出张量 (对于最后一个阶段，这是损失值)</span><br><br>    <span class="hljs-comment"># === 预热（Warmup）前向传播阶段 === (L214-L219)</span><br>    <span class="hljs-comment"># 这个循环的目的是填充流水线。每个阶段执行其分配到的 num_warmup_microbatches 次前向传播。</span><br>    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_warmup_microbatches):<br>        <span class="hljs-comment"># 从前一个阶段接收前向传播的激活值 (或 None，如果是第一个阶段)</span><br>        input_tensor = pipeline_communicate(operation=<span class="hljs-string">&#x27;recv_forward&#x27;</span>, shapes=tensor_shapes, device=device, dtype=dtype)<br>        <span class="hljs-comment"># 执行当前微批次的前向计算</span><br>        output_tensor = _forward_step(input_tensor)<br>        <span class="hljs-comment"># 将计算得到的激活值发送给下一个阶段 (或 None，如果是最后一个阶段)</span><br>        pipeline_communicate(operation=<span class="hljs-string">&#x27;send_forward&#x27;</span>, tensor=output_tensor, device=device, dtype=dtype)<br>        <span class="hljs-comment"># 存储当前微批次的输入和输出，供后续的反向传播使用</span><br>        input_tensors.append(input_tensor)<br>        output_tensors.append(output_tensor)<br><br>    <span class="hljs-comment"># 在进入稳定状态之前，如果还有剩余的微批次需要处理，</span><br>    <span class="hljs-comment"># 当前阶段需要先接收一个前向传播的输入。</span><br>    <span class="hljs-comment"># 这是因为稳定状态的循环开始时，期望 input_tensor 已经被填充。</span><br>    <span class="hljs-keyword">if</span> num_microbatches_remaining &gt; <span class="hljs-number">0</span>: <span class="hljs-comment"># (L221-L222)</span><br>        input_tensor = pipeline_communicate(operation=<span class="hljs-string">&#x27;recv_forward&#x27;</span>, shapes=tensor_shapes, device=device, dtype=dtype)<br>    <br>    <span class="hljs-comment"># 如果启用了数据并行 (dp_world_size &gt; 1)，则需要处理梯度的同步。</span><br>    <span class="hljs-comment"># 在进入稳定状态前，通常先禁用梯度同步，因为梯度是在所有微批次的反向传播完成后才同步的。</span><br>    <span class="hljs-keyword">if</span> requires_grad_sync: <span class="hljs-comment"># (L224-L225)</span><br>        model.require_backward_grad_sync = <span class="hljs-literal">False</span><br><br>    <span class="hljs-comment"># === 1F1B 稳定状态（Steady State）阶段 === (L228-L247)</span><br>    <span class="hljs-comment"># 在这个阶段，每个 GPU 同时执行一个前向传播和一个反向传播（针对不同的微批次）。</span><br>    <span class="hljs-keyword">for</span> ith_microbatch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_microbatches_remaining):<br>        is_last_iteration = (ith_microbatch == num_microbatches_remaining - <span class="hljs-number">1</span>) <span class="hljs-comment"># 判断是否是稳定状态的最后一次迭代</span><br>        <br>        <span class="hljs-comment"># 1. 执行当前微批次的前向传播 (F)</span><br>        output_tensor = _forward_step(input_tensor) <span class="hljs-comment"># 使用上一次迭代接收或预热阶段最后接收的 input_tensor</span><br>        <br>        <span class="hljs-comment"># 2. 双向通信：发送当前前向结果 (F)，接收上一个微批次的反向梯度 (B)</span><br>        <span class="hljs-comment">#    - send_tensor=output_tensor: 将当前前向计算的结果发送给下一个阶段。</span><br>        <span class="hljs-comment">#    - recv_shapes=tensor_shapes: 准备接收从下一个阶段传来的梯度。</span><br>        <span class="hljs-comment">#      这个梯度对应的是上一个已完成前向传播并发送出去的微批次的输出。</span><br>        output_tensor_grad = bidirectional_pipeline_communicate(operation=<span class="hljs-string">&#x27;send_fwd_recv_bwd&#x27;</span>, send_tensor=output_tensor, recv_shapes=tensor_shapes, device=device, dtype=dtype)<br>        <br>        <span class="hljs-comment"># 存储当前完成前向传播的 input_tensor 和 output_tensor</span><br>        input_tensors.append(input_tensor)<br>        output_tensors.append(output_tensor)<br>        <br>        <span class="hljs-comment"># 取出之前存储的、现在需要进行反向传播的微批次的 input_tensor 和 output_tensor</span><br>        <span class="hljs-comment"># 这些是与刚接收到的 output_tensor_grad 相对应的。</span><br>        input_tensor, output_tensor = input_tensors.pop(<span class="hljs-number">0</span>), output_tensors.pop(<span class="hljs-number">0</span>)<br>        <br>        <span class="hljs-comment"># 梯度同步控制：</span><br>        <span class="hljs-comment"># - 只在最后一个流水线阶段 (num_warmup_microbatches == 0)</span><br>        <span class="hljs-comment"># - 并且是稳定状态的最后一次迭代时</span><br>        <span class="hljs-comment"># - 才将 model.require_backward_grad_sync 设置为 True。</span><br>        <span class="hljs-comment"># 这是为了确保在整个梯度累积周期的最后一次反向传播时进行梯度同步。</span><br>        <span class="hljs-keyword">if</span> num_warmup_microbatches == <span class="hljs-number">0</span> <span class="hljs-keyword">and</span> is_last_iteration: <span class="hljs-comment"># (L238-L239)</span><br>            model.require_backward_grad_sync = <span class="hljs-literal">True</span><br><br>        <span class="hljs-comment"># 3. 执行上一个微批次的反向传播 (B)</span><br>        input_tensor_grad = model.backward(input_tensor, output_tensor, output_tensor_grad)<br>        <br>        <span class="hljs-comment"># 4. 处理反向传播结果的通信</span><br>        <span class="hljs-keyword">if</span> is_last_iteration: <span class="hljs-comment"># 如果是稳定状态的最后一次迭代</span><br>            <span class="hljs-comment"># 对于最后一个1F1B周期的反向传播，不再需要接收新的前向输入，</span><br>            <span class="hljs-comment"># 只需将计算得到的梯度发送给前一个阶段。</span><br>            input_tensor = <span class="hljs-literal">None</span> <span class="hljs-comment"># 后续不再有前向传播，所以设为 None</span><br>            pipeline_communicate(operation=<span class="hljs-string">&#x27;send_backward&#x27;</span>, tensor=input_tensor_grad, device=device, dtype=dtype)<br>        <span class="hljs-keyword">else</span>: <span class="hljs-comment"># 如果不是稳定状态的最后一次迭代</span><br>            <span class="hljs-comment"># 双向通信：发送当前反向计算得到的梯度 (B)，接收下一个微批次的前向输入 (F)</span><br>            <span class="hljs-comment"># - send_tensor=input_tensor_grad: 将当前反向计算得到的输入梯度发送给前一个阶段。</span><br>            <span class="hljs-comment"># - recv_shapes=tensor_shapes: 准备从前一个阶段接收下一个微批次的前向激活值。</span><br>            <span class="hljs-comment"># 这个接收到的 input_tensor 将用于下一次 1F1B 循环的 _forward_step。</span><br>            input_tensor = bidirectional_pipeline_communicate(operation=<span class="hljs-string">&#x27;send_bwd_recv_fwd&#x27;</span>, send_tensor=input_tensor_grad, recv_shapes=tensor_shapes, device=device, dtype=dtype)<br><br>    <span class="hljs-comment"># === 冷却（Cooldown）反向传播阶段 === (L250-L258)</span><br>    <span class="hljs-comment"># 这个循环处理在预热阶段存入流水线、但在稳定状态未来得及进行反向传播的微批次。</span><br>    <span class="hljs-comment"># 循环次数等于预热阶段的微批次数。</span><br>    <span class="hljs-keyword">for</span> ith_warmup_microbatches <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_warmup_microbatches):<br>        <span class="hljs-keyword">if</span> requires_grad_sync:<br>            <span class="hljs-comment"># 梯度同步控制：只在整个梯度累积周期的最后一次反向传播时才同步。</span><br>            <span class="hljs-comment"># 这通常发生在冷却阶段的最后一次迭代，对于那些 num_warmup_microbatches &gt; 0 的 rank。</span><br>            model.require_backward_grad_sync = (ith_warmup_microbatches == num_warmup_microbatches - <span class="hljs-number">1</span>)<br>        <br>        <span class="hljs-comment"># 取出预热阶段存储的输入和输出张量</span><br>        input_tensor, output_tensor = input_tensors.pop(<span class="hljs-number">0</span>), output_tensors.pop(<span class="hljs-number">0</span>)<br>        <span class="hljs-comment"># 从下一个阶段接收反向梯度</span><br>        output_tensor_grad = pipeline_communicate(operation=<span class="hljs-string">&#x27;recv_backward&#x27;</span>, shapes=tensor_shapes, device=device, dtype=dtype)<br>        <span class="hljs-comment"># 执行反向传播</span><br>        input_tensor_grad = model.backward(input_tensor, output_tensor, output_tensor_grad)<br>        <span class="hljs-comment"># 将计算得到的输入梯度发送给前一个阶段</span><br>        pipeline_communicate(operation=<span class="hljs-string">&#x27;send_backward&#x27;</span>, tensor=input_tensor_grad, device=device, dtype=dtype)<br><br>    <span class="hljs-keyword">return</span> logging_loss <span class="hljs-comment"># 返回累积的损失值</span><br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【Picotron-Tutorial】流水线并行</div>
+      <div>http://example.com/2025/06/24/Picotron-Tutorial pipeline parallel/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年6月24日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" title="【Picotron-Tutorial】上下文并行">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">【Picotron-Tutorial】上下文并行</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/06/14/Picotron-Tutorial%20%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C/" title="【Picotron-Tutorial】数据并行">
+                        <span class="hidden-mobile">【Picotron-Tutorial】数据并行</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

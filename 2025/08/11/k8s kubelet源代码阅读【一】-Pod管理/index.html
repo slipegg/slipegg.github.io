@@ -1,0 +1,1234 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="关键组件介绍probeManager当一个pod被kubelet感知到之后，就会调用probeManager的AddPod来为各个容器启动探针，监控状态变化。具体执行如下：  获取所有的pod.Spec.Containers以及pod中支持重新启动的initContainers，然后逐个处理  如果这个容器配置了StartupProbe或者ReadinessProbe或者LivenessProbe">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【k8s kubelet 源代码阅读（一）】-Pod管理">
+<meta property="og:url" content="http://example.com/2025/08/11/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-Pod%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="关键组件介绍probeManager当一个pod被kubelet感知到之后，就会调用probeManager的AddPod来为各个容器启动探针，监控状态变化。具体执行如下：  获取所有的pod.Spec.Containers以及pod中支持重新启动的initContainers，然后逐个处理  如果这个容器配置了StartupProbe或者ReadinessProbe或者LivenessProbe">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-08-11T12:53:03.000Z">
+<meta property="article:modified_time" content="2025-10-17T06:36:39.179Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="k8s">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>【k8s kubelet 源代码阅读（一）】-Pod管理 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【k8s kubelet 源代码阅读（一）】-Pod管理"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-11 20:53" pubdate>
+          2025年8月11日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          54k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          268 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【k8s kubelet 源代码阅读（一）】-Pod管理</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="关键组件介绍"><a href="#关键组件介绍" class="headerlink" title="关键组件介绍"></a>关键组件介绍</h1><h2 id="probeManager"><a href="#probeManager" class="headerlink" title="probeManager"></a>probeManager</h2><p>当一个pod被kubelet感知到之后，就会调用<code>probeManager</code>的<code>AddPod</code>来为各个容器启动探针，监控状态变化。具体执行如下：</p>
+<ul>
+<li><p>获取所有的pod.Spec.Containers以及pod中支持重新启动的initContainers，然后逐个处理</p>
+</li>
+<li><p>如果这个容器配置了StartupProbe或者ReadinessProbe或者LivenessProbe，那么就会为其创建对应类型的newWorker，并启动协程来运行</p>
+</li>
+<li><p>newWorker协程会通过一个循环不断运行，其在实际检查前会有一些专门的处理，例如看容器是否是已经重启的新容器（即ContainerID是否发生改变），或者是否处在<code>onHold</code>的重启状态，容器是否是Running状态，是否超过了InitialDelaySeconds初始等待时间，检查通过后才会去具体执行探针。</p>
+</li>
+<li><p>如果当前状态不是Started，那么就不会执行ReadinessProbe和LivenessProbe，只会执行StartupProbe。如果已经是Started那么就不会去执行StartupProbe。</p>
+</li>
+<li><p>然后目前支持的探针类型有：</p>
+<ul>
+<li><p>Exec：执行指定的命令</p>
+</li>
+<li><p>HTTPGet：执行Http请求</p>
+</li>
+<li><p>TCPSocket：建立TCPSocket</p>
+</li>
+<li><p>GRPC：调用GRPC</p>
+</li>
+</ul>
+</li>
+<li><p>如果连续探测成功或者连续失败超过阈值，就会将结果记录在自己的缓存中（缓存会被PLEG用来计算pod的事件），然后将事件发送到对应的<code>updates</code> 通道，然后通过<code>syncLoopIteration</code>函数来继续处理，在处理中会给podWorkers发送一个这个pod的<em>SyncPodSync</em>类型的事件来触发更新。</p>
+</li>
+</ul>
+<h2 id="StatusManager"><a href="#StatusManager" class="headerlink" title="StatusManager"></a>StatusManager</h2><p>StatusManager主要职责是批量地将 Kubelet 本地缓存的 Pod 状态同步到 API Server。</p>
+<p>其主循环如下，有两类更新的时机：</p>
+<ul>
+<li><p>增量更新：通过<code>podStatusChannel</code>触发</p>
+</li>
+<li><p>全量更新：每10s周期性触发一次</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-keyword">go</span> wait.Forever(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>    <span class="hljs-keyword">for</span> &#123;<br>       <span class="hljs-keyword">select</span> &#123;<br>       <span class="hljs-keyword">case</span> &lt;-m.podStatusChannel:<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Syncing updated statuses&quot;</span>)<br>          m.syncBatch(<span class="hljs-literal">false</span>) <span class="hljs-comment">// 增量更新</span><br>       <span class="hljs-keyword">case</span> &lt;-syncTicker:<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Syncing all statuses&quot;</span>)<br>          m.syncBatch(<span class="hljs-literal">true</span>) <span class="hljs-comment">// 全量更新</span><br>       &#125;<br>    &#125;<br>&#125;, <span class="hljs-number">0</span>)<br></code></pre></td></tr></table></figure>
+
+<p>其核心的<code>syncBatch(all bool)</code>执行流程如下：</p>
+<ul>
+<li><p>首先通过与缓存的apiserver中pod的状态与本地维护的pod的状态比较，收集哪些pod需要更新状态：</p>
+<ul>
+<li><p>增量更新：</p>
+<ul>
+<li>收集当前status version &gt; apiserver中 version的pod</li>
+</ul>
+</li>
+<li><p>全量更新：</p>
+<ul>
+<li><p>version变大的pod</p>
+</li>
+<li><p>有deletionTimestamp并且是终态的的pod</p>
+</li>
+<li><p>逐condition进行比较收集有不同的pod</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>然后会对这些收集到的pod通过<code>syncPod</code>来向APIServer更新状态</p>
+<ul>
+<li><p>首先get到原本的pod</p>
+</li>
+<li><p>然后比较uid是否相同，如果相同说明是同名新建的pod，需要跳过这次更新，并删除这旧的缓存</p>
+</li>
+<li><p>然后进行状态合并<code>mergePodStatus</code>，状态合并而不是替换的原因在于有些status字段可能不是kubelet管理的，具体合并规则为：</p>
+<ul>
+<li><p>对于condition，保留不由kubelet管理的旧的condition，对于由kubelet管理的采用最新的condition，目前由kubelet管理的condition type有：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs go">v1.PodScheduled,<br>v1.PodReady,<br>v1.PodInitialized,<br>v1.ContainersReady,<br>v1.PodResizeInProgress,<br>v1.PodResizePending,<br>v1.PodReadyToStartContainers,(如果开启相关特性)<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><code>ResourceClaimStatuses</code>字段还是采用旧字段，因为其不属于kubelet管理</p>
+</li>
+<li><p>如果pod进入了终态但是还有容器在运行，对于<code>Phase</code>、<code>Reason</code>、<code>Message</code>字段还是采用原本的旧字段，防止出现明明状态是终态但是还有容器在运行的假死状态</p>
+</li>
+<li><p>如果pod的phase是终态，就强制把<code>containerReady</code>和<code>podReady</code>字段设置为false，以防止上报一个逻辑上矛盾的状态。</p>
+</li>
+</ul>
+</li>
+<li><p>得到merge后的状态后会通过Patch的方式来更新status，根据patch返回的新pod来更新缓存</p>
+</li>
+<li><p>最后还会处理有<code>deletionTimestamp</code>并且是终态的的pod，其会调用Apiserver的<code>Delete</code>去删除对应的pod，并删除对应的缓存。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="PLEG"><a href="#PLEG" class="headerlink" title="PLEG"></a>PLEG</h2><p>目前最新的k8s支持两类PLEG：</p>
+<ul>
+<li><p>GenericPLEG：</p>
+<ul>
+<li><p>传统的PLEG，核心的执行循环是：<code>go wait.Until(g.Relist, g.relistDuration.RelistPeriod, g.stopCh)</code>，默认间隔是1s。</p>
+</li>
+<li><p>在g.Relist函数中，它会通过容器运行时获取到当前节点的所有pod的容器的状态，然后逐个pod检查，通过与新旧容器状态的比较来获取事件，主要的事件类型有<em>ContainerStarted、ContainerDied、ContainerRemoved、ContainerChanged</em>，比较的代码如下：</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">generateEvents</span><span class="hljs-params">(logger klog.Logger, podID types.UID, cid <span class="hljs-type">string</span>, oldState, newState plegContainerState)</span></span> []*PodLifecycleEvent &#123;<br>    <span class="hljs-keyword">if</span> newState == oldState &#123;<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>    &#125;<br><br>    logger.V(<span class="hljs-number">4</span>).Info(<span class="hljs-string">&quot;GenericPLEG&quot;</span>, <span class="hljs-string">&quot;podUID&quot;</span>, podID, <span class="hljs-string">&quot;containerID&quot;</span>, cid, <span class="hljs-string">&quot;oldState&quot;</span>, oldState, <span class="hljs-string">&quot;newState&quot;</span>, newState)<br>    <span class="hljs-keyword">switch</span> newState &#123;<br>    <span class="hljs-keyword">case</span> plegContainerRunning:<br>       <span class="hljs-keyword">return</span> []*PodLifecycleEvent&#123;&#123;ID: podID, Type: ContainerStarted, Data: cid&#125;&#125;<br>    <span class="hljs-keyword">case</span> plegContainerExited:<br>       <span class="hljs-keyword">return</span> []*PodLifecycleEvent&#123;&#123;ID: podID, Type: ContainerDied, Data: cid&#125;&#125;<br>    <span class="hljs-keyword">case</span> plegContainerUnknown:<br>       <span class="hljs-keyword">return</span> []*PodLifecycleEvent&#123;&#123;ID: podID, Type: ContainerChanged, Data: cid&#125;&#125;<br>    <span class="hljs-keyword">case</span> plegContainerNonExistent:<br>       <span class="hljs-keyword">switch</span> oldState &#123;<br>       <span class="hljs-keyword">case</span> plegContainerExited:<br>          <span class="hljs-comment">// We already reported that the container died before.</span><br>          <span class="hljs-keyword">return</span> []*PodLifecycleEvent&#123;&#123;ID: podID, Type: ContainerRemoved, Data: cid&#125;&#125;<br>       <span class="hljs-keyword">default</span>:<br>          <span class="hljs-keyword">return</span> []*PodLifecycleEvent&#123;&#123;ID: podID, Type: ContainerDied, Data: cid&#125;, &#123;ID: podID, Type: ContainerRemoved, Data: cid&#125;&#125;<br>       &#125;<br>    <span class="hljs-keyword">default</span>:<br>       <span class="hljs-built_in">panic</span>(fmt.Sprintf(<span class="hljs-string">&quot;unrecognized container state: %v&quot;</span>, newState))<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>如果有事件发生了，那么就会更新kubelet的cache中pod的状态，缓存的pod的状态如下：</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// PodStatus represents the status of the pod and its containers.</span><br><span class="hljs-comment">// v1.PodStatus can be derived from examining PodStatus and v1.Pod.</span><br><span class="hljs-keyword">type</span> PodStatus <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// ID of the pod.</span><br>    ID types.UID<br>    <span class="hljs-comment">// Name of the pod.</span><br>    Name <span class="hljs-type">string</span><br>    <span class="hljs-comment">// Namespace of the pod.</span><br>    Namespace <span class="hljs-type">string</span><br>    <span class="hljs-comment">// All IPs assigned to this pod</span><br>    IPs []<span class="hljs-type">string</span><br>    <span class="hljs-comment">// Status of containers in the pod.</span><br>    ContainerStatuses []*Status<br>    <span class="hljs-comment">// Statuses of containers of the active sandbox in the pod.</span><br>    ActiveContainerStatuses []*Status<br>    <span class="hljs-comment">// Status of the pod sandbox.</span><br>    <span class="hljs-comment">// Only for kuberuntime now, other runtime may keep it nil.</span><br>    SandboxStatuses []*runtimeapi.PodSandboxStatus<br>    <span class="hljs-comment">// Timestamp at which container and pod statuses were recorded</span><br>    TimeStamp time.Time<br>&#125;<br><br><span class="hljs-comment">// Status represents the status of a container.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// Status does not contain VolumeMap because CRI API is unaware of volume names.</span><br><span class="hljs-keyword">type</span> Status <span class="hljs-keyword">struct</span> &#123;<br>    <span class="hljs-comment">// ID of the container.</span><br>    ID ContainerID<br>    <span class="hljs-comment">// Name of the container.</span><br>    Name <span class="hljs-type">string</span><br>    <span class="hljs-comment">// Status of the container.</span><br>    State State<br>    <span class="hljs-comment">// Creation time of the container.</span><br>    CreatedAt time.Time<br>    <span class="hljs-comment">// Start time of the container.</span><br>    StartedAt time.Time<br>    <span class="hljs-comment">// Finish time of the container.</span><br>    FinishedAt time.Time<br>    <span class="hljs-comment">// Exit code of the container.</span><br>    ExitCode <span class="hljs-type">int</span><br>    <span class="hljs-comment">// Name of the image, this also includes the tag of the image,</span><br>    <span class="hljs-comment">// the expected form is &quot;NAME:TAG&quot;.</span><br>    Image <span class="hljs-type">string</span><br>    <span class="hljs-comment">// ID of the image.</span><br>    ImageID <span class="hljs-type">string</span><br>    <span class="hljs-comment">// The digested reference of the image used by the container.</span><br>    ImageRef <span class="hljs-type">string</span><br>    <span class="hljs-comment">// Runtime handler used to pull the image if any.</span><br>    ImageRuntimeHandler <span class="hljs-type">string</span><br>    <span class="hljs-comment">// Hash of the container, used for comparison.</span><br>    Hash <span class="hljs-type">uint64</span><br>    <span class="hljs-comment">// Number of times that the container has been restarted.</span><br>    RestartCount <span class="hljs-type">int</span><br>    <span class="hljs-comment">// A string explains why container is in such a status.</span><br>    Reason <span class="hljs-type">string</span><br>    <span class="hljs-comment">// Message written by the container before exiting (stored in</span><br>    <span class="hljs-comment">// TerminationMessagePath).</span><br>    Message <span class="hljs-type">string</span><br>    <span class="hljs-comment">// CPU and memory resources for this container</span><br>    Resources *ContainerResources<br>    <span class="hljs-comment">// User identity information of the first process of this container</span><br>    User *ContainerUser<br>    <span class="hljs-comment">// Mounts are the volume mounts of the container</span><br>    Mounts []Mount<br>    <span class="hljs-comment">// StopSignal is used to show the container&#x27;s effective stop signal in the Status</span><br>    StopSignal *v1.Signal<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>最后会将event（除<em>ContainerChanged</em>）发送给对应的管道，通过<code>g.eventChannel &lt;- events[i]</code></li>
+</ul>
+</li>
+<li><p>eventedPleg：</p>
+<ul>
+<li><p>这是基于事件实现的PLEG，通过 CRI 事件直接获取状态更新，相比依赖轮询的传统方法减少了节点资源消耗，但是这需要 CRI 运行时支持 CRI 事件。</p>
+</li>
+<li><p>其主循环有两个：<code>go wait.Until(e.watchEventsChannel, 0, e.stopCh)</code>和<br><code>go wait.Until(e.updateGlobalCache, </code><em><code>globalCacheUpdatePeriod</code></em><code>, e.stopCacheUpdateCh)</code>。</p>
+</li>
+<li><p>对于<code>e.watchEventsChannel</code>，</p>
+<ul>
+<li><p>其会向容器运行时发起请求，要求运行时将所有容器的生命周期事件（如创建、启动、停止、删除）通过一个 channel (<code>containerEventsResponseCh</code>) 发送过来。如果多次连接失败会停止eventPleg，转而启动GenericPLEG。</p>
+</li>
+<li><p>它还会不断从<code>containerEventsResponseCh</code>读取事件，然后获取对应pod的status，更新自身的cache，然后将事件发送给<code>eventChannel</code></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="主循环syncLoopIteration"><a href="#主循环syncLoopIteration" class="headerlink" title="主循环syncLoopIteration"></a>主循环<code>syncLoopIteration</code></h1><p>其主循环处理为<code>syncLoopIteration</code>，其核心是使用一个 select 语句同时监听来自多个不同源的事件通道，一旦任何一个通道有事件到达，它就会立即处理，从而驱动节点上的 Pod 达到其期望状态。代码如下。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// syncLoopIteration reads from various channels and dispatches pods to the</span><br><span class="hljs-comment">// given handler.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// Arguments:</span><br><span class="hljs-comment">// 1.  configCh:       a channel to read config events from</span><br><span class="hljs-comment">// 2.  handler:        the SyncHandler to dispatch pods to</span><br><span class="hljs-comment">// 3.  syncCh:         a channel to read periodic sync events from</span><br><span class="hljs-comment">// 4.  housekeepingCh: a channel to read housekeeping events from</span><br><span class="hljs-comment">// 5.  plegCh:         a channel to read PLEG updates from</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// Events are also read from the kubelet liveness manager&#x27;s update channel.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// The workflow is to read from one of the channels, handle that event, and</span><br><span class="hljs-comment">// update the timestamp in the sync loop monitor.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// Here is an appropriate place to note that despite the syntactical</span><br><span class="hljs-comment">// similarity to the switch statement, the case statements in a select are</span><br><span class="hljs-comment">// evaluated in a pseudorandom order if there are multiple channels ready to</span><br><span class="hljs-comment">// read from when the select is evaluated.  In other words, case statements</span><br><span class="hljs-comment">// are evaluated in random order, and you can not assume that the case</span><br><span class="hljs-comment">// statements evaluate in order if multiple channels have events.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// With that in mind, in truly no particular order, the different channels</span><br><span class="hljs-comment">// are handled as follows:</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//   - configCh: dispatch the pods for the config change to the appropriate</span><br><span class="hljs-comment">//     handler callback for the event type</span><br><span class="hljs-comment">//   - plegCh: update the runtime cache; sync pod</span><br><span class="hljs-comment">//   - syncCh: sync all pods waiting for sync</span><br><span class="hljs-comment">//   - housekeepingCh: trigger cleanup of pods</span><br><span class="hljs-comment">//   - health manager: sync pods that have failed or in which one or more</span><br><span class="hljs-comment">//     containers have failed health checks</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(kl *Kubelet)</span></span> syncLoopIteration(ctx context.Context, configCh &lt;-<span class="hljs-keyword">chan</span> kubetypes.PodUpdate, handler SyncHandler,<br>    syncCh &lt;-<span class="hljs-keyword">chan</span> time.Time, housekeepingCh &lt;-<span class="hljs-keyword">chan</span> time.Time, plegCh &lt;-<span class="hljs-keyword">chan</span> *pleg.PodLifecycleEvent) <span class="hljs-type">bool</span> &#123;<br>    <span class="hljs-keyword">select</span> &#123;<br>    <span class="hljs-keyword">case</span> u, open := &lt;-configCh:<br>       <span class="hljs-comment">// Update from a config source; dispatch it to the right handler</span><br>       <span class="hljs-comment">// callback.</span><br>       <span class="hljs-keyword">if</span> !open &#123;<br>          klog.ErrorS(<span class="hljs-literal">nil</span>, <span class="hljs-string">&quot;Update channel is closed, exiting the sync loop&quot;</span>)<br>          <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span><br>       &#125;<br><br>       <span class="hljs-keyword">switch</span> u.Op &#123;<br>       <span class="hljs-keyword">case</span> kubetypes.ADD:<br>          klog.V(<span class="hljs-number">2</span>).InfoS(<span class="hljs-string">&quot;SyncLoop ADD&quot;</span>, <span class="hljs-string">&quot;source&quot;</span>, u.Source, <span class="hljs-string">&quot;pods&quot;</span>, klog.KObjSlice(u.Pods))<br>          <span class="hljs-comment">// After restarting, kubelet will get all existing pods through</span><br>          <span class="hljs-comment">// ADD as if they are new pods. These pods will then go through the</span><br>          <span class="hljs-comment">// admission process and *may* be rejected. This can be resolved</span><br>          <span class="hljs-comment">// once we have checkpointing.</span><br>          handler.HandlePodAdditions(u.Pods)<br>       <span class="hljs-keyword">case</span> kubetypes.UPDATE:<br>          klog.V(<span class="hljs-number">2</span>).InfoS(<span class="hljs-string">&quot;SyncLoop UPDATE&quot;</span>, <span class="hljs-string">&quot;source&quot;</span>, u.Source, <span class="hljs-string">&quot;pods&quot;</span>, klog.KObjSlice(u.Pods))<br>          handler.HandlePodUpdates(u.Pods)<br>       <span class="hljs-keyword">case</span> kubetypes.REMOVE:<br>          klog.V(<span class="hljs-number">2</span>).InfoS(<span class="hljs-string">&quot;SyncLoop REMOVE&quot;</span>, <span class="hljs-string">&quot;source&quot;</span>, u.Source, <span class="hljs-string">&quot;pods&quot;</span>, klog.KObjSlice(u.Pods))<br>          handler.HandlePodRemoves(u.Pods)<br>       <span class="hljs-keyword">case</span> kubetypes.RECONCILE:<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncLoop RECONCILE&quot;</span>, <span class="hljs-string">&quot;source&quot;</span>, u.Source, <span class="hljs-string">&quot;pods&quot;</span>, klog.KObjSlice(u.Pods))<br>          handler.HandlePodReconcile(u.Pods)<br>       <span class="hljs-keyword">case</span> kubetypes.DELETE:<br>          klog.V(<span class="hljs-number">2</span>).InfoS(<span class="hljs-string">&quot;SyncLoop DELETE&quot;</span>, <span class="hljs-string">&quot;source&quot;</span>, u.Source, <span class="hljs-string">&quot;pods&quot;</span>, klog.KObjSlice(u.Pods))<br>          <span class="hljs-comment">// DELETE is treated as a UPDATE because of graceful deletion.</span><br>          handler.HandlePodUpdates(u.Pods)<br>       <span class="hljs-keyword">case</span> kubetypes.SET:<br>          <span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> Do we want to support this?</span><br>          klog.ErrorS(<span class="hljs-literal">nil</span>, <span class="hljs-string">&quot;Kubelet does not support snapshot update&quot;</span>)<br>       <span class="hljs-keyword">default</span>:<br>          klog.ErrorS(<span class="hljs-literal">nil</span>, <span class="hljs-string">&quot;Invalid operation type received&quot;</span>, <span class="hljs-string">&quot;operation&quot;</span>, u.Op)<br>       &#125;<br><br>       kl.sourcesReady.AddSource(u.Source)<br><br>    <span class="hljs-keyword">case</span> e := &lt;-plegCh:<br>       <span class="hljs-keyword">if</span> isSyncPodWorthy(e) &#123;<br>          <span class="hljs-comment">// PLEG event for a pod; sync it.</span><br>          <span class="hljs-keyword">if</span> pod, ok := kl.podManager.GetPodByUID(e.ID); ok &#123;<br>             klog.V(<span class="hljs-number">2</span>).InfoS(<span class="hljs-string">&quot;SyncLoop (PLEG): event for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;event&quot;</span>, e)<br>             handler.HandlePodSyncs([]*v1.Pod&#123;pod&#125;)<br>          &#125; <span class="hljs-keyword">else</span> &#123;<br>             <span class="hljs-comment">// If the pod no longer exists, ignore the event.</span><br>             klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncLoop (PLEG): pod does not exist, ignore irrelevant event&quot;</span>, <span class="hljs-string">&quot;event&quot;</span>, e)<br>          &#125;<br>       &#125;<br><br>       <span class="hljs-keyword">if</span> e.Type == pleg.ContainerDied &#123;<br>          <span class="hljs-keyword">if</span> containerID, ok := e.Data.(<span class="hljs-type">string</span>); ok &#123;<br>             kl.cleanUpContainersInPod(e.ID, containerID)<br>          &#125;<br>       &#125;<br>    <span class="hljs-keyword">case</span> &lt;-syncCh:<br>       <span class="hljs-comment">// Sync pods waiting for sync</span><br>       podsToSync := kl.getPodsToSync()<br>       <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(podsToSync) == <span class="hljs-number">0</span> &#123;<br>          <span class="hljs-keyword">break</span><br>       &#125;<br>       klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncLoop (SYNC) pods&quot;</span>, <span class="hljs-string">&quot;total&quot;</span>, <span class="hljs-built_in">len</span>(podsToSync), <span class="hljs-string">&quot;pods&quot;</span>, klog.KObjSlice(podsToSync))<br>       handler.HandlePodSyncs(podsToSync)<br>    <span class="hljs-keyword">case</span> update := &lt;-kl.livenessManager.Updates():<br>       <span class="hljs-keyword">if</span> update.Result == proberesults.Failure &#123;<br>          handleProbeSync(kl, update, handler, <span class="hljs-string">&quot;liveness&quot;</span>, <span class="hljs-string">&quot;unhealthy&quot;</span>)<br>       &#125;<br>    <span class="hljs-keyword">case</span> update := &lt;-kl.readinessManager.Updates():<br>       ready := update.Result == proberesults.Success<br>       kl.statusManager.SetContainerReadiness(update.PodUID, update.ContainerID, ready)<br><br>       status := <span class="hljs-string">&quot;not ready&quot;</span><br>       <span class="hljs-keyword">if</span> ready &#123;<br>          status = <span class="hljs-string">&quot;ready&quot;</span><br>       &#125;<br>       handleProbeSync(kl, update, handler, <span class="hljs-string">&quot;readiness&quot;</span>, status)<br>    <span class="hljs-keyword">case</span> update := &lt;-kl.startupManager.Updates():<br>       started := update.Result == proberesults.Success<br>       kl.statusManager.SetContainerStartup(update.PodUID, update.ContainerID, started)<br><br>       status := <span class="hljs-string">&quot;unhealthy&quot;</span><br>       <span class="hljs-keyword">if</span> started &#123;<br>          status = <span class="hljs-string">&quot;started&quot;</span><br>       &#125;<br>       handleProbeSync(kl, update, handler, <span class="hljs-string">&quot;startup&quot;</span>, status)<br>    <span class="hljs-keyword">case</span> update := &lt;-kl.containerManager.Updates():<br>       pods := []*v1.Pod&#123;&#125;<br>       <span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> update.PodUIDs &#123;<br>          <span class="hljs-keyword">if</span> pod, ok := kl.podManager.GetPodByUID(types.UID(p)); ok &#123;<br>             klog.V(<span class="hljs-number">3</span>).InfoS(<span class="hljs-string">&quot;SyncLoop (containermanager): event for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;event&quot;</span>, update)<br>             pods = <span class="hljs-built_in">append</span>(pods, pod)<br>          &#125; <span class="hljs-keyword">else</span> &#123;<br>             <span class="hljs-comment">// If the pod no longer exists, ignore the event.</span><br>             klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncLoop (containermanager): pod does not exist, ignore devices updates&quot;</span>, <span class="hljs-string">&quot;event&quot;</span>, update)<br>          &#125;<br>       &#125;<br>       <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(pods) &gt; <span class="hljs-number">0</span> &#123;<br>          <span class="hljs-comment">// Updating the pod by syncing it again</span><br>          <span class="hljs-comment">// We do not apply the optimization by updating the status directly, but can do it later</span><br>          handler.HandlePodSyncs(pods)<br>       &#125;<br><br>    <span class="hljs-keyword">case</span> &lt;-housekeepingCh:<br>       <span class="hljs-keyword">if</span> !kl.sourcesReady.AllReady() &#123;<br>          <span class="hljs-comment">// If the sources aren&#x27;t ready or volume manager has not yet synced the states,</span><br>          <span class="hljs-comment">// skip housekeeping, as we may accidentally delete pods from unready sources.</span><br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncLoop (housekeeping, skipped): sources aren&#x27;t ready yet&quot;</span>)<br>       &#125; <span class="hljs-keyword">else</span> &#123;<br>          start := time.Now()<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncLoop (housekeeping)&quot;</span>)<br>          <span class="hljs-keyword">if</span> err := handler.HandlePodCleanups(ctx); err != <span class="hljs-literal">nil</span> &#123;<br>             klog.ErrorS(err, <span class="hljs-string">&quot;Failed cleaning pods&quot;</span>)<br>          &#125;<br>          duration := time.Since(start)<br>          <span class="hljs-keyword">if</span> duration &gt; housekeepingWarningDuration &#123;<br>             klog.ErrorS(fmt.Errorf(<span class="hljs-string">&quot;housekeeping took too long&quot;</span>), <span class="hljs-string">&quot;Housekeeping took longer than expected&quot;</span>, <span class="hljs-string">&quot;expected&quot;</span>, housekeepingWarningDuration, <span class="hljs-string">&quot;actual&quot;</span>, duration.Round(time.Millisecond))<br>          &#125;<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncLoop (housekeeping) end&quot;</span>, <span class="hljs-string">&quot;duration&quot;</span>, duration.Round(time.Millisecond))<br>       &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>监控的事件来源有：</p>
+<ul>
+<li><p><code>configCh</code> (配置变更)</p>
+<ul>
+<li><p><strong>来源:&#x20;</strong>&#x41;PI Server、静态 Pod 文件目录、HTTP 端点。当有 Pod 的增、删、改、查（ADD, UPDATE, REMOVE, RECONCILE, DELETE）等期望状态变更时，事件会发送到这个通道。</p>
+</li>
+<li><p><strong>处理:&#x20;</strong>&#x51FD;数会根据事件类型（<code>u.op</code>），调用 <code>SyncHandler</code> 对应的处理方法（如 <code>HandlePodAdditions</code>, <code>HandlePodUpdates</code>,<code>HandlePodRemoves</code>,<code>HandlePodReconcile</code> ），将变更分发下去，最终触发 podWorkers 去执行具体的 Pod 操作。</p>
+</li>
+</ul>
+</li>
+<li><p><code>plegCh</code> (Pod 生命周期事件)</p>
+<ul>
+<li><p><strong>来源:&#x20;</strong>&#x50;LEG (Pod Lifecycle Event Generator)通过监控底层的容器运行时（如 containerd）获取的事件，它反映容器的实际状态变化，例如容器启动、死亡、创建失败等。</p>
+</li>
+<li><p><strong>处理:&#x20;</strong>&#x5F53;收到值得同步的 PLEG 事件时（<code>isSyncPodWorthy</code>），Kubelet 会为对应的 Pod 触发一次同步（<code>HandlePodSyncs</code>），以更新其在 API Server 上的状态，使其与节点的真实情况保持一致。</p>
+</li>
+</ul>
+</li>
+<li><p><code>syncCh</code> (周期性同步)</p>
+<ul>
+<li><p><strong>来源:&#x20;</strong>&#x4E00;个定时器，在 <code>syncLoop</code> 中定义，每秒触发一次。</p>
+</li>
+<li><p><strong>处理:&#x20;</strong>&#x8C03;用 <code>getPodsToSync()</code> 获取所有需要同步的 Pod（比如之前同步失败的、或有内部模块请求同步的），然后调用 <code>HandlePodSyncs</code> 对它们进行批量同步。这是一个“兜底”机制，确保即使有事件丢失，Pod 状态最终也能被校准。</p>
+</li>
+</ul>
+</li>
+<li><p><code>livenessManager</code>, <code>readinessManager</code>, <code>startupManager</code> 的 <code>Updates()</code> 通道 (探针结果)</p>
+<ul>
+<li><p><strong>来源:&#x20;</strong>&#x5065;康探针（Liveness&#x2F;Readiness&#x2F;Startup Probes）探测到某个容器的探针结果发生变化（如从成功变为失败）后会发送事件到通道中。</p>
+</li>
+<li><p><strong>处理:&#x20;</strong>&#x5F53;收到探针失败或成功的更新时，Kubelet 会立即为该 Pod 触发一次同步（<code>HandlePodSyncs</code>），以更新 Pod 的 <code>status.conditions</code>。例如，Readiness 探针失败会导致 Pod 的 <code>Ready</code> 条件变为 <code>False</code>。</p>
+</li>
+</ul>
+</li>
+<li><p><code>housekeepingCh</code> (内务管理)</p>
+<ul>
+<li><p><strong>来源:&#x20;</strong>&#x4E00;个定时器，每隔 <code>housekeepingPeriod</code>（默认2秒）触发一次。</p>
+</li>
+<li><p><strong>处理:&#x20;</strong>&#x8C03;用 <code>handler.HandlePodCleanups()</code> 执行清理工作，比如垃圾回收已终止的 Pod 和容器所占用的资源（如网络、挂载目录等）。这个操作只有在所有配置源都就绪后才会执行，以防误删。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="关键事件处理"><a href="#关键事件处理" class="headerlink" title="关键事件处理"></a>关键事件处理</h2><p><code>SyncHandler</code>主要包含以下的一些处理</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// SyncHandler is an interface implemented by Kubelet, for testability</span><br><span class="hljs-keyword">type</span> SyncHandler <span class="hljs-keyword">interface</span> &#123;<br>    HandlePodAdditions(pods []*v1.Pod)<br>    HandlePodUpdates(pods []*v1.Pod)<br>    HandlePodRemoves(pods []*v1.Pod)<br>    HandlePodReconcile(pods []*v1.Pod)<br>    HandlePodSyncs(pods []*v1.Pod)<br>    HandlePodCleanups(ctx context.Context) <span class="hljs-type">error</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="HandlePodAdditions"><a href="#HandlePodAdditions" class="headerlink" title="HandlePodAdditions"></a>HandlePodAdditions</h3><p>处理由API Server、静态 Pod 文件目录、HTTP 导致的pod添加的事件，流程如下：</p>
+<ul>
+<li><p>对所有添加的pod按创建时间进行排序，再逐个处理</p>
+</li>
+<li><p>把pod加入podManager用来表示pod以及被kubelet感知到</p>
+</li>
+<li><p>如果是静态pod：</p>
+<ul>
+<li>kubelet 不会走常规的创建流程，而是会找到它对应的真实 Pod（由 API Server 管理），并向 podWorkers 发送一个 SyncPodUpdate 请求。这通常意味着要根据静态 Pod 文件的变化来更新正在运行的 Pod。</li>
+</ul>
+</li>
+<li><p>如果是普通的pod：</p>
+<ul>
+<li><p>进行准入检查：检查pod是否已经被标记为需要终止。例如，Kubelet 可能刚重启，就收到了一个已经被删除的 Pod 的 ADD 事件，这时需要忽略掉对其的处理。</p>
+</li>
+<li><p>进行准入控制：获取到所有的allocated pods，然后通过各个admitHandlers来计算当前的资源是否可以提交这个pod。下面简单介绍predicateAdmitHandler和evicition_manager的检查逻辑：</p>
+<ul>
+<li><p>predicateAdmitHandler：</p>
+<ul>
+<li><p>首先检查一些就算抢占其他pod也无法解决的限制，如系统、主机名；</p>
+</li>
+<li><p>根据节点基本信息、已有pod、额外插件资源得到完整的节点信息；</p>
+</li>
+<li><p>执行与调度器中filter类似的检查，检查节点的 CPU、内存、存储、Pod 数量等是否足够， Pod 请求的主机端口是否已被占用，节点的标签是否满足 Pod 的节点亲和性&#x2F;选择器要求， Pod 是否能容忍节点上的 NoExecute 污点（Taint）等</p>
+</li>
+<li><p>如果当前检查没有通过，但这个pod是关键函数则会尝试执行抢占，抢占的逻辑大致为通过贪心找到能满足需要的资源且已占有的资源最少的pod。</p>
+</li>
+<li><p>如果还是不成功就会返回第一个不成功的原因。</p>
+</li>
+</ul>
+</li>
+<li><p>evicition_manager：</p>
+<ul>
+<li><p>如果没有condition就说明节点目前没有压力，直接放行</p>
+</li>
+<li><p>查看当前pod是否是关键pod，如果是就直接放行。判断的依据是查看其是否是静态pod或者优先级是否大于等于 2 * <em>HighestUserDefinablePriority&#x20;</em>&#x3D; 2000000000。</p>
+</li>
+<li><p>如果condition中只有内存压力，那么就会放行非 BestEffort Pod，然后对于 BestEffort Pod会检查它的容忍度，如果配置了对“内存压力”污点（Taint）的容忍度（Toleration）也会放心。</p>
+</li>
+<li><p>此外在有压力的情况下就不会放行了。</p>
+</li>
+</ul>
+</li>
+<li><p>最后调用podWorkers去执行UpdatePod函数，并传入pod及kubetypes.<em>SyncPodCreate</em>事件去继续处理，UpdatePod函数介绍如下：</p>
+<ul>
+<li><p>获取或创建<code>podSyncStatus</code></p>
+</li>
+<li><p>处理状态转化，对于要终止的pod，会设置<code>status.terminatingAt</code>字段为当前时间</p>
+</li>
+<li><p>会启动或通知 <code>PodWorker</code> Goroutine。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="PodWorker循环podWorkerLoop"><a href="#PodWorker循环podWorkerLoop" class="headerlink" title="PodWorker循环podWorkerLoop"></a>PodWorker循环podWorkerLoop</h1><p><code>podWorkerLoop</code> 是 Kubelet 中<strong>每个 Pod 专属的生命周期管理者</strong>。当 <code>UpdatePod</code> 函数第一次接收到关于某个新 Pod 的更新时，它就会为这个 Pod 启动一个独立的 <code>podWorkerLoop</code> goroutine。这个 goroutine 的职责就是<strong>串行地、顺序地</strong>处理这个 Pod 从生到死的所有状态转换，确保每一步都正确执行。</p>
+<p>这个函数的核心是一个 <code>for range podUpdates</code> 循环。<code>podUpdates</code> 是一个 channel，每当 <code>UpdatePod</code> 函数接收到关于这个 Pod 的新指令时，就会向这个 channel 发送一个信号，从而唤醒这个循环。</p>
+<ol>
+<li><p>等待并获取工作 (<code>for range podUpdates</code>):</p>
+<ul>
+<li>循环会阻塞在这里，等待新的更新信号。</li>
+</ul>
+</li>
+<li><p>准备同步 (<code>p.startPodSync(podUID)</code>):</p>
+<ul>
+<li><p>一旦被唤醒，它首先会调用 <code>startPodSync</code>。这个函数负责：</p>
+<ul>
+<li><p>从 <code>podSyncStatus</code> 中取出待处理的更新任务 (<code>pendingUpdate</code>)。</p>
+</li>
+<li><p>检查 Pod 是否可以开始工作（例如，对于静态 Pod，要确保没有同名的旧 Pod 还在运行）。</p>
+</li>
+<li><p>如果不能立即开始，<code>startPodSync</code> 会返回 <code>canStart: false</code>，<code>podWorkerLoop</code> 就会 <code>continue</code>，继续等待下一次更新。</p>
+</li>
+<li><p>如果 Pod 已经被标记为“永远无法启动”（例如，在启动前就被删除了），<code>startPodSync</code> 会返回 <code>canEverStart: false</code>，<code>podWorkerLoop</code> 就会直接 <code>return</code>，彻底退出。</p>
+</li>
+<li><p>如果一切正常，<code>startPodSync</code> 会返回 <code>canStart: true</code> 和 <code>canEverStart: true</code>，以及包含了具体工作内容的 <code>update</code> 对象。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>执行核心同步逻辑 (<code>err := func() error &#123; ... &#125;</code>):</p>
+<ul>
+<li><p>这是一个匿名函数，主要是为了方便地处理 <code>err</code>。</p>
+</li>
+<li><p>获取最新状态: <code>status, err = p.podCache.GetNewerThan(...)</code>。在执行任何操作前，它会尝试从 PLEG（Pod Lifecycle Event Generator）的缓存中获取 Pod 的最新运行时状态（<code>kubecontainer.PodStatus</code>）。这确保了接下来的决策是基于最新的容器状态做出的。</p>
+</li>
+<li><p>根据工作类型分派任务: <code>switch &#123; case update.WorkType == ... &#125;</code></p>
+<ul>
+<li><p><code>case TerminatedPod</code>: 如果工作类型是“已终止”，则调用 <code>p.podSyncer.SyncTerminatedPod</code>。这个函数负责最后的清理工作，比如卸载卷、清理网络等。</p>
+</li>
+<li><p><code>case TerminatingPod</code>: 如果工作类型是“正在终止”，则调用 <code>p.podSyncer.SyncTerminatingPod</code>。这个函数的核心任务是杀死 Pod 中的所有容器，并遵循优雅终止的宽限期。</p>
+</li>
+<li><p><code>default</code> (即 <code>SyncPod</code>): 这是最常见的类型，调用 <code>p.podSyncer.SyncPod</code>。这个函数是 Kubelet 的核心同步逻辑，它会：</p>
+<ul>
+<li><p>对比 Pod 的期望状态（<code>pod.Spec</code>）和实际状态（从容器运行时获取）。</p>
+</li>
+<li><p>创建缺失的容器。</p>
+</li>
+<li><p>杀死多余或不健康的容器。</p>
+</li>
+<li><p>设置沙箱（Pod 的网络命名空间等）。</p>
+</li>
+<li><p><code>SyncPod</code> 会返回一个布尔值 <code>isTerminal</code>，如果 Pod 的所有容器都已运行完毕并且根据重启策略（<code>RestartPolicy</code>）不需要再重启，<code>isTerminal</code> 就会是 <code>true</code>。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>处理同步结果:</p>
+<ul>
+<li><p><code>switch &#123; case err == context.Canceled: ... &#125;</code>: 如果错误是 <code>context.Canceled</code>，说明 <code>UpdatePod</code> 函数因为收到了更紧急的指令（如立即终止）而取消了这次同步。<code>podWorkerLoop</code> 会直接等待下一次被唤醒。</p>
+</li>
+<li><p><code>case err != nil</code>: 如果发生了其他错误，会打印错误日志，并通过 <code>completeWork</code> 函数将这个 Pod 加入到工作队列中，以便稍后进行退避重试（backoff retry）。</p>
+</li>
+<li><p><code>case update.WorkType == TerminatedPod</code>: 如果 <code>SyncTerminatedPod</code> 成功完成，说明 Pod 的生命周期彻底结束。调用 <code>completeTerminated</code> 来清理 <code>podWorkers</code> 的内部状态，然后 <code>podWorkerLoop</code> 就可以 <code>return</code>，这个 goroutine 也就退出了。</p>
+</li>
+<li><p><code>case update.WorkType == TerminatingPod</code>: 如果 <code>SyncTerminatingPod</code> 成功完成，说明所有容器都已被杀死。调用 <code>completeTerminating</code> 将 Pod 状态更新为“已终止”，并立即触发一次新的更新，以便进入 <code>TerminatedPod</code> 阶段进行清理。</p>
+</li>
+<li><p><code>case isTerminal</code>: 如果 <code>SyncPod</code> 返回 <code>isTerminal: true</code>，说明 Pod 自然运行结束。调用 <code>completeSync</code> 将 Pod 状态更新为“正在终止”，并立即触发一次新的更新，以便进入 <code>TerminatingPod</code> 阶段。</p>
+</li>
+</ul>
+</li>
+<li><p>完成工作并准备下一次循环 (<code>p.completeWork(...)</code>):</p>
+<ul>
+<li><p>这个函数会根据同步结果（成功、失败、阶段转换）来决定下一次重试的时间间隔，并将 Pod 的 UID 重新加入到 <code>workQueue</code> 中。</p>
+</li>
+<li><p>它还会检查 <code>podSyncStatus</code> 中是否已经有新的 <code>pendingUpdate</code>，如果有，就立即向 <code>podUpdates</code> channel 发送信号，触发下一次循环，实现状态转换的无缝衔接。</p>
+</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br></pre></td><td class="code"><pre><code class="hljs go"><span class="hljs-comment">// podWorkerLoop manages sequential state updates to a pod in a goroutine, exiting once the final</span><br><span class="hljs-comment">// state is reached. The loop is responsible for driving the pod through four main phases:</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// 1. Wait to start, guaranteeing no two pods with the same UID or same fullname are running at the same time</span><br><span class="hljs-comment">// 2. Sync, orchestrating pod setup by reconciling the desired pod spec with the runtime state of the pod</span><br><span class="hljs-comment">// 3. Terminating, ensuring all running containers in the pod are stopped</span><br><span class="hljs-comment">// 4. Terminated, cleaning up any resources that must be released before the pod can be deleted</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// The podWorkerLoop is driven by updates delivered to UpdatePod and by SyncKnownPods. If a particular</span><br><span class="hljs-comment">// sync method fails, p.workerQueue is updated with backoff but it is the responsibility of the kubelet</span><br><span class="hljs-comment">// to trigger new UpdatePod calls. SyncKnownPods will only retry pods that are no longer known to the</span><br><span class="hljs-comment">// caller. When a pod transitions working-&gt;terminating or terminating-&gt;terminated, the next update is</span><br><span class="hljs-comment">// queued immediately and no kubelet action is required.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *podWorkers)</span></span> podWorkerLoop(podUID types.UID, podUpdates &lt;-<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>&#123;&#125;) &#123;<br>    <span class="hljs-keyword">var</span> lastSyncTime time.Time<br>    <span class="hljs-keyword">for</span> <span class="hljs-keyword">range</span> podUpdates &#123;<br>       ctx, update, canStart, canEverStart, ok := p.startPodSync(podUID)<br>       <span class="hljs-comment">// If we had no update waiting, it means someone initialized the channel without filling out pendingUpdate.</span><br>       <span class="hljs-keyword">if</span> !ok &#123;<br>          <span class="hljs-keyword">continue</span><br>       &#125;<br>       <span class="hljs-comment">// If the pod was terminated prior to the pod being allowed to start, we exit the loop.</span><br>       <span class="hljs-keyword">if</span> !canEverStart &#123;<br>          <span class="hljs-keyword">return</span><br>       &#125;<br>       <span class="hljs-comment">// If the pod is not yet ready to start, continue and wait for more updates.</span><br>       <span class="hljs-keyword">if</span> !canStart &#123;<br>          <span class="hljs-keyword">continue</span><br>       &#125;<br><br>       podUID, podRef := podUIDAndRefForUpdate(update.Options)<br><br>       klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Processing pod event&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, podRef, <span class="hljs-string">&quot;podUID&quot;</span>, podUID, <span class="hljs-string">&quot;updateType&quot;</span>, update.WorkType)<br>       <span class="hljs-keyword">var</span> isTerminal <span class="hljs-type">bool</span><br>       err := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> <span class="hljs-type">error</span> &#123;<br>          <span class="hljs-comment">// The worker is responsible for ensuring the sync method sees the appropriate</span><br>          <span class="hljs-comment">// status updates on resyncs (the result of the last sync), transitions to</span><br>          <span class="hljs-comment">// terminating (no wait), or on terminated (whatever the most recent state is).</span><br>          <span class="hljs-comment">// Only syncing and terminating can generate pod status changes, while terminated</span><br>          <span class="hljs-comment">// pods ensure the most recent status makes it to the api server.</span><br>          <span class="hljs-keyword">var</span> status *kubecontainer.PodStatus<br>          <span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br>          <span class="hljs-keyword">switch</span> &#123;<br>          <span class="hljs-keyword">case</span> update.Options.RunningPod != <span class="hljs-literal">nil</span>:<br>             <span class="hljs-comment">// when we receive a running pod, we don&#x27;t need status at all because we are</span><br>             <span class="hljs-comment">// guaranteed to be terminating and we skip updates to the pod</span><br>          <span class="hljs-keyword">default</span>:<br>             <span class="hljs-comment">// wait until we see the next refresh from the PLEG via the cache (max 2s)</span><br>             <span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> this adds ~1s of latency on all transitions from sync to terminating</span><br>             <span class="hljs-comment">//  to terminated, and on all termination retries (including evictions). We should</span><br>             <span class="hljs-comment">//  improve latency by making the pleg continuous and by allowing pod status</span><br>             <span class="hljs-comment">//  changes to be refreshed when key events happen (killPod, sync-&gt;terminating).</span><br>             <span class="hljs-comment">//  Improving this latency also reduces the possibility that a terminated</span><br>             <span class="hljs-comment">//  container&#x27;s status is garbage collected before we have a chance to update the</span><br>             <span class="hljs-comment">//  API server (thus losing the exit code).</span><br>             status, err = p.podCache.GetNewerThan(update.Options.Pod.UID, lastSyncTime)<br><br>             <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>                <span class="hljs-comment">// This is the legacy event thrown by manage pod loop all other events are now dispatched</span><br>                <span class="hljs-comment">// from syncPodFn</span><br>                p.recorder.Eventf(update.Options.Pod, v1.EventTypeWarning, events.FailedSync, <span class="hljs-string">&quot;error determining status: %v&quot;</span>, err)<br>                <span class="hljs-keyword">return</span> err<br>             &#125;<br>          &#125;<br><br>          <span class="hljs-comment">// Take the appropriate action (illegal phases are prevented by UpdatePod)</span><br>          <span class="hljs-keyword">switch</span> &#123;<br>          <span class="hljs-keyword">case</span> update.WorkType == TerminatedPod:<br>             err = p.podSyncer.SyncTerminatedPod(ctx, update.Options.Pod, status)<br><br>          <span class="hljs-keyword">case</span> update.WorkType == TerminatingPod:<br>             <span class="hljs-keyword">var</span> gracePeriod *<span class="hljs-type">int64</span><br>             <span class="hljs-keyword">if</span> opt := update.Options.KillPodOptions; opt != <span class="hljs-literal">nil</span> &#123;<br>                gracePeriod = opt.PodTerminationGracePeriodSecondsOverride<br>             &#125;<br>             podStatusFn := p.acknowledgeTerminating(podUID)<br><br>             <span class="hljs-comment">// if we only have a running pod, terminate it directly</span><br>             <span class="hljs-keyword">if</span> update.Options.RunningPod != <span class="hljs-literal">nil</span> &#123;<br>                err = p.podSyncer.SyncTerminatingRuntimePod(ctx, update.Options.RunningPod)<br>             &#125; <span class="hljs-keyword">else</span> &#123;<br>                err = p.podSyncer.SyncTerminatingPod(ctx, update.Options.Pod, status, gracePeriod, podStatusFn)<br>             &#125;<br><br>          <span class="hljs-keyword">default</span>:<br>             isTerminal, err = p.podSyncer.SyncPod(ctx, update.Options.UpdateType, update.Options.Pod, update.Options.MirrorPod, status)<br>          &#125;<br><br>          lastSyncTime = p.clock.Now()<br>          <span class="hljs-keyword">return</span> err<br>       &#125;()<br><br>       <span class="hljs-keyword">var</span> phaseTransition <span class="hljs-type">bool</span><br>       <span class="hljs-keyword">switch</span> &#123;<br>       <span class="hljs-keyword">case</span> err == context.Canceled:<br>          <span class="hljs-comment">// when the context is cancelled we expect an update to already be queued</span><br>          klog.V(<span class="hljs-number">2</span>).InfoS(<span class="hljs-string">&quot;Sync exited with context cancellation error&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, podRef, <span class="hljs-string">&quot;podUID&quot;</span>, podUID, <span class="hljs-string">&quot;updateType&quot;</span>, update.WorkType)<br><br>       <span class="hljs-keyword">case</span> err != <span class="hljs-literal">nil</span>:<br>          <span class="hljs-comment">// we will queue a retry</span><br>          klog.ErrorS(err, <span class="hljs-string">&quot;Error syncing pod, skipping&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, podRef, <span class="hljs-string">&quot;podUID&quot;</span>, podUID)<br><br>       <span class="hljs-keyword">case</span> update.WorkType == TerminatedPod:<br>          <span class="hljs-comment">// we can shut down the worker</span><br>          p.completeTerminated(podUID)<br>          <span class="hljs-keyword">if</span> start := update.Options.StartTime; !start.IsZero() &#123;<br>             metrics.PodWorkerDuration.WithLabelValues(<span class="hljs-string">&quot;terminated&quot;</span>).Observe(metrics.SinceInSeconds(start))<br>          &#125;<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Processing pod event done&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, podRef, <span class="hljs-string">&quot;podUID&quot;</span>, podUID, <span class="hljs-string">&quot;updateType&quot;</span>, update.WorkType)<br>          <span class="hljs-keyword">return</span><br><br>       <span class="hljs-keyword">case</span> update.WorkType == TerminatingPod:<br>          <span class="hljs-comment">// pods that don&#x27;t exist in config don&#x27;t need to be terminated, other loops will clean them up</span><br>          <span class="hljs-keyword">if</span> update.Options.RunningPod != <span class="hljs-literal">nil</span> &#123;<br>             p.completeTerminatingRuntimePod(podUID)<br>             <span class="hljs-keyword">if</span> start := update.Options.StartTime; !start.IsZero() &#123;<br>                metrics.PodWorkerDuration.WithLabelValues(update.Options.UpdateType.String()).Observe(metrics.SinceInSeconds(start))<br>             &#125;<br>             klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Processing pod event done&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, podRef, <span class="hljs-string">&quot;podUID&quot;</span>, podUID, <span class="hljs-string">&quot;updateType&quot;</span>, update.WorkType)<br>             <span class="hljs-keyword">return</span><br>          &#125;<br>          <span class="hljs-comment">// otherwise we move to the terminating phase</span><br>          p.completeTerminating(podUID)<br>          phaseTransition = <span class="hljs-literal">true</span><br><br>       <span class="hljs-keyword">case</span> isTerminal:<br>          <span class="hljs-comment">// if syncPod indicated we are now terminal, set the appropriate pod status to move to terminating</span><br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Pod is terminal&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, podRef, <span class="hljs-string">&quot;podUID&quot;</span>, podUID, <span class="hljs-string">&quot;updateType&quot;</span>, update.WorkType)<br>          p.completeSync(podUID)<br>          phaseTransition = <span class="hljs-literal">true</span><br>       &#125;<br><br>       <span class="hljs-comment">// queue a retry if necessary, then put the next event in the channel if any</span><br>       p.completeWork(podUID, phaseTransition, err)<br>       <span class="hljs-keyword">if</span> start := update.Options.StartTime; !start.IsZero() &#123;<br>          metrics.PodWorkerDuration.WithLabelValues(update.Options.UpdateType.String()).Observe(metrics.SinceInSeconds(start))<br>       &#125;<br>       klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Processing pod event done&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, podRef, <span class="hljs-string">&quot;podUID&quot;</span>, podUID, <span class="hljs-string">&quot;updateType&quot;</span>, update.WorkType)<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+<h2 id="Kubelet中的SyncPod"><a href="#Kubelet中的SyncPod" class="headerlink" title="Kubelet中的SyncPod"></a>Kubelet中的SyncPod</h2><p><code>SyncPod</code> 是 Kubelet 中负责<strong>创建和维持 Pod 运行状态</strong>的核心工作函数。当 <code>podWorkerLoop</code> 决定要对一个 Pod 进行同步时，就会调用这个函数。它的核心目标是：<strong>将 Pod 的实际状态（Actual State）驱动为其期望状态（Desired State）</strong>。</p>
+<p>这个函数是<strong>可重入的（reentrant）</strong>，这意味着它可以被反复调用，并且每次调用都会尝试让 Pod 更接近其最终的期望状态。如果中途发生可恢复的错误，下一次调用 <code>SyncPod</code> 时会从失败的地方继续尝试。</p>
+<h3 id="SyncPod-的核心工作流程："><a href="#SyncPod-的核心工作流程：" class="headerlink" title="SyncPod 的核心工作流程："></a><code>SyncPod</code> 的核心工作流程：</h3><p>这个函数执行一个非常长的、事务性的操作序列，以确保一个 Pod 被正确地建立起来。如果其中任何一步失败，函数会返回错误，<code>podWorkerLoop</code> 会在稍后重试整个流程。</p>
+<ol>
+<li><p>前置准备和状态生成:</p>
+<ul>
+<li><p>记录延迟: 如果是第一次创建 Pod (<code>SyncPodCreate</code>)，会记录从 Kubelet 首次看到 Pod 到 <code>podWorker</code> 开始处理之间的延迟，用于性能监控。</p>
+</li>
+<li><p>处理资源伸缩 (Resize): 如果启用了 <code>InPlacePodVerticalScaling</code> 特性，它会先检查并处理 Pod 的资源伸缩请求。</p>
+</li>
+<li><p>生成 API 状态 (<code>generateAPIPodStatus</code>): 这是非常关键的一步。它会结合 Pod 的 <code>spec</code>、<code>statusManager</code> 中缓存的状态以及从容器运行时获取的最新 <code>podStatus</code>，生成一个最终要上报给 API Server 的 <code>v1.PodStatus</code> 对象。</p>
+</li>
+<li><p>检查是否已终结: 如果生成的 <code>apiPodStatus</code> 显示 Pod 已经处于 <code>Succeeded</code> 或 <code>Failed</code> 状态，说明 Pod 已经运行结束。<code>SyncPod</code> 会将这个最终状态更新到 <code>statusManager</code>，然后返回 <code>isTerminal: true</code>，通知 <code>podWorkerLoop</code> 进入终止流程。</p>
+</li>
+</ul>
+</li>
+<li><p>状态更新和前置检查:</p>
+<ul>
+<li><p>更新状态管理器 (<code>statusManager.SetPodStatus</code>): 将上一步生成的 <code>apiPodStatus</code> 更新到 Kubelet 的状态管理器中。这是 Kubelet 内部对 Pod 状态的权威记录。</p>
+</li>
+<li><p>检查网络插件: 如果网络插件还没准备好，并且 Pod 不是 <code>hostNetwork</code> 模式，那么就报错并退出，等待网络就绪。</p>
+</li>
+<li><p>注册 Secret&#x2F;ConfigMap: 通知 <code>secretManager</code> 和 <code>configMapManager</code>，这个 Pod 依赖了某些 Secret 和 ConfigMap，以便它们可以开始监视和挂载这些资源。</p>
+</li>
+</ul>
+</li>
+<li><p>资源准备和创建:</p>
+<ul>
+<li><p>创建 Cgroup (<code>pcm.EnsureExists</code>): 如果启用了 <code>cgroups-per-qos</code>，它会为 Pod 创建对应的 Cgroup，并应用资源限制（如 CPU、内存限制）。这里有一个特殊逻辑：如果 Kubelet 重启后发现一个已存在的 Pod 没有 Cgroup，它会先杀死这个 Pod 的所有容器，然后再创建 Cgroup 并重新拉起容器，以确保 Pod 运行在正确的 Cgroup 控制下。</p>
+</li>
+<li><p>创建 Mirror Pod (<code>tryReconcileMirrorPods</code>): 如果这是一个静态 Pod（Static Pod），并且还没有对应的镜像 Pod（Mirror Pod），<code>SyncPod</code> 会负责创建它。镜像 Pod 是静态 Pod 在 API Server 中的一个只读映射，目的是让集群的其他组件（如调度器）能够看到这个 Pod 并计算其资源占用。</p>
+</li>
+<li><p>创建数据目录 (<code>makePodDataDirs</code>): 为 Pod 创建所需的数据目录，例如 <code>/var/lib/kubelet/pods/&lt;pod-uid&gt;/volumes</code> 等。</p>
+</li>
+<li><p>等待卷挂载 (<code>volumeManager.WaitForAttachAndMount</code>): 这是非常重要的一步。它会阻塞在这里，直到 Pod 所需的所有存储卷（Volume）都已经被成功地附加（Attach）到节点并挂载（Mount）到 Pod 的数据目录中。</p>
+</li>
+</ul>
+</li>
+<li><p>容器运行时同步:</p>
+<ul>
+<li><p>获取拉取镜像的密钥 (<code>getPullSecretsForPod</code>): 从 Secret Manager 中获取拉取 Pod 镜像所需的 <code>imagePullSecrets</code>。</p>
+</li>
+<li><p>启动探针 (<code>probeManager.AddPod</code>): 通知 <code>probeManager</code> 开始对这个 Pod 进行存活探针（Liveness Probe）和就绪探针（Readiness Probe）。</p>
+</li>
+<li><p>调用容器运行时 (<code>kl.containerRuntime.SyncPod</code>): 这是整个流程中最核心的调用。Kubelet 将 Pod 的 <code>spec</code>、<code>podStatus</code>、拉取密钥等所有信息打包，传递给底层的容器运行时（如 containerd 或 CRI-O）。容器运行时会负责：</p>
+<ul>
+<li><p>创建或更新 Pod 的沙箱（Sandbox）。</p>
+</li>
+<li><p>拉取容器镜像。</p>
+</li>
+<li><p>创建和启动容器。</p>
+</li>
+<li><p>应用容器级别的配置。</p>
+</li>
+</ul>
+</li>
+<li><p><code>containerRuntime.SyncPod</code> 会返回一个结果，包含了同步过程中发生的任何错误。</p>
+</li>
+</ul>
+</li>
+<li><p>收尾工作:</p>
+<ul>
+<li><p>更新 Reason 缓存: 将容器运行时的同步结果更新到 <code>reasonCache</code>，这有助于调试。</p>
+</li>
+<li><p>处理原地伸缩结果: 如果有容器原地伸缩的操作，根据结果更新 Pod 的 <code>PodResizeInProgress</code> 状况。</p>
+</li>
+<li><p>返回结果: 将 <code>containerRuntime.SyncPod</code> 的错误返回给 <code>podWorkerLoop</code>。如果返回 <code>nil</code> 错误，则表示本次同步成功，Pod 已经处于其期望的运行状态。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p><code>SyncPod</code> 是一个精心设计的、健壮的事务性脚本。它像一个建筑工头，按照一份详细的蓝图（Pod Spec），一步一步地协调各种资源（Cgroup、网络、存储、Secret），并最终指挥容器运行时这个“施工队”来完成 Pod 的“建造”工作。它的可重入性和详细的步骤确保了即使在复杂的环境中，Pod 也能够被可靠地创建和维护。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br></pre></td><td class="code"><pre><code class="hljs go"><br><span class="hljs-comment">// SyncPod is the transaction script for the sync of a single pod (setting up)</span><br><span class="hljs-comment">// a pod. This method is reentrant and expected to converge a pod towards the</span><br><span class="hljs-comment">// desired state of the spec. The reverse (teardown) is handled in</span><br><span class="hljs-comment">// SyncTerminatingPod and SyncTerminatedPod. If SyncPod exits without error,</span><br><span class="hljs-comment">// then the pod runtime state is in sync with the desired configuration state</span><br><span class="hljs-comment">// (pod is running). If SyncPod exits with a transient error, the next</span><br><span class="hljs-comment">// invocation of SyncPod is expected to make progress towards reaching the</span><br><span class="hljs-comment">// desired state. SyncPod exits with isTerminal when the pod was detected to</span><br><span class="hljs-comment">// have reached a terminal lifecycle phase due to container exits (for</span><br><span class="hljs-comment">// RestartNever or RestartOnFailure) and the next method invoked will be</span><br><span class="hljs-comment">// SyncTerminatingPod. If the pod terminates for any other reason, SyncPod</span><br><span class="hljs-comment">// will receive a context cancellation and should exit as soon as possible.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// Arguments:</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// updateType - whether this is a create (first time) or an update, should</span><br><span class="hljs-comment">// only be used for metrics since this method must be reentrant</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// pod - the pod that is being set up</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// mirrorPod - the mirror pod known to the kubelet for this pod, if any</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// podStatus - the most recent pod status observed for this pod which can</span><br><span class="hljs-comment">// be used to determine the set of actions that should be taken during</span><br><span class="hljs-comment">// this loop of SyncPod</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// The workflow is:</span><br><span class="hljs-comment">//   - If the pod is being created, record pod worker start latency</span><br><span class="hljs-comment">//   - Call generateAPIPodStatus to prepare an v1.PodStatus for the pod</span><br><span class="hljs-comment">//   - If the pod is being seen as running for the first time, record pod</span><br><span class="hljs-comment">//     start latency</span><br><span class="hljs-comment">//   - Update the status of the pod in the status manager</span><br><span class="hljs-comment">//   - Stop the pod&#x27;s containers if it should not be running due to soft</span><br><span class="hljs-comment">//     admission</span><br><span class="hljs-comment">//   - Ensure any background tracking for a runnable pod is started</span><br><span class="hljs-comment">//   - Create a mirror pod if the pod is a static pod, and does not</span><br><span class="hljs-comment">//     already have a mirror pod</span><br><span class="hljs-comment">//   - Create the data directories for the pod if they do not exist</span><br><span class="hljs-comment">//   - Wait for volumes to attach/mount</span><br><span class="hljs-comment">//   - Fetch the pull secrets for the pod</span><br><span class="hljs-comment">//   - Call the container runtime&#x27;s SyncPod callback</span><br><span class="hljs-comment">//   - Update the traffic shaping for the pod&#x27;s ingress and egress limits</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// If any step of this workflow errors, the error is returned, and is repeated</span><br><span class="hljs-comment">// on the next SyncPod call.</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">// This operation writes all events that are dispatched in order to provide</span><br><span class="hljs-comment">// the most accurate information possible about an error situation to aid debugging.</span><br><span class="hljs-comment">// Callers should not write an event if this operation returns an error.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(kl *Kubelet)</span></span> SyncPod(ctx context.Context, updateType kubetypes.SyncPodType, pod, mirrorPod *v1.Pod, podStatus *kubecontainer.PodStatus) (isTerminal <span class="hljs-type">bool</span>, err <span class="hljs-type">error</span>) &#123;<br>    ctx, otelSpan := kl.tracer.Start(ctx, <span class="hljs-string">&quot;syncPod&quot;</span>, trace.WithAttributes(<br>       semconv.K8SPodUIDKey.String(<span class="hljs-type">string</span>(pod.UID)),<br>       attribute.String(<span class="hljs-string">&quot;k8s.pod&quot;</span>, klog.KObj(pod).String()),<br>       semconv.K8SPodNameKey.String(pod.Name),<br>       attribute.String(<span class="hljs-string">&quot;k8s.pod.update_type&quot;</span>, updateType.String()),<br>       semconv.K8SNamespaceNameKey.String(pod.Namespace),<br>    ))<br>    klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncPod enter&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;podUID&quot;</span>, pod.UID)<br>    <span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> &#123;<br>       <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>          otelSpan.RecordError(err)<br>          otelSpan.SetStatus(codes.Error, err.Error())<br>       &#125;<br>       klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncPod exit&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;podUID&quot;</span>, pod.UID, <span class="hljs-string">&quot;isTerminal&quot;</span>, isTerminal)<br>       otelSpan.End()<br>    &#125;()<br><br>    <span class="hljs-comment">// Latency measurements for the main workflow are relative to the</span><br>    <span class="hljs-comment">// first time the pod was seen by kubelet.</span><br>    <span class="hljs-keyword">var</span> firstSeenTime time.Time<br>    <span class="hljs-keyword">if</span> firstSeenTimeStr, ok := pod.Annotations[kubetypes.ConfigFirstSeenAnnotationKey]; ok &#123;<br>       firstSeenTime = kubetypes.ConvertToTimestamp(firstSeenTimeStr).Get()<br>    &#125;<br><br>    <span class="hljs-comment">// Record pod worker start latency if being created</span><br>    <span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> make pod workers record their own latencies</span><br>    <span class="hljs-keyword">if</span> updateType == kubetypes.SyncPodCreate &#123;<br>       <span class="hljs-keyword">if</span> !firstSeenTime.IsZero() &#123;<br>          <span class="hljs-comment">// This is the first time we are syncing the pod. Record the latency</span><br>          <span class="hljs-comment">// since kubelet first saw the pod if firstSeenTime is set.</span><br>          metrics.PodWorkerStartDuration.Observe(metrics.SinceInSeconds(firstSeenTime))<br>       &#125; <span class="hljs-keyword">else</span> &#123;<br>          klog.V(<span class="hljs-number">3</span>).InfoS(<span class="hljs-string">&quot;First seen time not recorded for pod&quot;</span>,<br>             <span class="hljs-string">&quot;podUID&quot;</span>, pod.UID,<br>             <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// handlePodResourcesResize updates the pod to use the allocated resources. This should come</span><br>    <span class="hljs-comment">// before the main business logic of SyncPod, so that a consistent view of the pod is used</span><br>    <span class="hljs-comment">// across the sync loop.</span><br>    <span class="hljs-keyword">if</span> utilfeature.DefaultFeatureGate.Enabled(features.InPlacePodVerticalScaling) &#123;<br>       <span class="hljs-comment">// Handle pod resize here instead of doing it in HandlePodUpdates because</span><br>       <span class="hljs-comment">// this conveniently retries any Deferred resize requests</span><br>       <span class="hljs-comment">// TODO(vinaykul,InPlacePodVerticalScaling): Investigate doing this in HandlePodUpdates + periodic SyncLoop scan</span><br>       <span class="hljs-comment">//     See: https://github.com/kubernetes/kubernetes/pull/102884#discussion_r663160060</span><br>       pod, err = kl.handlePodResourcesResize(pod, podStatus)<br>       <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>          <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// Generate final API pod status with pod and status manager status</span><br>    apiPodStatus := kl.generateAPIPodStatus(pod, podStatus, <span class="hljs-literal">false</span>)<br>    <span class="hljs-comment">// The pod IP may be changed in generateAPIPodStatus if the pod is using host network. (See #24576)</span><br>    <span class="hljs-comment">// TODO(random-liu): After writing pod spec into container labels, check whether pod is using host network, and</span><br>    <span class="hljs-comment">// set pod IP to hostIP directly in runtime.GetPodStatus</span><br>    podStatus.IPs = <span class="hljs-built_in">make</span>([]<span class="hljs-type">string</span>, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(apiPodStatus.PodIPs))<br>    <span class="hljs-keyword">for</span> _, ipInfo := <span class="hljs-keyword">range</span> apiPodStatus.PodIPs &#123;<br>       podStatus.IPs = <span class="hljs-built_in">append</span>(podStatus.IPs, ipInfo.IP)<br>    &#125;<br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(podStatus.IPs) == <span class="hljs-number">0</span> &amp;&amp; <span class="hljs-built_in">len</span>(apiPodStatus.PodIP) &gt; <span class="hljs-number">0</span> &#123;<br>       podStatus.IPs = []<span class="hljs-type">string</span>&#123;apiPodStatus.PodIP&#125;<br>    &#125;<br><br>    <span class="hljs-comment">// If the pod is terminal, we don&#x27;t need to continue to setup the pod</span><br>    <span class="hljs-keyword">if</span> apiPodStatus.Phase == v1.PodSucceeded || apiPodStatus.Phase == v1.PodFailed &#123;<br>       kl.statusManager.SetPodStatus(pod, apiPodStatus)<br>       isTerminal = <span class="hljs-literal">true</span><br>       <span class="hljs-keyword">return</span> isTerminal, <span class="hljs-literal">nil</span><br>    &#125;<br><br>    <span class="hljs-comment">// Record the time it takes for the pod to become running</span><br>    <span class="hljs-comment">// since kubelet first saw the pod if firstSeenTime is set.</span><br>    existingStatus, ok := kl.statusManager.GetPodStatus(pod.UID)<br>    <span class="hljs-keyword">if</span> !ok || existingStatus.Phase == v1.PodPending &amp;&amp; apiPodStatus.Phase == v1.PodRunning &amp;&amp;<br>       !firstSeenTime.IsZero() &#123;<br>       metrics.PodStartDuration.Observe(metrics.SinceInSeconds(firstSeenTime))<br>    &#125;<br><br>    kl.statusManager.SetPodStatus(pod, apiPodStatus)<br><br>    <span class="hljs-comment">// If the network plugin is not ready, only start the pod if it uses the host network</span><br>    <span class="hljs-keyword">if</span> err := kl.runtimeState.networkErrors(); err != <span class="hljs-literal">nil</span> &amp;&amp; !kubecontainer.IsHostNetworkPod(pod) &#123;<br>       kl.recorder.Eventf(pod, v1.EventTypeWarning, events.NetworkNotReady, <span class="hljs-string">&quot;%s: %v&quot;</span>, NetworkNotReadyErrorMsg, err)<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, fmt.Errorf(<span class="hljs-string">&quot;%s: %v&quot;</span>, NetworkNotReadyErrorMsg, err)<br>    &#125;<br><br>    <span class="hljs-comment">// ensure the kubelet knows about referenced secrets or configmaps used by the pod</span><br>    <span class="hljs-keyword">if</span> !kl.podWorkers.IsPodTerminationRequested(pod.UID) &#123;<br>       <span class="hljs-keyword">if</span> kl.secretManager != <span class="hljs-literal">nil</span> &#123;<br>          kl.secretManager.RegisterPod(pod)<br>       &#125;<br>       <span class="hljs-keyword">if</span> kl.configMapManager != <span class="hljs-literal">nil</span> &#123;<br>          kl.configMapManager.RegisterPod(pod)<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// Create Cgroups for the pod and apply resource parameters</span><br>    <span class="hljs-comment">// to them if cgroups-per-qos flag is enabled.</span><br>    pcm := kl.containerManager.NewPodContainerManager()<br>    <span class="hljs-comment">// If pod has already been terminated then we need not create</span><br>    <span class="hljs-comment">// or update the pod&#x27;s cgroup</span><br>    <span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> once context cancellation is added this check can be removed</span><br>    <span class="hljs-keyword">if</span> !kl.podWorkers.IsPodTerminationRequested(pod.UID) &#123;<br>       <span class="hljs-comment">// When the kubelet is restarted with the cgroups-per-qos</span><br>       <span class="hljs-comment">// flag enabled, all the pod&#x27;s running containers</span><br>       <span class="hljs-comment">// should be killed intermittently and brought back up</span><br>       <span class="hljs-comment">// under the qos cgroup hierarchy.</span><br>       <span class="hljs-comment">// Check if this is the pod&#x27;s first sync</span><br>       firstSync := <span class="hljs-literal">true</span><br>       <span class="hljs-keyword">for</span> _, containerStatus := <span class="hljs-keyword">range</span> apiPodStatus.ContainerStatuses &#123;<br>          <span class="hljs-keyword">if</span> containerStatus.State.Running != <span class="hljs-literal">nil</span> &#123;<br>             firstSync = <span class="hljs-literal">false</span><br>             <span class="hljs-keyword">break</span><br>          &#125;<br>       &#125;<br>       <span class="hljs-comment">// Don&#x27;t kill containers in pod if pod&#x27;s cgroups already</span><br>       <span class="hljs-comment">// exists or the pod is running for the first time</span><br>       podKilled := <span class="hljs-literal">false</span><br>       <span class="hljs-keyword">if</span> !pcm.Exists(pod) &amp;&amp; !firstSync &#123;<br>          p := kubecontainer.ConvertPodStatusToRunningPod(kl.getRuntime().Type(), podStatus)<br>          <span class="hljs-keyword">if</span> err := kl.killPod(ctx, pod, p, <span class="hljs-literal">nil</span>); err == <span class="hljs-literal">nil</span> &#123;<br>             podKilled = <span class="hljs-literal">true</span><br>          &#125; <span class="hljs-keyword">else</span> &#123;<br>             <span class="hljs-keyword">if</span> wait.Interrupted(err) &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span><br>             &#125;<br>             klog.ErrorS(err, <span class="hljs-string">&quot;KillPod failed&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;podStatus&quot;</span>, podStatus)<br>          &#125;<br>       &#125;<br>       <span class="hljs-comment">// Create and Update pod&#x27;s Cgroups</span><br>       <span class="hljs-comment">// Don&#x27;t create cgroups for run once pod if it was killed above</span><br>       <span class="hljs-comment">// The current policy is not to restart the run once pods when</span><br>       <span class="hljs-comment">// the kubelet is restarted with the new flag as run once pods are</span><br>       <span class="hljs-comment">// expected to run only once and if the kubelet is restarted then</span><br>       <span class="hljs-comment">// they are not expected to run again.</span><br>       <span class="hljs-comment">// We don&#x27;t create and apply updates to cgroup if its a run once pod and was killed above</span><br>       <span class="hljs-keyword">if</span> !(podKilled &amp;&amp; pod.Spec.RestartPolicy == v1.RestartPolicyNever) &#123;<br>          <span class="hljs-keyword">if</span> !pcm.Exists(pod) &#123;<br>             <span class="hljs-keyword">if</span> err := kl.containerManager.UpdateQOSCgroups(); err != <span class="hljs-literal">nil</span> &#123;<br>                klog.V(<span class="hljs-number">2</span>).InfoS(<span class="hljs-string">&quot;Failed to update QoS cgroups while syncing pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;err&quot;</span>, err)<br>             &#125;<br>             <span class="hljs-keyword">if</span> err := pcm.EnsureExists(pod); err != <span class="hljs-literal">nil</span> &#123;<br>                kl.recorder.Eventf(pod, v1.EventTypeWarning, events.FailedToCreatePodContainer, <span class="hljs-string">&quot;unable to ensure pod container exists: %v&quot;</span>, err)<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, fmt.Errorf(<span class="hljs-string">&quot;failed to ensure that the pod: %v cgroups exist and are correctly applied: %v&quot;</span>, pod.UID, err)<br>             &#125;<br>          &#125;<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// Create Mirror Pod for Static Pod if it doesn&#x27;t already exist</span><br>    kl.tryReconcileMirrorPods(pod, mirrorPod)<br><br>    <span class="hljs-comment">// Make data directories for the pod</span><br>    <span class="hljs-keyword">if</span> err := kl.makePodDataDirs(pod); err != <span class="hljs-literal">nil</span> &#123;<br>       kl.recorder.Eventf(pod, v1.EventTypeWarning, events.FailedToMakePodDataDirectories, <span class="hljs-string">&quot;error making pod data directories: %v&quot;</span>, err)<br>       klog.ErrorS(err, <span class="hljs-string">&quot;Unable to make pod data directories for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>    &#125;<br><br>    <span class="hljs-comment">// Wait for volumes to attach/mount</span><br>    <span class="hljs-keyword">if</span> err := kl.volumeManager.WaitForAttachAndMount(ctx, pod); err != <span class="hljs-literal">nil</span> &#123;<br>       <span class="hljs-keyword">if</span> !wait.Interrupted(err) &#123;<br>          kl.recorder.Eventf(pod, v1.EventTypeWarning, events.FailedMountVolume, <span class="hljs-string">&quot;Unable to attach or mount volumes: %v&quot;</span>, err)<br>          klog.ErrorS(err, <span class="hljs-string">&quot;Unable to attach or mount volumes for pod; skipping pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125;<br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err<br>    &#125;<br><br>    <span class="hljs-comment">// Fetch the pull secrets for the pod</span><br>    pullSecrets := kl.getPullSecretsForPod(pod)<br><br>    <span class="hljs-comment">// Ensure the pod is being probed</span><br>    kl.probeManager.AddPod(pod)<br><br>    <span class="hljs-comment">// TODO(#113606): use cancellation from the incoming context parameter, which comes from the pod worker.</span><br>    <span class="hljs-comment">// Currently, using cancellation from that context causes test failures. To remove this WithoutCancel,</span><br>    <span class="hljs-comment">// any wait.Interrupted errors need to be filtered from result and bypass the reasonCache - cancelling</span><br>    <span class="hljs-comment">// the context for SyncPod is a known and deliberate error, not a generic error.</span><br>    <span class="hljs-comment">// Use WithoutCancel instead of a new context.TODO() to propagate trace context</span><br>    <span class="hljs-comment">// Call the container runtime&#x27;s SyncPod callback</span><br>    sctx := context.WithoutCancel(ctx)<br>    result := kl.containerRuntime.SyncPod(sctx, pod, podStatus, pullSecrets, kl.crashLoopBackOff)<br>    kl.reasonCache.Update(pod.UID, result)<br><br>    <span class="hljs-keyword">for</span> _, r := <span class="hljs-keyword">range</span> result.SyncResults &#123;<br>       <span class="hljs-keyword">if</span> r.Action == kubecontainer.ResizePodInPlace &#123;<br>          <span class="hljs-keyword">if</span> r.Error == <span class="hljs-literal">nil</span> &#123;<br>             <span class="hljs-comment">// The pod was resized successfully, clear any pod resize errors in the PodResizeInProgress condition.</span><br>             kl.statusManager.SetPodResizeInProgressCondition(pod.UID, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-literal">true</span>)<br>          &#125; <span class="hljs-keyword">else</span> &#123;<br>             kl.statusManager.SetPodResizeInProgressCondition(pod.UID, v1.PodReasonError, r.Message, <span class="hljs-literal">false</span>)<br>          &#125;<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, result.Error()<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="kubeGenericRuntimeManager的syncPod"><a href="#kubeGenericRuntimeManager的syncPod" class="headerlink" title="kubeGenericRuntimeManager的syncPod"></a>kubeGenericRuntimeManager的syncPod</h2><p>这个函数是 Kubelet 与底层容器运行时（如 containerd, CRI-O）交互的<strong>核心</strong>。当 Kubelet 的 <code>podWorkerLoop</code> 决定要同步一个 Pod 的状态时，最终就会调用这个函数。它的职责是<strong>将 Pod 的实际状态（Actual State）调整为期望状态（Desired State）</strong>。</p>
+<p>整个函数可以看作一个精心编排的、包含多个步骤的事务性过程。如果中途某一步失败，函数会返回错误，上层逻辑（<code>podWorkerLoop</code>）会在稍后重试整个 <code>SyncPod</code> 流程。</p>
+<h3 id="SyncPod-的-8-个核心步骤："><a href="#SyncPod-的-8-个核心步骤：" class="headerlink" title="SyncPod 的 8 个核心步骤："></a><code>SyncPod</code> 的 8 个核心步骤：</h3><p>函数注释中清晰地列出了它的工作流程，我们来逐一解析：</p>
+<h4 id="步骤-1-计算-Pod-的变更-m-computePodActions"><a href="#步骤-1-计算-Pod-的变更-m-computePodActions" class="headerlink" title="步骤 1: 计算 Pod 的变更 (m.computePodActions)"></a><strong>步骤 1: 计算 Pod 的变更 (</strong><code>m.computePodActions</code><strong>)</strong></h4><p>这是 <code>SyncPod</code> 的“大脑”。它会比较 Pod 的期望配置 (<code>pod</code> spec) 和从容器运行时获取的当前实际状态 (<code>podStatus</code>)，然后计算出需要执行的一系列具体操作，封装在 <code>podContainerChanges</code> 对象里。这些操作包括：</p>
+<ul>
+<li><p><code>KillPod</code>: 是否需要杀死整个 Pod（包括它的网络沙箱）。</p>
+</li>
+<li><p><code>CreateSandbox</code>: 是否需要创建一个新的网络沙箱。</p>
+</li>
+<li><p><code>ContainersToKill</code>: 一个列表，包含需要被杀死的容器（比如：健康检查失败、定义已变更等）。</p>
+</li>
+<li><p><code>ContainersToStart</code>: 一个列表，包含需要被启动或重启的应用容器。</p>
+</li>
+<li><p><code>InitContainersToStart</code>: 需要启动的 Init 容器。</p>
+</li>
+<li><p><code>EphemeralContainersToStart</code>: 需要启动的临时容器（Ephemeral Container）。</p>
+</li>
+<li><p><code>ContainersToUpdate</code>: 需要原地更新资源的容器（用于垂直扩缩容）。</p>
+</li>
+</ul>
+<h4 id="步骤-2-如有必要，杀死整个-Pod-if-podContainerChanges-KillPod"><a href="#步骤-2-如有必要，杀死整个-Pod-if-podContainerChanges-KillPod" class="headerlink" title="步骤 2: 如有必要，杀死整个 Pod (if podContainerChanges.KillPod)"></a><strong>步骤 2: 如有必要，杀死整个 Pod (</strong><code>if podContainerChanges.KillPod</code><strong>)</strong></h4><p>如果步骤 1 计算出需要杀死整个 Pod（通常是因为网络沙箱的配置变了，或者所有容器都已终止且无需重启），这一步就会执行。它会调用 <code>killPodWithSyncResult</code> 来：</p>
+<ol>
+<li><p>停止 Pod 内所有的容器。</p>
+</li>
+<li><p>停止并销毁 Pod 的网络沙箱。 如果此步骤失败，<code>SyncPod</code> 会立即返回。</p>
+</li>
+</ol>
+<h4 id="步骤-3-杀死不需要的容器"><a href="#步骤-3-杀死不需要的容器" class="headerlink" title="步骤 3: 杀死不需要的容器"></a><strong>步骤 3: 杀死不需要的容器</strong></h4><p>如果不需要杀死整个 Pod，这一步会遍历步骤 1 计算出的 <code>ContainersToKill</code> 列表，并调用 <code>m.killContainer</code> 来逐个停止那些不再需要的容器。</p>
+<h4 id="步骤-4-如有必要，创建-Pod-沙箱-if-podContainerChanges-CreateSandbox"><a href="#步骤-4-如有必要，创建-Pod-沙箱-if-podContainerChanges-CreateSandbox" class="headerlink" title="步骤 4: 如有必要，创建 Pod 沙箱 (if podContainerChanges.CreateSandbox)"></a><strong>步骤 4: 如有必要，创建 Pod 沙箱 (</strong><code>if podContainerChanges.CreateSandbox</code><strong>)</strong></h4><p>如果步骤 1 计算出需要创建新的沙箱，这一步就会执行。它会调用 <code>m.createPodSandbox</code>，通过 CRI (Container Runtime Interface) 请求底层容器运行时创建一个新的网络环境（即 Pod Sandbox）。创建成功后，会获取并记录沙箱的 IP 地址。</p>
+<h4 id="步骤-5-创建临时容器-Ephemeral-Containers"><a href="#步骤-5-创建临时容器-Ephemeral-Containers" class="headerlink" title="步骤 5: 创建临时容器 (Ephemeral Containers)"></a><strong>步骤 5: 创建临时容器 (Ephemeral Containers)</strong></h4><p>遍历 <code>EphemeralContainersToStart</code> 列表，启动所有需要的临时容器。临时容器通常用于调试，它们可以在 Pod 运行后动态添加进来。</p>
+<h4 id="步骤-6-创建-Init-容器"><a href="#步骤-6-创建-Init-容器" class="headerlink" title="步骤 6: 创建 Init 容器"></a><strong>步骤 6: 创建 Init 容器</strong></h4><p>遍历 <code>InitContainersToStart</code> 列表，按顺序启动 Init 容器。<strong>这是关键的一步</strong>：</p>
+<ul>
+<li><p>对于不可重启的 Init 容器，如果任何一个启动失败，<code>SyncPod</code> 会立即中止并返回错误，因为后续的容器都不能再启动。</p>
+</li>
+<li><p>对于可重启的 Init 容器（Sidecar），如果启动失败，可能会跳过并继续尝试启动其他容器。</p>
+</li>
+</ul>
+<h4 id="步骤-7-调整运行中容器的资源"><a href="#步骤-7-调整运行中容器的资源" class="headerlink" title="步骤 7: 调整运行中容器的资源"></a><strong>步骤 7: 调整运行中容器的资源</strong></h4><p>如果启用了原地垂直扩缩容（In-Place Pod Vertical Scaling）功能，并且步骤 1 计算出了需要更新资源的容器列表 (ContainersToUpdate)，这一步会调用 CRI 接口去更新正在运行容器的资源限制（如 CPU、内存）。</p>
+<h4 id="步骤-8-创建应用容器"><a href="#步骤-8-创建应用容器" class="headerlink" title="步骤 8: 创建应用容器"></a><strong>步骤 8: 创建应用容器</strong></h4><p>这是最后一步，遍历 <code>ContainersToStart</code> 列表，启动所有常规的应用容器。与 Init 容器不同，如果某个应用容器启动失败，<code>SyncPod</code> 通常不会立即中止，而是会记录下这个失败，然后继续尝试启动其他容器。</p>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p><code>SyncPod</code> 是 Kubelet 中一个非常健壮和核心的函数。它通过一个定义清晰的、可重试的步骤序列，确保了 Pod 的状态能够可靠地从任何当前状态收敛到其期望状态。它处理了从网络、存储、配置到容器生命周期的方方面面，是 Pod 得以在节点上正确运行的根本保障。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br></pre></td><td class="code"><pre><code class="hljs go"><br><span class="hljs-comment">// SyncPod syncs the running pod into the desired pod by executing following steps:</span><br><span class="hljs-comment">//</span><br><span class="hljs-comment">//  1. Compute sandbox and container changes.</span><br><span class="hljs-comment">//  2. Kill pod sandbox if necessary.</span><br><span class="hljs-comment">//  3. Kill any containers that should not be running.</span><br><span class="hljs-comment">//  4. Create sandbox if necessary.</span><br><span class="hljs-comment">//  5. Create ephemeral containers.</span><br><span class="hljs-comment">//  6. Create init containers.</span><br><span class="hljs-comment">//  7. Resize running containers (if InPlacePodVerticalScaling==true)</span><br><span class="hljs-comment">//  8. Create normal containers.</span><br><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m *kubeGenericRuntimeManager)</span></span> SyncPod(ctx context.Context, pod *v1.Pod, podStatus *kubecontainer.PodStatus, pullSecrets []v1.Secret, backOff *flowcontrol.Backoff) (result kubecontainer.PodSyncResult) &#123;<br>    <span class="hljs-comment">// Step 1: Compute sandbox and container changes.</span><br>    podContainerChanges := m.computePodActions(ctx, pod, podStatus)<br>    klog.V(<span class="hljs-number">3</span>).InfoS(<span class="hljs-string">&quot;computePodActions got for pod&quot;</span>, <span class="hljs-string">&quot;podActions&quot;</span>, podContainerChanges, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>    <span class="hljs-keyword">if</span> podContainerChanges.CreateSandbox &#123;<br>       ref, err := ref.GetReference(legacyscheme.Scheme, pod)<br>       <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>          klog.ErrorS(err, <span class="hljs-string">&quot;Couldn&#x27;t make a ref to pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125;<br>       <span class="hljs-keyword">if</span> podContainerChanges.SandboxID != <span class="hljs-string">&quot;&quot;</span> &#123;<br>          m.recorder.Eventf(ref, v1.EventTypeNormal, events.SandboxChanged, <span class="hljs-string">&quot;Pod sandbox changed, it will be killed and re-created.&quot;</span>)<br>       &#125; <span class="hljs-keyword">else</span> &#123;<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;SyncPod received new pod, will create a sandbox for it&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// Step 2: Kill the pod if the sandbox has changed.</span><br>    <span class="hljs-keyword">if</span> podContainerChanges.KillPod &#123;<br>       <span class="hljs-keyword">if</span> podContainerChanges.CreateSandbox &#123;<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Stopping PodSandbox for pod, will start new one&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125; <span class="hljs-keyword">else</span> &#123;<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Stopping PodSandbox for pod, because all other containers are dead&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125;<br><br>       killResult := m.killPodWithSyncResult(ctx, pod, kubecontainer.ConvertPodStatusToRunningPod(m.runtimeName, podStatus), <span class="hljs-literal">nil</span>)<br>       result.AddPodSyncResult(killResult)<br>       <span class="hljs-keyword">if</span> killResult.Error() != <span class="hljs-literal">nil</span> &#123;<br>          klog.ErrorS(killResult.Error(), <span class="hljs-string">&quot;killPodWithSyncResult failed&quot;</span>)<br>          <span class="hljs-keyword">return</span><br>       &#125;<br><br>       <span class="hljs-keyword">if</span> podContainerChanges.CreateSandbox &#123;<br>          m.purgeInitContainers(ctx, pod, podStatus)<br>       &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>       <span class="hljs-comment">// Step 3: kill any running containers in this pod which are not to keep.</span><br>       <span class="hljs-keyword">for</span> containerID, containerInfo := <span class="hljs-keyword">range</span> podContainerChanges.ContainersToKill &#123;<br>          klog.V(<span class="hljs-number">3</span>).InfoS(<span class="hljs-string">&quot;Killing unwanted container for pod&quot;</span>, <span class="hljs-string">&quot;containerName&quot;</span>, containerInfo.name, <span class="hljs-string">&quot;containerID&quot;</span>, containerID, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>          killContainerResult := kubecontainer.NewSyncResult(kubecontainer.KillContainer, containerInfo.name)<br>          result.AddSyncResult(killContainerResult)<br>          <span class="hljs-keyword">if</span> err := m.killContainer(ctx, pod, containerID, containerInfo.name, containerInfo.message, containerInfo.reason, <span class="hljs-literal">nil</span>, <span class="hljs-literal">nil</span>); err != <span class="hljs-literal">nil</span> &#123;<br>             killContainerResult.Fail(kubecontainer.ErrKillContainer, err.Error())<br>             klog.ErrorS(err, <span class="hljs-string">&quot;killContainer for pod failed&quot;</span>, <span class="hljs-string">&quot;containerName&quot;</span>, containerInfo.name, <span class="hljs-string">&quot;containerID&quot;</span>, containerID, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>             <span class="hljs-keyword">return</span><br>          &#125;<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// Keep terminated init containers fairly aggressively controlled</span><br>    <span class="hljs-comment">// This is an optimization because container removals are typically handled</span><br>    <span class="hljs-comment">// by container garbage collector.</span><br>    m.pruneInitContainersBeforeStart(ctx, pod, podStatus)<br><br>    <span class="hljs-comment">// We pass the value of the PRIMARY podIP and list of podIPs down to</span><br>    <span class="hljs-comment">// generatePodSandboxConfig and generateContainerConfig, which in turn</span><br>    <span class="hljs-comment">// passes it to various other functions, in order to facilitate functionality</span><br>    <span class="hljs-comment">// that requires this value (hosts file and downward API) and avoid races determining</span><br>    <span class="hljs-comment">// the pod IP in cases where a container requires restart but the</span><br>    <span class="hljs-comment">// podIP isn&#x27;t in the status manager yet. The list of podIPs is used to</span><br>    <span class="hljs-comment">// generate the hosts file.</span><br>    <span class="hljs-comment">//</span><br>    <span class="hljs-comment">// We default to the IPs in the passed-in pod status, and overwrite them if the</span><br>    <span class="hljs-comment">// sandbox needs to be (re)started.</span><br>    <span class="hljs-keyword">var</span> podIPs []<span class="hljs-type">string</span><br>    <span class="hljs-keyword">if</span> podStatus != <span class="hljs-literal">nil</span> &#123;<br>       podIPs = podStatus.IPs<br>    &#125;<br><br>    <span class="hljs-comment">// Step 4: Create a sandbox for the pod if necessary.</span><br>    podSandboxID := podContainerChanges.SandboxID<br>    <span class="hljs-keyword">if</span> podContainerChanges.CreateSandbox &#123;<br>       <span class="hljs-keyword">var</span> msg <span class="hljs-type">string</span><br>       <span class="hljs-keyword">var</span> err <span class="hljs-type">error</span><br><br>       klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Creating PodSandbox for pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       metrics.StartedPodsTotal.Inc()<br>       createSandboxResult := kubecontainer.NewSyncResult(kubecontainer.CreatePodSandbox, format.Pod(pod))<br>       result.AddSyncResult(createSandboxResult)<br><br>       <span class="hljs-comment">// ConvertPodSysctlsVariableToDotsSeparator converts sysctl variable</span><br>       <span class="hljs-comment">// in the Pod.Spec.SecurityContext.Sysctls slice into a dot as a separator.</span><br>       <span class="hljs-comment">// runc uses the dot as the separator to verify whether the sysctl variable</span><br>       <span class="hljs-comment">// is correct in a separate namespace, so when using the slash as the sysctl</span><br>       <span class="hljs-comment">// variable separator, runc returns an error: &quot;sysctl is not in a separate kernel namespace&quot;</span><br>       <span class="hljs-comment">// and the podSandBox cannot be successfully created. Therefore, before calling runc,</span><br>       <span class="hljs-comment">// we need to convert the sysctl variable, the dot is used as a separator to separate the kernel namespace.</span><br>       <span class="hljs-comment">// When runc supports slash as sysctl separator, this function can no longer be used.</span><br>       sysctl.ConvertPodSysctlsVariableToDotsSeparator(pod.Spec.SecurityContext)<br><br>       <span class="hljs-comment">// Prepare resources allocated by the Dynammic Resource Allocation feature for the pod</span><br>       <span class="hljs-keyword">if</span> utilfeature.DefaultFeatureGate.Enabled(features.DynamicResourceAllocation) &#123;<br>          <span class="hljs-keyword">if</span> err := m.runtimeHelper.PrepareDynamicResources(ctx, pod); err != <span class="hljs-literal">nil</span> &#123;<br>             ref, referr := ref.GetReference(legacyscheme.Scheme, pod)<br>             <span class="hljs-keyword">if</span> referr != <span class="hljs-literal">nil</span> &#123;<br>                klog.ErrorS(referr, <span class="hljs-string">&quot;Couldn&#x27;t make a ref to pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>                <span class="hljs-keyword">return</span><br>             &#125;<br>             m.recorder.Eventf(ref, v1.EventTypeWarning, events.FailedPrepareDynamicResources, <span class="hljs-string">&quot;Failed to prepare dynamic resources: %v&quot;</span>, err)<br>             klog.ErrorS(err, <span class="hljs-string">&quot;Failed to prepare dynamic resources&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>             <span class="hljs-keyword">return</span><br>          &#125;<br>       &#125;<br><br>       podSandboxID, msg, err = m.createPodSandbox(ctx, pod, podContainerChanges.Attempt)<br>       <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>          <span class="hljs-comment">// createPodSandbox can return an error from CNI, CSI,</span><br>          <span class="hljs-comment">// or CRI if the Pod has been deleted while the POD is</span><br>          <span class="hljs-comment">// being created. If the pod has been deleted then it&#x27;s</span><br>          <span class="hljs-comment">// not a real error.</span><br>          <span class="hljs-comment">//</span><br>          <span class="hljs-comment">// SyncPod can still be running when we get here, which</span><br>          <span class="hljs-comment">// means the PodWorker has not acked the deletion.</span><br>          <span class="hljs-keyword">if</span> m.podStateProvider.IsPodTerminationRequested(pod.UID) &#123;<br>             klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Pod was deleted and sandbox failed to be created&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;podUID&quot;</span>, pod.UID)<br>             <span class="hljs-keyword">return</span><br>          &#125;<br>          metrics.StartedPodsErrorsTotal.Inc()<br>          createSandboxResult.Fail(kubecontainer.ErrCreatePodSandbox, msg)<br>          klog.ErrorS(err, <span class="hljs-string">&quot;CreatePodSandbox for pod failed&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>          ref, referr := ref.GetReference(legacyscheme.Scheme, pod)<br>          <span class="hljs-keyword">if</span> referr != <span class="hljs-literal">nil</span> &#123;<br>             klog.ErrorS(referr, <span class="hljs-string">&quot;Couldn&#x27;t make a ref to pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>          &#125;<br>          m.recorder.Eventf(ref, v1.EventTypeWarning, events.FailedCreatePodSandBox, <span class="hljs-string">&quot;Failed to create pod sandbox: %v&quot;</span>, err)<br>          <span class="hljs-keyword">return</span><br>       &#125;<br>       klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Created PodSandbox for pod&quot;</span>, <span class="hljs-string">&quot;podSandboxID&quot;</span>, podSandboxID, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br><br>       resp, err := m.runtimeService.PodSandboxStatus(ctx, podSandboxID, <span class="hljs-literal">false</span>)<br>       <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>          ref, referr := ref.GetReference(legacyscheme.Scheme, pod)<br>          <span class="hljs-keyword">if</span> referr != <span class="hljs-literal">nil</span> &#123;<br>             klog.ErrorS(referr, <span class="hljs-string">&quot;Couldn&#x27;t make a ref to pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>          &#125;<br>          m.recorder.Eventf(ref, v1.EventTypeWarning, events.FailedStatusPodSandBox, <span class="hljs-string">&quot;Unable to get pod sandbox status: %v&quot;</span>, err)<br>          klog.ErrorS(err, <span class="hljs-string">&quot;Failed to get pod sandbox status; Skipping pod&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>          result.Fail(err)<br>          <span class="hljs-keyword">return</span><br>       &#125;<br>       <span class="hljs-keyword">if</span> resp.GetStatus() == <span class="hljs-literal">nil</span> &#123;<br>          result.Fail(errors.New(<span class="hljs-string">&quot;pod sandbox status is nil&quot;</span>))<br>          <span class="hljs-keyword">return</span><br>       &#125;<br><br>       <span class="hljs-comment">// If we ever allow updating a pod from non-host-network to</span><br>       <span class="hljs-comment">// host-network, we may use a stale IP.</span><br>       <span class="hljs-keyword">if</span> !kubecontainer.IsHostNetworkPod(pod) &#123;<br>          <span class="hljs-comment">// Overwrite the podIPs passed in the pod status, since we just started the pod sandbox.</span><br>          podIPs = m.determinePodSandboxIPs(pod.Namespace, pod.Name, resp.GetStatus())<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Determined the ip for pod after sandbox changed&quot;</span>, <span class="hljs-string">&quot;IPs&quot;</span>, podIPs, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// the start containers routines depend on pod ip(as in primary pod ip)</span><br>    <span class="hljs-comment">// instead of trying to figure out if we have 0 &lt; len(podIPs)</span><br>    <span class="hljs-comment">// everytime, we short circuit it here</span><br>    podIP := <span class="hljs-string">&quot;&quot;</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(podIPs) != <span class="hljs-number">0</span> &#123;<br>       podIP = podIPs[<span class="hljs-number">0</span>]<br>    &#125;<br><br>    <span class="hljs-comment">// Get podSandboxConfig for containers to start.</span><br>    configPodSandboxResult := kubecontainer.NewSyncResult(kubecontainer.ConfigPodSandbox, podSandboxID)<br>    result.AddSyncResult(configPodSandboxResult)<br>    podSandboxConfig, err := m.generatePodSandboxConfig(pod, podContainerChanges.Attempt)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>       message := fmt.Sprintf(<span class="hljs-string">&quot;GeneratePodSandboxConfig for pod %q failed: %v&quot;</span>, format.Pod(pod), err)<br>       klog.ErrorS(err, <span class="hljs-string">&quot;GeneratePodSandboxConfig for pod failed&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       configPodSandboxResult.Fail(kubecontainer.ErrConfigPodSandbox, message)<br>       <span class="hljs-keyword">return</span><br>    &#125;<br><br>    imageVolumePullResults, err := m.getImageVolumes(ctx, pod, podSandboxConfig, pullSecrets)<br>    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>       klog.ErrorS(err, <span class="hljs-string">&quot;Get image volumes for pod failed&quot;</span>, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       configPodSandboxResult.Fail(kubecontainer.ErrConfigPodSandbox, err.Error())<br>       <span class="hljs-keyword">return</span><br>    &#125;<br><br>    <span class="hljs-comment">// Helper containing boilerplate common to starting all types of containers.</span><br>    <span class="hljs-comment">// typeName is a description used to describe this type of container in log messages,</span><br>    <span class="hljs-comment">// currently: &quot;container&quot;, &quot;init container&quot; or &quot;ephemeral container&quot;</span><br>    <span class="hljs-comment">// metricLabel is the label used to describe this type of container in monitoring metrics.</span><br>    <span class="hljs-comment">// currently: &quot;container&quot;, &quot;init_container&quot; or &quot;ephemeral_container&quot;</span><br>    start := <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(ctx context.Context, typeName, metricLabel <span class="hljs-type">string</span>, spec *startSpec)</span></span> <span class="hljs-type">error</span> &#123;<br>       startContainerResult := kubecontainer.NewSyncResult(kubecontainer.StartContainer, spec.container.Name)<br>       result.AddSyncResult(startContainerResult)<br><br>       isInBackOff, msg, err := m.doBackOff(pod, spec.container, podStatus, backOff)<br>       <span class="hljs-keyword">if</span> isInBackOff &#123;<br>          startContainerResult.Fail(err, msg)<br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Backing Off restarting container in pod&quot;</span>, <span class="hljs-string">&quot;containerType&quot;</span>, typeName, <span class="hljs-string">&quot;container&quot;</span>, spec.container, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>          <span class="hljs-keyword">return</span> err<br>       &#125;<br><br>       metrics.StartedContainersTotal.WithLabelValues(metricLabel).Inc()<br>       <span class="hljs-keyword">if</span> sc.HasWindowsHostProcessRequest(pod, spec.container) &#123;<br>          metrics.StartedHostProcessContainersTotal.WithLabelValues(metricLabel).Inc()<br>       &#125;<br>       klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Creating container in pod&quot;</span>, <span class="hljs-string">&quot;containerType&quot;</span>, typeName, <span class="hljs-string">&quot;container&quot;</span>, spec.container, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br><br>       <span class="hljs-comment">// We fail late here to populate the &quot;ErrImagePull&quot; and &quot;ImagePullBackOff&quot; correctly to the end user.</span><br>       imageVolumes, err := m.toKubeContainerImageVolumes(imageVolumePullResults, spec.container, pod, startContainerResult)<br>       <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>          <span class="hljs-keyword">return</span> err<br>       &#125;<br><br>       <span class="hljs-comment">// NOTE (aramase) podIPs are populated for single stack and dual stack clusters. Send only podIPs.</span><br>       msg, err = m.startContainer(ctx, podSandboxID, podSandboxConfig, spec, pod, podStatus, pullSecrets, podIP, podIPs, imageVolumes)<br>       incrementImageVolumeMetrics(err, msg, spec.container, imageVolumes)<br>       <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> &#123;<br>          <span class="hljs-comment">// startContainer() returns well-defined error codes that have reasonable cardinality for metrics and are</span><br>          <span class="hljs-comment">// useful to cluster administrators to distinguish &quot;server errors&quot; from &quot;user errors&quot;.</span><br>          metrics.StartedContainersErrorsTotal.WithLabelValues(metricLabel, err.Error()).Inc()<br>          <span class="hljs-keyword">if</span> sc.HasWindowsHostProcessRequest(pod, spec.container) &#123;<br>             metrics.StartedHostProcessContainersErrorsTotal.WithLabelValues(metricLabel, err.Error()).Inc()<br>          &#125;<br>          startContainerResult.Fail(err, msg)<br>          <span class="hljs-comment">// known errors that are logged in other places are logged at higher levels here to avoid</span><br>          <span class="hljs-comment">// repetitive log spam</span><br>          <span class="hljs-keyword">switch</span> &#123;<br>          <span class="hljs-keyword">case</span> err == images.ErrImagePullBackOff:<br>             klog.V(<span class="hljs-number">3</span>).InfoS(<span class="hljs-string">&quot;Container start failed in pod&quot;</span>, <span class="hljs-string">&quot;containerType&quot;</span>, typeName, <span class="hljs-string">&quot;container&quot;</span>, spec.container, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod), <span class="hljs-string">&quot;containerMessage&quot;</span>, msg, <span class="hljs-string">&quot;err&quot;</span>, err)<br>          <span class="hljs-keyword">default</span>:<br>             utilruntime.HandleError(fmt.Errorf(<span class="hljs-string">&quot;%v %+v start failed in pod %v: %v: %s&quot;</span>, typeName, spec.container, format.Pod(pod), err, msg))<br>          &#125;<br>          <span class="hljs-keyword">return</span> err<br>       &#125;<br><br>       <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span><br>    &#125;<br><br>    <span class="hljs-comment">// Step 5: start ephemeral containers</span><br>    <span class="hljs-comment">// These are started &quot;prior&quot; to init containers to allow running ephemeral containers even when there</span><br>    <span class="hljs-comment">// are errors starting an init container. In practice init containers will start first since ephemeral</span><br>    <span class="hljs-comment">// containers cannot be specified on pod creation.</span><br>    <span class="hljs-keyword">for</span> _, idx := <span class="hljs-keyword">range</span> podContainerChanges.EphemeralContainersToStart &#123;<br>       start(ctx, <span class="hljs-string">&quot;ephemeral container&quot;</span>, metrics.EphemeralContainer, ephemeralContainerStartSpec(&amp;pod.Spec.EphemeralContainers[idx]))<br>    &#125;<br><br>    <span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> Remove this code path as logically it is the subset of the next</span><br>    <span class="hljs-comment">// code path.</span><br>    <span class="hljs-keyword">if</span> !types.HasRestartableInitContainer(pod) &amp;&amp; utilfeature.DefaultFeatureGate.Enabled(features.LegacySidecarContainers) &#123;<br>       <span class="hljs-comment">// Step 6: start the init container.</span><br>       <span class="hljs-keyword">if</span> container := podContainerChanges.NextInitContainerToStart; container != <span class="hljs-literal">nil</span> &#123;<br>          <span class="hljs-comment">// Start the next init container.</span><br>          <span class="hljs-keyword">if</span> err := start(ctx, <span class="hljs-string">&quot;init container&quot;</span>, metrics.InitContainer, containerStartSpec(container)); err != <span class="hljs-literal">nil</span> &#123;<br>             <span class="hljs-keyword">return</span><br>          &#125;<br><br>          <span class="hljs-comment">// Successfully started the container; clear the entry in the failure</span><br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Completed init container for pod&quot;</span>, <span class="hljs-string">&quot;containerName&quot;</span>, container.Name, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>       <span class="hljs-comment">// Step 6: start init containers.</span><br>       <span class="hljs-keyword">for</span> _, idx := <span class="hljs-keyword">range</span> podContainerChanges.InitContainersToStart &#123;<br>          container := &amp;pod.Spec.InitContainers[idx]<br>          <span class="hljs-comment">// Start the next init container.</span><br>          <span class="hljs-keyword">if</span> err := start(ctx, <span class="hljs-string">&quot;init container&quot;</span>, metrics.InitContainer, containerStartSpec(container)); err != <span class="hljs-literal">nil</span> &#123;<br>             <span class="hljs-keyword">if</span> podutil.IsRestartableInitContainer(container) &#123;<br>                klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Failed to start the restartable init container for the pod, skipping&quot;</span>, <span class="hljs-string">&quot;initContainerName&quot;</span>, container.Name, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>                <span class="hljs-keyword">continue</span><br>             &#125;<br>             klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Failed to initialize the pod, as the init container failed to start, aborting&quot;</span>, <span class="hljs-string">&quot;initContainerName&quot;</span>, container.Name, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>             <span class="hljs-keyword">return</span><br>          &#125;<br><br>          <span class="hljs-comment">// Successfully started the container; clear the entry in the failure</span><br>          klog.V(<span class="hljs-number">4</span>).InfoS(<span class="hljs-string">&quot;Completed init container for pod&quot;</span>, <span class="hljs-string">&quot;containerName&quot;</span>, container.Name, <span class="hljs-string">&quot;pod&quot;</span>, klog.KObj(pod))<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// Step 7: For containers in podContainerChanges.ContainersToUpdate[CPU,Memory] list, invoke UpdateContainerResources</span><br>    <span class="hljs-keyword">if</span> resizable, _ := IsInPlacePodVerticalScalingAllowed(pod); resizable &#123;<br>       <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(podContainerChanges.ContainersToUpdate) &gt; <span class="hljs-number">0</span> || podContainerChanges.UpdatePodResources &#123;<br>          result.SyncResults = <span class="hljs-built_in">append</span>(result.SyncResults, m.doPodResizeAction(pod, podContainerChanges))<br>       &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// Step 8: start containers in podContainerChanges.ContainersToStart.</span><br>    <span class="hljs-keyword">for</span> _, idx := <span class="hljs-keyword">range</span> podContainerChanges.ContainersToStart &#123;<br>       start(ctx, <span class="hljs-string">&quot;container&quot;</span>, metrics.Container, containerStartSpec(&amp;pod.Spec.Containers[idx]))<br>    &#125;<br><br>    <span class="hljs-keyword">return</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/kubelet/" class="category-chain-item">kubelet</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/k8s/" class="print-no-link">#k8s</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【k8s kubelet 源代码阅读（一）】-Pod管理</div>
+      <div>http://example.com/2025/08/11/k8s kubelet源代码阅读【一】-Pod管理/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年8月11日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/08/19/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%BA%8C%E3%80%91-%E8%8A%82%E7%82%B9%E7%8A%B6%E6%80%81%E4%B8%8A%E6%8A%A5/" title="【k8s kubelet 源代码阅读（二）】-节点状态上报">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">【k8s kubelet 源代码阅读（二）】-节点状态上报</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/07/12/pytorch-fsdp-2/" title="【pytorch-fsdp 源代码阅读（二）】-参数流转">
+                        <span class="hidden-mobile">【pytorch-fsdp 源代码阅读（二）】-参数流转</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
