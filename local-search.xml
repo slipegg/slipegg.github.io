@@ -4,6 +4,33 @@
   
   
   <entry>
+    <title>【论文阅读】Reducing Activation Recomputation in Large Transformer Models</title>
+    <link href="/2025/12/08/Reducing-Activation-Paper-Note/"/>
+    <url>/2025/12/08/Reducing-Activation-Paper-Note/</url>
+    
+    <content type="html"><![CDATA[<ul><li><p><strong>链接：</strong>: <a href="https://arxiv.org/pdf/2205.05198.pdf">https://arxiv.org/pdf/2205.05198.pdf</a></p></li><li><p><strong>发表会议：MLSYS’22(CCF-B)&#x20;</strong></p></li><li><p><strong>团队：NVIDIA</strong></p></li></ul><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>在论文发表的2022年看来，一些研究在Transformer大模型训练中会采用激活重计算而不是存储的方式来减少激活值所占存储，但是其问题在于会引入很多冗余计算的开销，导致训练效率降低。故本文提出了<strong>序列并行</strong>和<strong>选择性激活重计算</strong>方法，并结合Tensor并行的方式大幅削减了激活重计算带来的开销。</p><h2 id="方法思路"><a href="#方法思路" class="headerlink" title="方法思路"></a>方法思路</h2><h3 id="理论分析激活值"><a href="#理论分析激活值" class="headerlink" title="理论分析激活值"></a>理论分析激活值</h3><p>其理论计算了主要的激活量（注意下述默认各个元素采用16位也就是2字节存储，公式表示的也都是占用的元素字节数），变量名如下：</p><p><img src="/2025/12/08/Reducing-Activation-Paper-Note/image.png"></p><p>Transformer大模型结构如下：</p><p><img src="/2025/12/08/Reducing-Activation-Paper-Note/image-1.png"></p><ul><li><p>Attention模块占用了：11sbh + 5as^2b</p></li><li><p>MLP模块占用了：19sbh</p></li><li><p>Layer norm模块：4sbh</p></li><li><p>上述3者组合得到一层Transformer占用的激活大小：sbh(34+5*as&#x2F;h)</p></li></ul><h4 id="Tensor并行"><a href="#Tensor并行" class="headerlink" title="Tensor并行"></a>Tensor并行</h4><p><img src="/2025/12/08/Reducing-Activation-Paper-Note/image-2.png"></p><ul><li>如果采用了t路Tensor并行，那么会对如上图所示的Attention+MLP模块进行并行化，将每层激活值减少为sbh(10+24&#x2F;t+5*as&#x2F;ht)</li></ul><h4 id="序列并行"><a href="#序列并行" class="headerlink" title="序列并行"></a>序列并行</h4><ul><li>Tensor并行并不能对LayerNorm和Dropout进行并行化，所以本文还引入了序列并行，以序列维度进行切分，在t维序列并行下，每层激活值减少为：sbh(10&#x2F;t+24&#x2F;t+5*as&#x2F;ht)&#x3D;sbh&#x2F;t(34+5*as&#x2F;h)</li></ul><h4 id="流水线并行"><a href="#流水线并行" class="headerlink" title="流水线并行"></a>流水线并行</h4><ul><li><p>在流水线切分下，Transformer的L层被划分为L&#x2F;p组，p是流水线并行的大小。</p></li><li><p>对于1F1B的流水线调度策略，每级流水线在第一阶段需要保留L&#x2F;p*p&#x3D;L层激活，故激活值大小为：sbhL&#x2F;t(34+5*as&#x2F;h)</p></li><li><p>注意不同调度策略下激活值大小会有所不同</p></li></ul><h4 id="总激活值"><a href="#总激活值" class="headerlink" title="总激活值"></a>总激活值</h4><ul><li>上述在考虑时没有考虑输入嵌入、最后一层层归一化和输出层所需的激活，其占用的额外激活为：</li></ul><p><img src="/2025/12/08/Reducing-Activation-Paper-Note/image-3.png"></p><ul><li>由于其相比原其他相加的值sbhL&#x2F;t(34+5*as&#x2F;h)往往比较小，所以可忽略不计</li></ul><h3 id="选择性激活"><a href="#选择性激活" class="headerlink" title="选择性激活"></a>选择性激活</h3><ul><li><p>在上述并行优化下得到的激活值大小以及很大，故还需要进一步优化</p></li><li><p>完全激活重计算（即只保留输入激活）可以将总内存需求减少到2sbhL，如果进一步在张量并行等级优化，可以将其优化到2sbhL&#x2F;t。但是这会导致过度的冗余计算，并且张量并行下会增加通信开销。</p></li><li><p>为了平衡计算与内存的开销，其核心思想是仅对占用了大量内存但是重计算方便的Transformer层进行检查点设置。</p></li><li><p>对于公式中的34其与大型矩阵计算更相关，对于5*as&#x2F;h主要指的是QK^T矩阵乘法、softmax、softmax dropout和V上的注意力，这些操作有较大的输入和激活，但是其运算量低。带入GPT 3大模型的参数，计算得到5*as&#x2F;h&#x3D;80，大于34，占更大的部分。所以其倾向于将5*as&#x2F;h相关部分的激活去掉以快速重计算，而将34相关计算的激活保留，避免缓慢的重计算。</p></li></ul><h2 id="实验效果"><a href="#实验效果" class="headerlink" title="实验效果"></a>实验效果</h2><ul><li>如下图所示，其验证了Sequence 并行与选择性激活区激活值的优化效果，以及两者叠加的优化效果。</li></ul><p><img src="/2025/12/08/Reducing-Activation-Paper-Note/image-4.png"></p><ul><li>如下图所示，也实际验证了其对模型训练过程中显存占用的优化情况</li></ul><p><img src="/2025/12/08/Reducing-Activation-Paper-Note/image-5.png"></p><ul><li>相比与不重计算的耗时只增加了约4%。</li></ul><p><img src="/2025/12/08/Reducing-Activation-Paper-Note/image-6.png"></p><ul><li>相比于完全重计算，吞吐也增加了30%左右。</li></ul><p><img src="/2025/12/08/Reducing-Activation-Paper-Note/image-7.png"></p><h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul><li><p>对激活值理论计算的部分很精彩。</p></li><li><p>引入了Sequence并行，这在后续也成为了一大标准。</p></li><li><p>选择性激活重计算很朴素但确实很好用。</p></li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>LLM</category>
+      
+      <category>基础知识</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>LLM</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>【论文阅读】Megatron-LM论文阅读</title>
     <link href="/2025/12/07/Megatron-LM-paper-note/"/>
     <url>/2025/12/07/Megatron-LM-paper-note/</url>
