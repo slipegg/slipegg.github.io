@@ -266,6 +266,76 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/12/14/megatron-lm-env-and-example/" target="_self">
+          【Megatron-LM】环境配置与训练示例跑通
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/14/megatron-lm-env-and-example/" target="_self">
+        <div>
+          环境配置 下载代码：  1git clone https://github.com/NVIDIA/Megatron-LM.git   切换到稳定分支：  1git checkout -b core_r0.14.0 origin/core_r0.14.0   拉取指定docker镜像：  1docker pull nvcr.io/nvidia/pytorch:25.04-py3  最小示例示例运行流
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-14 13:38" pubdate>
+              2025-12-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/12/13/llama3-pre-training-paper-note/" target="_self">
           【论文阅读】The Llama 3 Herd of Models（Section 3 Pre-Training）
         </a>
@@ -461,6 +531,8 @@
             <i class="iconfont icon-tags"></i>
             
               <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
             
           </div>
         
@@ -832,74 +904,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-06-28 20:53" pubdate>
               2025-06-28
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/" target="_self">
-          【Picotron-Tutorial】流水线并行
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/" target="_self">
-        <div>
-          Afab并行理论分析最简单的pipeline并行就是将模型划分为好几层，然后分别放置在不同的GPU上依次进行前向传播和后先传播，如下图所示。但是这带来的最大的问题是效率过低，存在很多空闲时刻。   一个16层模型的流水线并行示例，该模型分布在4块GPU上。数字表示层编号。  假设$t_f$ 和$t_b$ 分别是单个微批次在流水线的一个阶段上进行前向传播和反向传播所需的时间（通常假设 $t_b\ap
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-06-24 20:53" pubdate>
-              2025-06-24
             </time>
           </div>
         
