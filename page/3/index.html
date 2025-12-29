@@ -266,6 +266,142 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/05/02/LLMFromScratch2/" target="_self">
+          【从零构建大模型】二、编码Attention机制
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/02/LLMFromScratch2/" target="_self">
+        <div>
+          概览构建大模型的全景图如下，本文介绍了基础的attention处理。  介绍的脉络如下：  介绍The problem with modeling long sequences对于类似翻译的任务，由于不同语言的语法问题，所以难以做到一对一的逐字翻译，需要提前对原本的字符串进行encoder提取信息，然后使用decoder模块进行翻译。 而传统的encoder-decoder RNNs方法在enco
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-05-02 20:53" pubdate>
+              2025-05-02
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/05/01/LLMFromScratch1/" target="_self">
+          【从零构建大模型】一、文本数据处理
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/01/LLMFromScratch1/" target="_self">
+        <div>
+          概览构建大模型的全景图如下，本文介绍了最开始的数据处理。  数据处理的全景图如下所示，大致流程为：  将原文本，一般为一个string，进行分割。  对分割后的词转化为id。  生成一个embeddings层，然后id作为序号去embeddings层中取对应的行作为自己的表征。    如此转化后就将原本深度学习模型不能处理的原始数据转化为了可以处理的矩阵，同时我们希望这最后表示原始数据的矩阵中也能
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-05-01 20:53" pubdate>
+              2025-05-01
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/04/30/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%98%BE%E5%AD%98%E5%8D%A0%E7%94%A8/" target="_self">
           大模型显存占用浅析
         </a>
@@ -790,141 +926,6 @@
             <i class="iconfont icon-tags"></i>
             
               <a href="/tags/%E5%BC%80%E6%BA%90%E4%B9%8B%E5%A4%8F/">#开源之夏</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/11/19/k8sUseGPU/" target="_self">
-          如何在K8s集群中管理与使用GPU
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/11/19/k8sUseGPU/" target="_self">
-        <div>
-          背景随着人工智能的兴起，GPU作为重要的智算算力类型愈发受到重视，而Kubernetes（k8s）作为业界主流的集群管理系统，如何方便管理、使用GPU也是其需要解决的一大问题，故此收集整理了K8s管理与使用GPU的相关资料以学习。 物理机如何使用GPU如果给一台普通的物理机，例如我们日常用的笔记本电脑应该如何使用GPU呢。其主要涉及到两个插件的安装，分别是Nvidia Driver和CUDA To
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-11-19 10:50" pubdate>
-              2024-11-19
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/k8s/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/k8s/">#k8s</a>
-            
-              <a href="/tags/GPU/">#GPU</a>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/09/13/InternLM/" target="_self">
-          InternLM 书生大模型实战营
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/09/13/InternLM/" target="_self">
-        <div>
-          1. 入门岛1.1 第一关 Linux 基础知识闯关任务 完成SSH连接与端口映射并运行hello_world.pyhello_world运行截图：  访问截图：  可选任务2 使用 VSCODE 远程连接开发机并创建一个conda环境创建一个名为py310的conda环境，安装python3.10  1.2 第二关 Python 基础知识闯关任务 Python实现wordcountwordcou
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-09-13 21:57" pubdate>
-              2024-09-13
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E4%B9%A6%E7%94%9F%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%AE%9E%E6%88%98%E8%90%A5/" class="category-chain-item">书生大模型实战营</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/InternLM/">#InternLM</a>
-            
-              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
             
           </div>
         

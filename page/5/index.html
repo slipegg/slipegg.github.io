@@ -266,6 +266,146 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2024/05/10/k8sSource2/" target="_self">
+          【K8s源码分析（二）】-K8s调度队列介绍
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/10/k8sSource2/" target="_self">
+        <div>
+          本次分析参考的K8s版本是v1.27.0。 调度队列简介这里是官方对于K8s中调度队列的介绍，很值得一看：Scheduling queue in kube-scheduler。整体的架构如下图所示。  简单来说K8s中的调度队列主要有3种：  ActiveQ（heap结构）：在每个调度周期开始时都会从这里取出一个Pod尝试调度。一开始提交的所有没有指定.spec.nodeName的Pod都会发送到
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-10 16:33" pubdate>
+              2024-05-10
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/05/10/k8sSource1/" target="_self">
+          【K8s源码分析（一）】-K8s调度框架及调度器初始化介绍
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/10/k8sSource1/" target="_self">
+        <div>
+          本次分析参考的K8s版本是v1.27.0。 调度框架介绍这是官方对于v1.27调度框架的介绍文档：https://v1-27.docs.kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/ 将调度器的实现转化为插件的形式有助于加强调度器的拓展性、灵活性，同时也使得调度核心的实现更加的轻量、可维护。 下图展示了Po
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-10 16:18" pubdate>
+              2024-05-10
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2024/05/01/godelPaperRead/" target="_self">
           【论文阅读】Gödel:Unified Large-Scale Resource Management and Scheduling at ByteDance
         </a>
@@ -794,130 +934,6 @@
               <a href="/tags/MIT6-824/">#MIT6.824</a>
             
               <a href="/tags/Go/">#Go</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/03/14/ShadowResources/" target="_self">
-          【论文阅读】Not All Resources are Visible:Exploiting Fragmented Shadow Resources in Shared-State Scheduler Architecture
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/14/ShadowResources/" target="_self">
-        <div>
-          论文信息论文地址： Not All Resources are Visible: Exploiting Fragmented Shadow Resources in Shared-State Scheduler Architecture 收录会议： 云计算顶会-ACM Symposium on Cloud Computing(SoCC2023) 作者： 交通大学-李超教授团队 背景资源：一个集群中
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-14 15:34" pubdate>
-              2024-03-14
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" class="category-chain-item">论文阅读</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/%E9%9B%86%E7%BE%A4%E8%B0%83%E5%BA%A6/">#集群调度</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/03/02/colorfulEcho/" target="_self">
-          Linux控制台输出多种样式彩色字符及原理解析
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/02/colorfulEcho/" target="_self">
-        <div>
-          1. 前言之前在做MIT6.824的实验的时候，有助教资料在说明如何输出彩色的字符来让日志更加清晰。所以对Linux控制台如何输出多种样式的彩色字符以及它的原理产生了兴趣，学习了之后在这里记录一下。 2. 原理Linux控制台输出彩色字符的原理是通过ANSI转义码来实现的。ANSI转义码是一种控制字符，用于控制文本终端的行为。包括但不限于控制光标位置、颜色、清屏等。 下面这是一段输出蓝色字符的控制
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-02 20:51" pubdate>
-              2024-03-02
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/Linux/">#Linux</a>
             
           </div>
         
