@@ -266,6 +266,216 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2024/05/11/k8sSource5/" target="_self">
+          【K8s源码分析（五）】-K8s中Pod亲和性调度插件介绍
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/11/k8sSource5/" target="_self">
+        <div>
+          本次分析参考的K8s版本是v1.27.0。 前言K8s调度器v1版的的默认的插件都在pkg/scheduler/apis/config/v1/default_plugins.go:30 中，如下 1234567891011121314151617181920212223242526272829303132// getDefaultPlugins returns the default set of
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-11 16:10" pubdate>
+              2024-05-11
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/05/10/k8sSource4/" target="_self">
+          【K8s源码分析（四）】-K8s调度器绑定周期介绍
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/10/k8sSource4/" target="_self">
+        <div>
+          本次分析参考的K8s版本是v1.27.0。 K8s的整体调度框架如下图所示。  bindeCycle顶层函数K8s调度器中绑定周期的函数bindingCycle在pkg/scheduler/schedule_one.go:225中，如下，补充了一些注释。 123456789101112131415161718192021222324252627282930313233343536373839404
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-10 16:38" pubdate>
+              2024-05-10
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/05/10/k8sSource3/" target="_self">
+          【K8s源码分析（三）】-K8s调度器调度周期介绍
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/05/10/k8sSource3/" target="_self">
+        <div>
+          本次分析参考的K8s版本是v1.27.0。 K8s的整体调度框架如下图所示。  调度框架顶层函数K8s调度器调度的核心函数schedulerone在pkg/scheduler/schedule_one.go:62，如下，这里将一些解释写在了注释里 1234567891011121314151617181920212223242526272829303132333435363738394041424
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-05-10 16:37" pubdate>
+              2024-05-10
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="category-chain-item">源码分析</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">#源码分析</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2024/05/10/k8sSource2/" target="_self">
           【K8s源码分析（二）】-K8s调度队列介绍
         </a>
@@ -683,216 +893,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2024-04-08 10:01" pubdate>
               2024-04-08
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/MIT6-824/Lab/" class="category-chain-item">Lab</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/Go/">#Go</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/04/02/k8sArchitecture/" target="_self">
-          Kubernetes 架构及部署、调度、状态管理流程简介
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/k8sArchitecture/" target="_self">
-        <div>
-          Kubernetes简称k8s，是用于自动部署、扩展和管理“容器化应用程序”的开源系统。该系统由Google设计并捐赠给Cloud Native Computing Foundation来使用。 它旨在提供“跨主机集群的自动部署、扩展以及运行应用程序容器的平台”。 它支持一系列容器工具，包括Docker等。它是当前绝对主流的容器管理平台。目前阿里（ACK）、字节（ Gödel ）、美团（LAR）内
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-04-02 20:53" pubdate>
-              2024-04-02
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/k8s/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/k8s/">#k8s</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/03/28/linearizability/" target="_self">
-          分布式系统中的线性一致性
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/28/linearizability/" target="_self">
-        <div>
-          前言分布式一致性指的是在同一个系统中，不同客户端操作看到的数据之间的关系。这里重点关注的是网络键值存储系统中的一致性模型。 首先为什么这有可能出现问题呢？主要是来源于分布式系统中特有的问题，包括：  并发读&#x2F;写 副本 缓存 故障、恢复 重传 …  这些问题就有可能导致系统出现意想不到的场景，比如如下是一个简单的生产者代码： 12put(&quot;result&quot;, 27)put
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-28 11:36" pubdate>
-              2024-03-28
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/MIT6-824/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2024/03/19/MIT6-824lab2B/" target="_self">
-          【MIT6.824】lab2B-log replication 实现笔记
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/19/MIT6-824lab2B/" target="_self">
-        <div>
-          引言lab2B的实验要求如下： Implement the leader and follower code to append new log entries, so that the go test -run 2B tests pass.  Hint: Run git pull to get the latest lab software. Hint: Your first goal shou
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2024-03-19 21:31" pubdate>
-              2024-03-19
             </time>
           </div>
         

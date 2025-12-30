@@ -266,6 +266,216 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2024/04/02/k8sArchitecture/" target="_self">
+          Kubernetes 架构及部署、调度、状态管理流程简介
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/04/02/k8sArchitecture/" target="_self">
+        <div>
+          Kubernetes简称k8s，是用于自动部署、扩展和管理“容器化应用程序”的开源系统。该系统由Google设计并捐赠给Cloud Native Computing Foundation来使用。 它旨在提供“跨主机集群的自动部署、扩展以及运行应用程序容器的平台”。 它支持一系列容器工具，包括Docker等。它是当前绝对主流的容器管理平台。目前阿里（ACK）、字节（ Gödel ）、美团（LAR）内
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-04-02 20:53" pubdate>
+              2024-04-02
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/03/28/linearizability/" target="_self">
+          分布式系统中的线性一致性
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/28/linearizability/" target="_self">
+        <div>
+          前言分布式一致性指的是在同一个系统中，不同客户端操作看到的数据之间的关系。这里重点关注的是网络键值存储系统中的一致性模型。 首先为什么这有可能出现问题呢？主要是来源于分布式系统中特有的问题，包括：  并发读&#x2F;写 副本 缓存 故障、恢复 重传 …  这些问题就有可能导致系统出现意想不到的场景，比如如下是一个简单的生产者代码： 12put(&quot;result&quot;, 27)put
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-03-28 11:36" pubdate>
+              2024-03-28
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/MIT6-824/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
+            
+              <a href="/tags/MIT6-824/">#MIT6.824</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2024/03/19/MIT6-824lab2B/" target="_self">
+          【MIT6.824】lab2B-log replication 实现笔记
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/19/MIT6-824lab2B/" target="_self">
+        <div>
+          引言lab2B的实验要求如下： Implement the leader and follower code to append new log entries, so that the go test -run 2B tests pass.  Hint: Run git pull to get the latest lab software. Hint: Your first goal shou
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-03-19 21:31" pubdate>
+              2024-03-19
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/MIT6-824/Lab/" class="category-chain-item">Lab</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
+            
+              <a href="/tags/MIT6-824/">#MIT6.824</a>
+            
+              <a href="/tags/Go/">#Go</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2024/03/14/ShadowResources/" target="_self">
           【论文阅读】Not All Resources are Visible:Exploiting Fragmented Shadow Resources in Shared-State Scheduler Architecture
         </a>
@@ -719,213 +929,6 @@
               <a href="/tags/MIT6-824/">#MIT6.824</a>
             
               <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/12/05/TheGoogleFileSystemPaperRead/" target="_self">
-          【论文阅读】The Google file System
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/12/05/TheGoogleFileSystemPaperRead/" target="_self">
-        <div>
-          The Google file System论文是MIT6.824中推荐阅读的论文，他是Google早期的三大论文之一，由于课程并不需要实现这个系统，所以就对整部论文中的关键点进行介绍总结。 相关背景为了满足Google快速增长的数据处理需求，Google需要自己构建一套文件系统——The Google file System(GFS)。而这套文件系统也必须是分布式的文件系统才足以满足要求，但是我
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-12-05 17:21" pubdate>
-              2023-12-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/MIT6-824/%E8%AE%BA%E6%96%87/" class="category-chain-item">论文</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/GFS/">#GFS</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/12/01/IDEA%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91%E9%80%89%E9%A1%B9%E4%B8%A2%E5%A4%B1%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95/" target="_self">
-          IDEA远程开发选项丢失修复方法
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/12/01/IDEA%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91%E9%80%89%E9%A1%B9%E4%B8%A2%E5%A4%B1%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95/" target="_self">
-        <div>
-          今天打开IDEA发现远程开发选项没有了：  发现全网也没有什么提到过这个错误的，所有捣鼓了好久还进行了IDEA的重装也一直都没有解决，最后查看IDEA官方的介绍文档才发现了问题所在：Remote Development Gateway插件被关闭了 故而解决方法就是点击IDEA的设置选项卡，在插件(plugs)选项中重新勾选Remote Development Gateway来启用该插件即可  点击
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-12-01 17:03" pubdate>
-              2023-12-01
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/IDEA/">#IDEA</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/11/22/MIT6-824lab1/" target="_self">
-          【MIT6.824】lab 1 MapReduce实现总结
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/11/22/MIT6-824lab1/" target="_self">
-        <div>
-          MIT6.824是一门经典的分布式课程，课程链接：https://pdos.csail.mit.edu/6.824/labs/lab-mr.html，对于lab 1我们需要在提供的代码框架的基础上补充coordinator和worker的代码，以实现分布式的MapReduce程序。 本人在借鉴了部分其他人的设计思想的基础上，独立完成了所有的代码，最后设计的实现能够通过所有的测试脚本。 实现的代码厂
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-11-22 18:41" pubdate>
-              2023-11-22
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/MIT6-824/Lab/" class="category-chain-item">Lab</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/go/">#go</a>
-            
-              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
-            
-              <a href="/tags/MIT6-824/">#MIT6.824</a>
             
           </div>
         

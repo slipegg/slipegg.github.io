@@ -338,6 +338,146 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/12/28/megatron-lm-ddp/" target="_self">
+          【Megatron-LM源码分析（四）】-DDP数据并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/28/megatron-lm-ddp/" target="_self">
+        <div>
+          数据并行存在多种，最简单的就是DDP，每个DP都拥有完整的模型，然后在每个batch结束后在DP间同步梯度，最后统一进行优化器更新。再复杂一些的数据宾县会上ZERO技术，将模型、梯度、优化器状态等进行切分。 这里主要关注最简单的DDP，主要关注DP并行组如何划分，如果做个各个DP读取不同的数据，以及训练过程中如何做到梯度同步。 DP并行组查看megatron/core/parallel_state
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-28 15:50" pubdate>
+              2025-12-28
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/12/26/megatron-lm-profiler/" target="_self">
+          【Megatron-LM源码分析（三）】-性能分析
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/26/megatron-lm-profiler/" target="_self">
+        <div>
+          在算力利用率方面，Megatron-LM支持通过Pytorch Profiler和Nsys进行分析，注意这两者在Megatron-LM中是互斥的。  PyTorch Profiler：框架原生工具，更高层，侧重于 Python&#x2F;PyTorch 算子层级，可以看到代码级的调用链，适合识别 Python 端的慢算子、内存泄漏、调度开销。  Nsys：系统级追踪工具，更底层，侧重于 CUDA
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-26 15:47" pubdate>
+              2025-12-26
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/12/22/ScheMoE-paper-note/" target="_self">
           【论文阅读】ScheMoE:An Extensible Mixture-of-Experts  Distributed Training System with Tasks Scheduling
         </a>
@@ -410,8 +550,78 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/12/22/megatron-lm-pre-train-process/" target="_self">
+          【Megatron-LM源码分析（二）】-GPT模型pretrain流程
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/22/megatron-lm-pre-train-process/" target="_self">
+        <div>
+          本次查看Megatron-LM的版本是core_r0.14.0，查看的GPT训练文件是pretrain_gpt.py 入口函数main入口函数代码如下： 123456789101112131415161718if __name__ == &quot;__main__&quot;:    # Temporary for transition to core datasets    train_val
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-22 15:41" pubdate>
+              2025-12-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/12/14/megatron-lm-env-and-example/" target="_self">
-          【Megatron-LM】环境配置与训练示例跑通
+          【Megatron-LM源码分析（一）】-环境配置与训练示例跑通
         </a>
       </h2>
 
@@ -749,210 +959,6 @@
             <i class="iconfont icon-tags"></i>
             
               <a href="/tags/k8s/">#k8s</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/08/19/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%BA%8C%E3%80%91-%E8%8A%82%E7%82%B9%E7%8A%B6%E6%80%81%E4%B8%8A%E6%8A%A5/" target="_self">
-          【k8s kubelet 源代码阅读（二）】-节点状态上报
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/19/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%BA%8C%E3%80%91-%E8%8A%82%E7%82%B9%E7%8A%B6%E6%80%81%E4%B8%8A%E6%8A%A5/" target="_self">
-        <div>
-          主处理流程在kubelet的Run中会调用相应的代码进行节点状态更新，代码如下： 123456789101112131415161718192021222324252627282930if kl.kubeClient != nil &#123;    // Start two go-routines to update the status.    //    // The first will
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-08-19 20:53" pubdate>
-              2025-08-19
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/k8s/kubelet/" class="category-chain-item">kubelet</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/k8s/">#k8s</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/08/11/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-Pod%E7%AE%A1%E7%90%86/" target="_self">
-          【k8s kubelet 源代码阅读（一）】-Pod管理
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/11/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-Pod%E7%AE%A1%E7%90%86/" target="_self">
-        <div>
-          关键组件介绍probeManager当一个pod被kubelet感知到之后，就会调用probeManager的AddPod来为各个容器启动探针，监控状态变化。具体执行如下：  获取所有的pod.Spec.Containers以及pod中支持重新启动的initContainers，然后逐个处理  如果这个容器配置了StartupProbe或者ReadinessProbe或者LivenessProbe
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-08-11 20:53" pubdate>
-              2025-08-11
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/k8s/kubelet/" class="category-chain-item">kubelet</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/k8s/">#k8s</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/07/12/pytorch-fsdp-2/" target="_self">
-          【pytorch-fsdp 源代码阅读（二）】-参数流转
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/07/12/pytorch-fsdp-2/" target="_self">
-        <div>
-          初始化 获取module下需要展开的tensors  将tensors放入到一个数组中，然后使用cat拼接到一起。这部分展开的数据会放到FlatParamHandle.flat_param中   123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-07-12 20:53" pubdate>
-              2025-07-12
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/FSDP/" class="category-chain-item">FSDP</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         

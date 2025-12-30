@@ -1,0 +1,910 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在算力利用率方面，Megatron-LM支持通过Pytorch Profiler和Nsys进行分析，注意这两者在Megatron-LM中是互斥的。  PyTorch Profiler：框架原生工具，更高层，侧重于 Python&#x2F;PyTorch 算子层级，可以看到代码级的调用链，适合识别 Python 端的慢算子、内存泄漏、调度开销。  Nsys：系统级追踪工具，更底层，侧重于 CUDA">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Megatron-LM源码分析（三）】-性能分析">
+<meta property="og:url" content="http://example.com/2025/12/26/megatron-lm-profiler/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="在算力利用率方面，Megatron-LM支持通过Pytorch Profiler和Nsys进行分析，注意这两者在Megatron-LM中是互斥的。  PyTorch Profiler：框架原生工具，更高层，侧重于 Python&#x2F;PyTorch 算子层级，可以看到代码级的调用链，适合识别 Python 端的慢算子、内存泄漏、调度开销。  Nsys：系统级追踪工具，更底层，侧重于 CUDA">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/12/26/megatron-lm-profiler/image.png">
+<meta property="og:image" content="http://example.com/2025/12/26/megatron-lm-profiler/image-1.png">
+<meta property="og:image" content="http://example.com/2025/12/26/megatron-lm-profiler/image-2.png">
+<meta property="og:image" content="http://example.com/2025/12/26/megatron-lm-profiler/image-3.png">
+<meta property="og:image" content="http://example.com/2025/12/26/megatron-lm-profiler/image-4.png">
+<meta property="og:image" content="http://example.com/2025/12/26/megatron-lm-profiler/image-5.png">
+<meta property="article:published_time" content="2025-12-26T07:47:41.000Z">
+<meta property="article:modified_time" content="2025-12-30T07:48:45.736Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Megatron-LM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2025/12/26/megatron-lm-profiler/image.png">
+  
+  
+  
+  <title>【Megatron-LM源码分析（三）】-性能分析 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【Megatron-LM源码分析（三）】-性能分析"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-26 15:47" pubdate>
+          2025年12月26日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          17k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          83 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【Megatron-LM源码分析（三）】-性能分析</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>在算力利用率方面，Megatron-LM支持通过Pytorch Profiler和Nsys进行分析，注意这两者在Megatron-LM中是互斥的。</p>
+<ul>
+<li><p>PyTorch Profiler：框架原生工具，更高层，侧重于 Python&#x2F;PyTorch 算子层级，可以看到代码级的调用链，适合识别 Python 端的慢算子、内存泄漏、调度开销。</p>
+</li>
+<li><p>Nsys：系统级追踪工具，更底层，侧重于 CUDA 和硬件性能层级，适合分析 CUDA Kernel 执行、PCIe 带宽利用率、GPU 内存传输、多 GPU 通信（NCCL）等</p>
+</li>
+</ul>
+<p>在显存占用方面，Megatron-LM支持通过Pytorch自带的snapshot的功能来记录显存分配情况。</p>
+<p>下面就如何开启这些分析方法以及示例做介绍。</p>
+<h1 id="PyTorch-Profiler性能分析"><a href="#PyTorch-Profiler性能分析" class="headerlink" title="PyTorch Profiler性能分析"></a>PyTorch Profiler性能分析</h1><h2 id="使用方法"><a href="#使用方法" class="headerlink" title="使用方法"></a>使用方法</h2><p>一般使用pytorch Profile的代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.profiler<br><span class="hljs-keyword">import</span> os<br><br>logdir = <span class="hljs-string">&quot;tb_profiler_test&quot;</span><br><br><span class="hljs-keyword">with</span> torch.profiler.profile(<br>    activities=[<br>        torch.profiler.ProfilerActivity.CPU,<br>        torch.profiler.ProfilerActivity.CUDA,<br>    ],<br>    schedule=torch.profiler.schedule(<br>        wait=<span class="hljs-number">1</span>,<br>        warmup=<span class="hljs-number">1</span>,<br>        active=<span class="hljs-number">2</span>,<br>        repeat=<span class="hljs-number">1</span>,<br>    ),<br>    on_trace_ready=torch.profiler.tensorboard_trace_handler(<br>        logdir<br>    ),<br>    record_shapes=<span class="hljs-literal">True</span>,<br>    with_stack=<span class="hljs-literal">True</span>,<br>) <span class="hljs-keyword">as</span> prof:<br>    <span class="hljs-keyword">for</span> step <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">6</span>):<br>        x = torch.randn(<span class="hljs-number">4096</span>, <span class="hljs-number">4096</span>, device=<span class="hljs-string">&quot;cuda&quot;</span>)<br>        y = x @ x<br>        torch.cuda.synchronize()<br>        prof.step()<br><br></code></pre></td></tr></table></figure>
+
+<p>首先需要定义<code>torch.profiler.schedule</code>，然后通过prof.step来更新当前步数。最后的结果可以通过Tensboard或者Chrome的<code>chrome://tracing/</code>来查看。</p>
+<h2 id="相关代码"><a href="#相关代码" class="headerlink" title="相关代码"></a>相关代码</h2><p>相关参数的介绍如下，</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python">group.add_argument(<span class="hljs-string">&#x27;--profile&#x27;</span>, action=<span class="hljs-string">&#x27;store_true&#x27;</span>,<br>                   <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;Enable nsys profiling. When using this option, nsys &#x27;</span><br>                   <span class="hljs-string">&#x27;options should be specified in commandline. An example &#x27;</span><br>                   <span class="hljs-string">&#x27;nsys commandline is `nsys profile -s none -t nvtx,cuda &#x27;</span><br>                   <span class="hljs-string">&#x27;-o &lt;path/to/output_file&gt; --force-overwrite true &#x27;</span><br>                   <span class="hljs-string">&#x27;--capture-range=cudaProfilerApi &#x27;</span><br>                   <span class="hljs-string">&#x27;--capture-range-end=stop`.&#x27;</span>)<br>group.add_argument(<span class="hljs-string">&#x27;--profile-step-start&#x27;</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>, default=<span class="hljs-number">10</span>,<br>                   <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;Global step to start profiling.&#x27;</span>)<br>group.add_argument(<span class="hljs-string">&#x27;--profile-step-end&#x27;</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>, default=<span class="hljs-number">12</span>,<br>                   <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;Global step to stop profiling.&#x27;</span>)<br>group.add_argument(<span class="hljs-string">&#x27;--use-pytorch-profiler&#x27;</span>, action=<span class="hljs-string">&#x27;store_true&#x27;</span>,<br>                   <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;Use the built-in pytorch profiler. &#x27;</span><br>                   <span class="hljs-string">&#x27;Useful if you wish to view profiles in tensorboard.&#x27;</span>,<br>                   dest=<span class="hljs-string">&#x27;use_pytorch_profiler&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+
+
+<p>在<code>megatron/training/training.py</code>的<code>training</code>函数中有如下的代码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs shell">    if (<br>        args.profile<br>        and torch.distributed.get_rank() in args.profile_ranks<br>        and args.use_pytorch_profiler<br>    ):<br>        prof = torch.profiler.profile(<br>            schedule=torch.profiler.schedule(<br>                wait=max(args.profile_step_start - 1, 0),<br>                warmup=1 if args.profile_step_start &gt; 0 else 0,<br>                active=args.profile_step_end - args.profile_step_start,<br>                repeat=1,<br>            ),<br>            on_trace_ready=torch.profiler.tensorboard_trace_handler(args.tensorboard_dir),<br>            record_shapes=True,<br>            with_stack=True,<br>        )<br>        prof.start()<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">       ...</span><br><br>    # Run training iterations till done.<br>    while iteration &lt; args.train_iters:<br>        if args.profile and torch.distributed.get_rank() in args.profile_ranks:<br>            if args.use_pytorch_profiler:<br>                prof.step()<br>            elif iteration == args.profile_step_start:<br>                torch.cuda.cudart().cudaProfilerStart()<br>                torch.autograd.profiler.emit_nvtx(record_shapes=True).__enter__()<br></code></pre></td></tr></table></figure>
+
+<p>这说明了只有开启profile、use_pytorch_profiler并且当前进程的rank在profile_ranks时才会开启prof。然后也在定义torch.profiler.profile时指明了需要跳过profile_step_start - 1步，然后只要profile_step_start&gt;1就预热一轮否则不预热，然后采集<code>args.profile_step_end - args.profile_step_start</code>步。</p>
+<p>在每次batch的迭代中会调用prof.step()来更新采集步数。</p>
+<p>在<code>megatron/training/training.py</code>中的<code>post_training_step_callbacks</code>有如下的代码负责在step达到profile_step_end后停止prof：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">Profiling.</span><br>if (<br>    args.profile<br>    and iteration == args.profile_step_end<br>    and torch.distributed.get_rank() in args.profile_ranks<br>):<br>    if args.use_pytorch_profiler:<br>        assert prof is not None<br>        prof.stop()<br>    else:<br>        torch.cuda.cudart().cudaProfilerStop()<br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意这里说的step是指实际这一次训练运行了多少步，不与从checkpoint中恢复的当前的iter有关。</p>
+</blockquote>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><p>运行脚本如下，关键是<code>PROFILER_ARGS</code>中添加的对应参数，其指示会采集110、111步。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span><br><br><span class="hljs-comment"># Runs the &quot;857m&quot; parameter model</span><br><br><span class="hljs-built_in">export</span> CUDA_DEVICE_MAX_CONNECTIONS=1<br><br>GPUS_PER_NODE=4<br><span class="hljs-comment"># Change for multinode config</span><br>MASTER_ADDR=localhost<br>MASTER_PORT=6000<br>NUM_NODES=1<br>NODE_RANK=0<br>WORLD_SIZE=$((<span class="hljs-variable">$GPUS_PER_NODE</span>*<span class="hljs-variable">$NUM_NODES</span>))<br><br>CHECKPOINT_PATH=<span class="hljs-variable">$1</span> <span class="hljs-comment">#&lt;Specify path&gt;</span><br>TENSORBOARD_LOGS_PATH=<span class="hljs-variable">$2</span> <span class="hljs-comment">#&lt;Specify path&gt;</span><br>VOCAB_FILE=<span class="hljs-variable">$3</span> <span class="hljs-comment">#&lt;Specify path to file&gt;/gpt2-vocab.json</span><br>MERGE_FILE=<span class="hljs-variable">$4</span> <span class="hljs-comment">#&lt;Specify path to file&gt;/gpt2-merges.txt</span><br>DATA_PATH=<span class="hljs-variable">$5</span> <span class="hljs-comment">#&lt;Specify path and file prefix&gt;_text_document</span><br>USE_NSYS=0<br><span class="hljs-keyword">if</span> [[ <span class="hljs-variable">$&#123;6:-&#125;</span> == <span class="hljs-string">&quot;--nsys&quot;</span> ]]; <span class="hljs-keyword">then</span><br>  USE_NSYS=1<br><span class="hljs-keyword">fi</span><br><br>DISTRIBUTED_ARGS=(<br>    --nproc_per_node <span class="hljs-variable">$GPUS_PER_NODE</span> <br>    --nnodes <span class="hljs-variable">$NUM_NODES</span> <br>    --master_addr <span class="hljs-variable">$MASTER_ADDR</span> <br>    --master_port <span class="hljs-variable">$MASTER_PORT</span><br>)<br><br>GPT_MODEL_ARGS=(<br>    --num-layers 24 <br>    --hidden-size 1024 <br>    --num-attention-heads 16 <br>    --seq-length 2048 <br>    --max-position-embeddings 2048 <br>    --attention-backend auto <span class="hljs-comment"># Can use (flash/fused/unfused/local)</span><br>)<br><br>TRAINING_ARGS=(<br>    --micro-batch-size 4 <br>    --global-batch-size 16 <br>    <span class="hljs-comment"># --rampup-batch-size 16 16 5859375 </span><br>    --train-iters 20000 <br>    --weight-decay 0.1 <br>    --adam-beta1 0.9 <br>    --adam-beta2 0.95 <br>    --init-method-std 0.006 <br>    --clip-grad 1.0 <br>    --fp16<br>    --lr 6.0e-5 <br>    --lr-decay-style cosine <br>    --min-lr 6.0e-6<br>    --lr-warmup-fraction .001 <br>    --lr-decay-iters 20000 <br>)<br><br>MODEL_PARALLEL_ARGS=(<br>  --tensor-model-parallel-size 1 <br>  --pipeline-model-parallel-size 1 <br>)<br><br>DATA_ARGS=(<br>    --data-path <span class="hljs-variable">$DATA_PATH</span> <br>    --vocab-file <span class="hljs-variable">$VOCAB_FILE</span> <br>    --merge-file <span class="hljs-variable">$MERGE_FILE</span> <br>    --<span class="hljs-built_in">split</span> 949,50,1<br>)<br><br>EVAL_AND_LOGGING_ARGS=(<br>    --log-interval 200<br>    --save-interval 10000 <br>    --eval-interval 1000 <br>    --save <span class="hljs-variable">$CHECKPOINT_PATH</span> <br>    --load <span class="hljs-variable">$CHECKPOINT_PATH</span> <br>    --eval-iters 10<br>    --tensorboard-dir <span class="hljs-variable">$TENSORBOARD_LOGS_PATH</span> <br>)<br><br>PROFILER_ARGS=(<br>    --profile<br>    --use-pytorch-profiler<br>    --profile-step-start 110<br>    --profile-step-end 112<br>    --profile-ranks 0<br>)<br><br><span class="hljs-comment"># Build command as an array (no string concatenation)</span><br>CMD=(<br>  torchrun<br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;DISTRIBUTED_ARGS[@]&#125;</span>&quot;</span><br>  pretrain_gpt.py<br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;GPT_MODEL_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;TRAINING_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;MODEL_PARALLEL_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;DATA_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;EVAL_AND_LOGGING_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;PROFILER_ARGS[@]&#125;</span>&quot;</span><br>)<br><br><span class="hljs-keyword">if</span> [[ <span class="hljs-string">&quot;<span class="hljs-variable">$USE_NSYS</span>&quot;</span> -eq 1 ]]; <span class="hljs-keyword">then</span><br>  NSIGHT_PREFIX=<span class="hljs-string">&quot;./nsight_profile/gpt3_857m&quot;</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Running with Nsight profiling, output prefix: <span class="hljs-variable">$&#123;NSIGHT_PREFIX&#125;</span>&quot;</span><br>  <span class="hljs-built_in">exec</span> nsys profile \<br>    -s none -t nvtx,cuda \<br>    --cudabacktrace=all \<br>    --cuda-graph-trace=node \<br>    --python-backtrace=cuda \<br>    --<span class="hljs-built_in">wait</span> all \<br>    -o <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;NSIGHT_PREFIX&#125;</span>&quot;</span> \<br>    --force-overwrite <span class="hljs-literal">true</span> \<br>    --capture-range=cudaProfilerApi \<br>    --capture-range-end=stop \<br>    <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CMD[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">else</span><br>  <span class="hljs-built_in">exec</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CMD[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">fi</span><br></code></pre></td></tr></table></figure>
+
+<p>运行的指令如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">bash examples/gpt3/train_gpt3_857m_distributed.sh     /workspace/megatron-lm/model_ckpt/gpt3_857m_2     /workspace/megatron-lm/tb_logs/gpt3_857m_profiler     /workspace/megatron-lm/data/tokenizer/gpt2-vocab.json     /workspace/megatron-lm/data/tokenizer/gpt2-merges.txt     /workspace/megatron-lm/data/TinyStoriesV2-GPT4-train_text_document      &gt; gpt3_857m2.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+
+<p>运行后会在<code>tensorboard-dir</code>下获取对应的<code>pt.trace.json</code>文件，例如本次运行获得的是<code>tb_logs/gpt3_857m_profiler/6dacc15685cd_821091.1766741105666343018.pt.trace.json</code>文件</p>
+<p>可以用tensor board或者是Chrome查看该文件，如下是访问Chrome的<code>chrome://tracing/</code>查看的结果：</p>
+<p>CPU层面的Python代码分析的结果如下，可以看到整个调用链还是很清楚的：</p>
+<p><img src="/2025/12/26/megatron-lm-profiler/image.png" srcset="/img/loading.gif" lazyload></p>
+<p>GPU层面的分析结果如下，由于这里使用的是简单的数据并行，所以每一步后都有一次all reduce进行参数收集，整体逻辑看的还是很清楚的。</p>
+<p><img src="/2025/12/26/megatron-lm-profiler/image-1.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="Nsys性能分析"><a href="#Nsys性能分析" class="headerlink" title="Nsys性能分析"></a>Nsys性能分析</h1><h2 id="使用方法-1"><a href="#使用方法-1" class="headerlink" title="使用方法"></a>使用方法</h2><p>一般使用Nsys的代码如下，其中range_push(“xxx”)与range_pop()为一段运行的代码区间标注了区间名</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.cuda.nvtx <span class="hljs-keyword">as</span> nvtx<br><span class="hljs-keyword">import</span> time<br><br>device = <span class="hljs-string">&quot;cuda&quot;</span><br><br><span class="hljs-comment"># warmup</span><br><span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">2</span>):<br>    x = torch.randn(<span class="hljs-number">4096</span>, <span class="hljs-number">4096</span>, device=device)<br>    y = x @ x<br>    torch.cuda.synchronize()<br><br><span class="hljs-comment"># profile 区间</span><br>nvtx.range_push(<span class="hljs-string">&quot;matmul_step&quot;</span>)<br><br>x = torch.randn(<span class="hljs-number">4096</span>, <span class="hljs-number">4096</span>, device=device)<br>y = x @ x<br>torch.cuda.synchronize()<br><br>nvtx.range_pop()<br><br>time.sleep(<span class="hljs-number">0.2</span>)  <span class="hljs-comment"># 让 CPU timeline 更明显</span><br><br></code></pre></td></tr></table></figure>
+
+<p>需要用如下的nsys开头的命令运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs shell">nsys profile \<br>  --trace=cuda,nvtx,osrt \<br>  -o simple_matmul \<br>  python example.py<br></code></pre></td></tr></table></figure>
+
+<p>运行后会生成<code>simple_matmul.nsys-rep</code>，然后可以下载<a target="_blank" rel="noopener" href="https://developer.nvidia.com/nsight-systems">Nsight Systems</a>对其进行查看。</p>
+<h2 id="相关代码-1"><a href="#相关代码-1" class="headerlink" title="相关代码"></a>相关代码</h2><p>相关参数的介绍其实与Pytorch Profiler类似，不同之处需要关闭use_pytorch_profiler。</p>
+<p>Megatron-LM也在多个地方专门手动标注了profile 区间以便于查看。</p>
+<p><img src="/2025/12/26/megatron-lm-profiler/image-2.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="/2025/12/26/megatron-lm-profiler/image-3.png" srcset="/img/loading.gif" lazyload></p>
+<p>整体与Pytorch Profile类似，其通过step步数来控制达到args.profile_step_start步数时才开启profile，</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">Run training iterations till <span class="hljs-keyword">done</span>.</span><br>while iteration &lt; args.train_iters:<br>    if args.profile and torch.distributed.get_rank() in args.profile_ranks:<br>        if args.use_pytorch_profiler:<br>            prof.step()<br>        elif iteration == args.profile_step_start:<br>            torch.cuda.cudart().cudaProfilerStart()<br>            torch.autograd.profiler.emit_nvtx(record_shapes=True).__enter__()<br></code></pre></td></tr></table></figure>
+
+<p>然后当步数达到args.profile_step_end步数时才关闭profile</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">Profiling.</span><br>if (<br>    args.profile<br>    and iteration == args.profile_step_end<br>    and torch.distributed.get_rank() in args.profile_ranks<br>):<br>    if args.use_pytorch_profiler:<br>        assert prof is not None<br>        prof.stop()<br>    else:<br>        torch.cuda.cudart().cudaProfilerStop()<br></code></pre></td></tr></table></figure>
+
+<h2 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h2><p>运行的脚本如下，注意这里相比Pytorch Profile删掉了<code>--use-pytorch-profiler</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span><br><br><span class="hljs-comment"># Runs the &quot;857m&quot; parameter model</span><br><br><span class="hljs-built_in">export</span> CUDA_DEVICE_MAX_CONNECTIONS=1<br><br>GPUS_PER_NODE=4<br><span class="hljs-comment"># Change for multinode config</span><br>MASTER_ADDR=localhost<br>MASTER_PORT=6000<br>NUM_NODES=1<br>NODE_RANK=0<br>WORLD_SIZE=$((<span class="hljs-variable">$GPUS_PER_NODE</span>*<span class="hljs-variable">$NUM_NODES</span>))<br><br>CHECKPOINT_PATH=<span class="hljs-variable">$1</span> <span class="hljs-comment">#&lt;Specify path&gt;</span><br>TENSORBOARD_LOGS_PATH=<span class="hljs-variable">$2</span> <span class="hljs-comment">#&lt;Specify path&gt;</span><br>VOCAB_FILE=<span class="hljs-variable">$3</span> <span class="hljs-comment">#&lt;Specify path to file&gt;/gpt2-vocab.json</span><br>MERGE_FILE=<span class="hljs-variable">$4</span> <span class="hljs-comment">#&lt;Specify path to file&gt;/gpt2-merges.txt</span><br>DATA_PATH=<span class="hljs-variable">$5</span> <span class="hljs-comment">#&lt;Specify path and file prefix&gt;_text_document</span><br>USE_NSYS=0<br><span class="hljs-keyword">if</span> [[ <span class="hljs-variable">$&#123;6:-&#125;</span> == <span class="hljs-string">&quot;--nsys&quot;</span> ]]; <span class="hljs-keyword">then</span><br>  USE_NSYS=1<br><span class="hljs-keyword">fi</span><br><br>DISTRIBUTED_ARGS=(<br>    --nproc_per_node <span class="hljs-variable">$GPUS_PER_NODE</span> <br>    --nnodes <span class="hljs-variable">$NUM_NODES</span> <br>    --master_addr <span class="hljs-variable">$MASTER_ADDR</span> <br>    --master_port <span class="hljs-variable">$MASTER_PORT</span><br>)<br><br>GPT_MODEL_ARGS=(<br>    --num-layers 24 <br>    --hidden-size 1024 <br>    --num-attention-heads 16 <br>    --seq-length 2048 <br>    --max-position-embeddings 2048 <br>    --attention-backend auto <span class="hljs-comment"># Can use (flash/fused/unfused/local)</span><br>)<br><br>TRAINING_ARGS=(<br>    --micro-batch-size 4 <br>    --global-batch-size 16 <br>    <span class="hljs-comment"># --rampup-batch-size 16 16 5859375 </span><br>    --train-iters 20000 <br>    --weight-decay 0.1 <br>    --adam-beta1 0.9 <br>    --adam-beta2 0.95 <br>    --init-method-std 0.006 <br>    --clip-grad 1.0 <br>    --fp16<br>    --lr 6.0e-5 <br>    --lr-decay-style cosine <br>    --min-lr 6.0e-6<br>    --lr-warmup-fraction .001 <br>    --lr-decay-iters 20000 <br>)<br><br>MODEL_PARALLEL_ARGS=(<br>  --tensor-model-parallel-size 1 <br>  --pipeline-model-parallel-size 1 <br>)<br><br>DATA_ARGS=(<br>    --data-path <span class="hljs-variable">$DATA_PATH</span> <br>    --vocab-file <span class="hljs-variable">$VOCAB_FILE</span> <br>    --merge-file <span class="hljs-variable">$MERGE_FILE</span> <br>    --<span class="hljs-built_in">split</span> 949,50,1<br>)<br><br>EVAL_AND_LOGGING_ARGS=(<br>    --log-interval 200<br>    --save-interval 10000 <br>    --eval-interval 1000 <br>    --save <span class="hljs-variable">$CHECKPOINT_PATH</span> <br>    --load <span class="hljs-variable">$CHECKPOINT_PATH</span> <br>    --eval-iters 10<br>    --tensorboard-dir <span class="hljs-variable">$TENSORBOARD_LOGS_PATH</span> <br>)<br><br>PROFILER_ARGS=(<br>    --profile<br>    --profile-step-start 110<br>    --profile-step-end 112<br>    --profile-ranks 0<br>)<br><br><span class="hljs-comment"># Build command as an array (no string concatenation)</span><br>CMD=(<br>  torchrun<br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;DISTRIBUTED_ARGS[@]&#125;</span>&quot;</span><br>  pretrain_gpt.py<br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;GPT_MODEL_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;TRAINING_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;MODEL_PARALLEL_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;DATA_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;EVAL_AND_LOGGING_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;PROFILER_ARGS[@]&#125;</span>&quot;</span><br>)<br><br><span class="hljs-keyword">if</span> [[ <span class="hljs-string">&quot;<span class="hljs-variable">$USE_NSYS</span>&quot;</span> -eq 1 ]]; <span class="hljs-keyword">then</span><br>  NSIGHT_PREFIX=<span class="hljs-string">&quot;./nsight_profile/gpt3_857m&quot;</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Running with Nsight profiling, output prefix: <span class="hljs-variable">$&#123;NSIGHT_PREFIX&#125;</span>&quot;</span><br>  <span class="hljs-built_in">exec</span> nsys profile \<br>    -s none -t nvtx,cuda \<br>    --cudabacktrace=all \<br>    --cuda-graph-trace=node \<br>    --python-backtrace=cuda \<br>    --<span class="hljs-built_in">wait</span> all \<br>    -o <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;NSIGHT_PREFIX&#125;</span>&quot;</span> \<br>    --force-overwrite <span class="hljs-literal">true</span> \<br>    --capture-range=cudaProfilerApi \<br>    --capture-range-end=stop \<br>    <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CMD[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">else</span><br>  <span class="hljs-built_in">exec</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CMD[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">fi</span><br></code></pre></td></tr></table></figure>
+
+<p>运行的指令如下，注意这里添加了<code>--nsys</code>来在脚本中用nsys启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">bash examples/gpt3/train_gpt3_857m_distributed.sh     /workspace/megatron-lm/model_ckpt/gpt3_857m_2     /workspace/megatron-lm/tb_logs/gpt3_857m_profiler     /workspace/megatron-lm/data/tokenizer/gpt2-vocab.json     /workspace/megatron-lm/data/tokenizer/gpt2-merges.txt     /workspace/megatron-lm/data/TinyStoriesV2-GPT4-train_text_document     --nsys      &gt; gpt3_857m2.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+
+<p>最后会得到<code>nsight_profile/gpt3_857m.nsys-rep</code>，将其放入Nsight Systems中查看结果如下：</p>
+<p><img src="/2025/12/26/megatron-lm-profiler/image-4.png" srcset="/img/loading.gif" lazyload></p>
+<p>确实看下来是更底层了些，cuda相关的分析更加全面了。</p>
+<h1 id="Memory-Snap显存分析"><a href="#Memory-Snap显存分析" class="headerlink" title="Memory Snap显存分析"></a>Memory Snap显存分析</h1><h2 id="使用方法-2"><a href="#使用方法-2" class="headerlink" title="使用方法"></a>使用方法</h2><p>Pytorch的Memory snap的整体使用方法如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">torch.cuda.memory._record_memory_history()               <span class="hljs-comment"># 开始记录</span><br>run_your_code()                                          <span class="hljs-comment"># 训练或推理代码</span><br>torch.cuda.memory._dump_snapshot(<span class="hljs-string">&quot;my_snapshot.pickle&quot;</span>)   <span class="hljs-comment"># 保存文件</span><br>torch.cuda.memory._record_memory_history(enabled=None)   <span class="hljs-comment"># 终止记录</span><br></code></pre></td></tr></table></figure>
+
+<p>运行后得到<code>my_snapshot.pickle</code>，然后可以到<a target="_blank" rel="noopener" href="https://docs.pytorch.org/memory/_viz%E4%B8%AD%E8%BF%9B%E8%A1%8C%E6%9F%A5%E7%9C%8B%E3%80%82">https://docs.pytorch.org/memory\_viz中进行查看。</a></p>
+<h2 id="相关代码-2"><a href="#相关代码-2" class="headerlink" title="相关代码"></a>相关代码</h2><p>其相关参数的介绍如下，有<code>--record-memory-history</code>与<code>--memory-snapshot-path</code>两个</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python">group.add_argument(<span class="hljs-string">&#x27;--record-memory-history&#x27;</span>, action=<span class="hljs-string">&quot;store_true&quot;</span>, default=<span class="hljs-literal">False</span>,<br>                   <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;Record memory history in last rank.&#x27;</span>)<br>group.add_argument(<span class="hljs-string">&#x27;--memory-snapshot-path&#x27;</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">str</span>, default=<span class="hljs-string">&quot;snapshot.pickle&quot;</span>,<br>                   <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;Specifies where to dump the memory history pickle.&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>在<code>pretrain_gpt.py</code>中的<code>model_provider</code>函数中，有如下代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> args.record_memory_history:<br>    torch.cuda.memory._record_memory_history(<br>        <span class="hljs-literal">True</span>,<br>        <span class="hljs-comment"># keep 100,000 alloc/free events from before the snapshot</span><br>        trace_alloc_max_entries=<span class="hljs-number">100000</span>,<br>        <span class="hljs-comment"># record stack information for the trace events</span><br>        trace_alloc_record_context=<span class="hljs-literal">True</span>,<br>    )<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">oom_observer</span>(<span class="hljs-params">device, alloc, device_alloc, device_free</span>):<br>        <span class="hljs-comment"># snapshot right after an OOM happened</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;saving allocated state during OOM&#x27;</span>)<br>        snapshot = torch.cuda.memory._snapshot()<br>        <span class="hljs-keyword">from</span> pickle <span class="hljs-keyword">import</span> dump<br><br>        dump(<br>            snapshot,<br>            <span class="hljs-built_in">open</span>(<span class="hljs-string">f&quot;oom_rank-<span class="hljs-subst">&#123;torch.distributed.get_rank()&#125;</span>_<span class="hljs-subst">&#123;args.memory_snapshot_path&#125;</span>&quot;</span>, <span class="hljs-string">&#x27;wb&#x27;</span>),<br>        )<br><br>    torch._C._cuda_attach_out_of_memory_observer(oom_observer)<br></code></pre></td></tr></table></figure>
+
+<p>可以看到启动snap的条件是配置上<code>--record-memory-history</code>（对应 args.record_memory_history&#x3D;True）,然后snap的配置也写的比较死，就是直接写定最多保留 10 万条 alloc&#x2F;free 事件，并为每条 alloc&#x2F;free 记录调用栈&#x2F;上下文信息。然后这里还定义了一个<code>oom_observer</code>,主要作用是在oom的时候调用该函数，然后将当前显存调用情况保存下来。</p>
+<p>然后在<code>megatron/training/training.py</code>的<code>training_log</code>函数中，存在如下的代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-keyword">if</span> iteration % args.log_interval == 0:<br>    <span class="hljs-keyword">if</span> args.record_memory_history and is_last_rank():<br>        snapshot = torch.cuda.memory._snapshot()<br>        from pickle import dump<br><br>        with open(args.memory_snapshot_path, <span class="hljs-string">&#x27;wb&#x27;</span>) as f:<br>            dump(snapshot, f)<br></code></pre></td></tr></table></figure>
+
+<p>即如果当前迭代次数是<code>log_interval</code>的整数倍，并且标记了要记录Memory情况并且是最后一个rank，那么就将当前的snapshot保存下来。</p>
+<h2 id="示例-2"><a href="#示例-2" class="headerlink" title="示例"></a>示例</h2><p>运行的脚本如下，关键是在<code>PROFILER_ARGS</code>参数中添加了<code>--record-memory-history</code>以及<code>--memory-snapshot-path &#39;./snapshot/snapshot.pickle&#39;</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-meta">#!/bin/bash</span><br><br><span class="hljs-comment"># Runs the &quot;857m&quot; parameter model</span><br><br><span class="hljs-built_in">export</span> CUDA_DEVICE_MAX_CONNECTIONS=1<br><br>GPUS_PER_NODE=4<br><span class="hljs-comment"># Change for multinode config</span><br>MASTER_ADDR=localhost<br>MASTER_PORT=6000<br>NUM_NODES=1<br>NODE_RANK=0<br>WORLD_SIZE=$((<span class="hljs-variable">$GPUS_PER_NODE</span>*<span class="hljs-variable">$NUM_NODES</span>))<br><br>CHECKPOINT_PATH=<span class="hljs-variable">$1</span> <span class="hljs-comment">#&lt;Specify path&gt;</span><br>TENSORBOARD_LOGS_PATH=<span class="hljs-variable">$2</span> <span class="hljs-comment">#&lt;Specify path&gt;</span><br>VOCAB_FILE=<span class="hljs-variable">$3</span> <span class="hljs-comment">#&lt;Specify path to file&gt;/gpt2-vocab.json</span><br>MERGE_FILE=<span class="hljs-variable">$4</span> <span class="hljs-comment">#&lt;Specify path to file&gt;/gpt2-merges.txt</span><br>DATA_PATH=<span class="hljs-variable">$5</span> <span class="hljs-comment">#&lt;Specify path and file prefix&gt;_text_document</span><br>USE_NSYS=0<br><span class="hljs-keyword">if</span> [[ <span class="hljs-variable">$&#123;6:-&#125;</span> == <span class="hljs-string">&quot;--nsys&quot;</span> ]]; <span class="hljs-keyword">then</span><br>  USE_NSYS=1<br><span class="hljs-keyword">fi</span><br><br>DISTRIBUTED_ARGS=(<br>    --nproc_per_node <span class="hljs-variable">$GPUS_PER_NODE</span> <br>    --nnodes <span class="hljs-variable">$NUM_NODES</span> <br>    --master_addr <span class="hljs-variable">$MASTER_ADDR</span> <br>    --master_port <span class="hljs-variable">$MASTER_PORT</span><br>)<br><br>GPT_MODEL_ARGS=(<br>    --num-layers 24 <br>    --hidden-size 1024 <br>    --num-attention-heads 16 <br>    --seq-length 2048 <br>    --max-position-embeddings 2048 <br>    --attention-backend auto <span class="hljs-comment"># Can use (flash/fused/unfused/local)</span><br>)<br><br>TRAINING_ARGS=(<br>    --micro-batch-size 4 <br>    --global-batch-size 16 <br>    <span class="hljs-comment"># --rampup-batch-size 16 16 5859375 </span><br>    --train-iters 20000 <br>    --weight-decay 0.1 <br>    --adam-beta1 0.9 <br>    --adam-beta2 0.95 <br>    --init-method-std 0.006 <br>    --clip-grad 1.0 <br>    --fp16<br>    --lr 6.0e-5 <br>    --lr-decay-style cosine <br>    --min-lr 6.0e-6<br>    --lr-warmup-fraction .001 <br>    --lr-decay-iters 20000 <br>)<br><br>MODEL_PARALLEL_ARGS=(<br>  --tensor-model-parallel-size 1 <br>  --pipeline-model-parallel-size 1 <br>)<br><br>DATA_ARGS=(<br>    --data-path <span class="hljs-variable">$DATA_PATH</span> <br>    --vocab-file <span class="hljs-variable">$VOCAB_FILE</span> <br>    --merge-file <span class="hljs-variable">$MERGE_FILE</span> <br>    --<span class="hljs-built_in">split</span> 949,50,1<br>)<br><br>EVAL_AND_LOGGING_ARGS=(<br>    --log-interval 200<br>    --save-interval 10000 <br>    --eval-interval 1000 <br>    --save <span class="hljs-variable">$CHECKPOINT_PATH</span> <br>    --load <span class="hljs-variable">$CHECKPOINT_PATH</span> <br>    --eval-iters 10<br>    --tensorboard-dir <span class="hljs-variable">$TENSORBOARD_LOGS_PATH</span> <br>)<br><br>PROFILER_ARGS=(<br>    --profile<br>    --record-memory-history<br>    --profile-step-start 110<br>    --profile-step-end 112<br>    --profile-ranks 0<br>)<br><br><span class="hljs-comment"># Build command as an array (no string concatenation)</span><br>CMD=(<br>  torchrun<br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;DISTRIBUTED_ARGS[@]&#125;</span>&quot;</span><br>  pretrain_gpt.py<br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;GPT_MODEL_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;TRAINING_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;MODEL_PARALLEL_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;DATA_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;EVAL_AND_LOGGING_ARGS[@]&#125;</span>&quot;</span><br>  <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;PROFILER_ARGS[@]&#125;</span>&quot;</span><br>)<br><br><span class="hljs-keyword">if</span> [[ <span class="hljs-string">&quot;<span class="hljs-variable">$USE_NSYS</span>&quot;</span> -eq 1 ]]; <span class="hljs-keyword">then</span><br>  NSIGHT_PREFIX=<span class="hljs-string">&quot;./nsight_profile/gpt3_857m&quot;</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Running with Nsight profiling, output prefix: <span class="hljs-variable">$&#123;NSIGHT_PREFIX&#125;</span>&quot;</span><br>  <span class="hljs-built_in">exec</span> nsys profile \<br>    -s none -t nvtx,cuda \<br>    --cudabacktrace=all \<br>    --cuda-graph-trace=node \<br>    --python-backtrace=cuda \<br>    --<span class="hljs-built_in">wait</span> all \<br>    -o <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;NSIGHT_PREFIX&#125;</span>&quot;</span> \<br>    --force-overwrite <span class="hljs-literal">true</span> \<br>    --capture-range=cudaProfilerApi \<br>    --capture-range-end=stop \<br>    <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CMD[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">else</span><br>  <span class="hljs-built_in">exec</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CMD[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">fi</span><br></code></pre></td></tr></table></figure>
+
+<p>运行指令为：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">bash examples/gpt3/train_gpt3_857m_distributed.sh     /workspace/megatron-lm/model_ckpt/gpt3_857m_2     /workspace/megatron-lm/tb_logs/gpt3_857m_profiler     /workspace/megatron-lm/data/tokenizer/gpt2-vocab.json     /workspace/megatron-lm/data/tokenizer/gpt2-merges.txt     /workspace/megatron-lm/data/TinyStoriesV2-GPT4-train_text_document      &gt; gpt3_857m2.log 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+
+<p>运行后会得到<code>snapshot/snapshot.pickle</code>，将其放入到<a target="_blank" rel="noopener" href="https://docs.pytorch.org/memory/_viz%E4%B8%AD%E8%BF%9B%E8%A1%8C%E6%9F%A5%E7%9C%8B%EF%BC%8C%E7%BB%93%E6%9E%9C%E5%A6%82%E4%B8%8B%EF%BC%9A">https://docs.pytorch.org/memory\_viz中进行查看，结果如下：</a></p>
+<p><img src="/2025/12/26/megatron-lm-profiler/image-5.png" srcset="/img/loading.gif" lazyload></p>
+<p>其最底层的就是基础的模型、优化器的显存占用，上面的动态激活显存可以看到呈现明显的周期性，其显存占用最高的时候就是通过cross_entropy计算loss的时候，可以达到约15GB。这是因为这时前向传播的激活全部都计算完毕，后续反向传播的时候激活依次释放。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/Megatron-LM/" class="print-no-link">#Megatron-LM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【Megatron-LM源码分析（三）】-性能分析</div>
+      <div>http://example.com/2025/12/26/megatron-lm-profiler/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年12月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/12/28/megatron-lm-ddp/" title="【Megatron-LM源码分析（四）】-DDP数据并行">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">【Megatron-LM源码分析（四）】-DDP数据并行</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/12/22/ScheMoE-paper-note/" title="【论文阅读】ScheMoE:An Extensible Mixture-of-Experts  Distributed Training System with Tasks Scheduling">
+                        <span class="hidden-mobile">【论文阅读】ScheMoE:An Extensible Mixture-of-Experts  Distributed Training System with Tasks Scheduling</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
