@@ -4,6 +4,37 @@
   
   
   <entry>
+    <title>【论文阅读】Efficient Memory Management for Large Language  Model Serving with PagedAttention（vLLM论文）</title>
+    <link href="/2026/01/09/vLLM-paper-note/"/>
+    <url>/2026/01/09/vLLM-paper-note/</url>
+    
+    <content type="html"><![CDATA[<ul><li><p><strong>论文链接</strong>：<a href="https://dl.acm.org/doi/abs/10.1145/3600006.3613165">https://dl.acm.org/doi/abs/10.1145/3600006.3613165</a></p></li><li><p><strong>开源链接</strong>：<a href="https://github.com/vllm-project/vllm">https://github.com/vllm-project/vllm</a></p></li><li><p><strong>发表会议</strong>：SOSP’23(CCF-A)</p></li><li><p><strong>团队</strong>：UC Berkeley</p></li></ul><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul><li><p>大模型服务化带来了高昂的运行成本，需要进行推理优化提高吞吐、降低成本</p></li><li><p>LLM推理过程是一个自回归模型，关键的注意力机制模块需要进行KV Cache，而现有GPU的显存有限，<strong>留给KV Cache的空间不多</strong>，需要进行细致的KV Cache显存管理。例如，对于13B参数OPT模型，单个Token的KV缓存需要800KB的空间，计算为2（键和值向量）×5120（隐藏状态大小）×40（层数）×2（每个FP16字节）。由于OPT最多可以生成2048个令牌的序列，因此存储一个请求的KV缓存所需的内存可以高达1.6GB，而GPU的显存容量在几十GB的水平。</p></li></ul><p><img src="/2026/01/09/vLLM-paper-note/image.png"></p><ul><li><p>现有的LLM服务无法有效地管理KV Cache，因为它们将KV Cache存储在连续的内存空间中（因为大多数深度学习框架要求张量存储在连续空间中）。而LLM推理因为自回归的特性，KV Cache随着模型生成新的Token，可能会逐渐增长，也可能随着结束Token的出现而消除，并且它的长度与生命周期难以提前获知。这导致现有系统在以下几个方面低效：</p><p><img src="/2026/01/09/vLLM-paper-note/image-1.png"></p><ul><li><p>现有系统往往按照最大可能长度进行显存的<strong>静态分配</strong>，这导致其存在了3个部分的显存浪费：</p><ol><li><p>分配给未来Token生成使用的<strong>预留显存</strong>（Reserved）</p></li><li><p>提前分配了但是实际却不需要用到的<strong>内部显存碎片</strong>（Internal fragmentation）</p></li><li><p>系统中因为频繁静态分配导致的过小无法被静态分配使用的<strong>外部显存碎片</strong>（External fragmentation）</p></li></ol></li><li><p>现有系统也<strong>不能利用显存共享</strong>的机会。LLM服务通常会通过并行采样、波束搜索的方式为每个请求生成多个输出，这里的就可以部分共享其前置的KV Cache，但是现有系统因为KV Cache缓存在单独的连续空间所以不能做到共享</p></li></ul><p><img src="/2026/01/09/vLLM-paper-note/image-2.png"></p></li><li><p>为了高效的管理显存，本文提出了一种受操作系统中经典虚拟内存和分页技术启发的高效注意力算力PagedAttention，并以此为基础构建了LLM推理服务vLLM</p></li></ul><h1 id="方法思路"><a href="#方法思路" class="headerlink" title="方法思路"></a>方法思路</h1><h2 id="PagedAttention"><a href="#PagedAttention" class="headerlink" title="PagedAttention"></a>PagedAttention</h2><p>PagedAttention将K、V进行了分块，每块的K、V数量为B，每块会在物理存储中连续存储。各块之间并不保证连续，如下图所示，其前面的K、V被存储到了3个Block中。</p><p><img src="/2026/01/09/vLLM-paper-note/image-3.png"></p><p>在此分块的背景下，计算Attention的方式也转变为了以Block为单位的分块计算，如下所示。</p><p><img src="/2026/01/09/vLLM-paper-note/image-4.png"></p><ul><li><p>在计算 $Attention&#x3D; \mathrm{softmax}!\left(\frac{Q K^\top}{\sqrt{d_k}}\right)$时，将当前最新的$q_i$与第j个Block中的 $K_j$直接进行矩阵计算就可以批量得到该Block中各个K对于$q_i$的Attention，即$A_{ij}$。</p></li><li><p>然后在计算最新输出$o_i$时，对于第j个Block，需要将刚得到的$A_{ij}$与原本缓存该Block的 $V_j$进行矩阵乘，然后进行累加即可得到$o_i$</p></li></ul><h2 id="KV-Cache管理"><a href="#KV-Cache管理" class="headerlink" title="KV Cache管理"></a>KV Cache管理</h2><ul><li><p>系统中存在逻辑 Block和物理Block两个概念，其通过Block Table进行对应，Block Table记录了逻辑Block与物理Block的对应关系以及当前物理Block具体已填充的数量</p></li><li><p>每个物理Block具有固定的大小，物理Block可以按需灵活分配与释放</p></li></ul><p><img src="/2026/01/09/vLLM-paper-note/image-5.png"></p><p><img src="/2026/01/09/vLLM-paper-note/image-6.png"></p><h2 id="复杂解码算法适配"><a href="#复杂解码算法适配" class="headerlink" title="复杂解码算法适配"></a>复杂解码算法适配</h2><ul><li><strong>平行采样示例：</strong>&#x53EF;以让两个Sample一开始的prompt都共享同一个物理KV Cache block，并且注意对该Block设置引用计数器为2，然后当一个Sample开始生成并写入新的Token时，因为观察到引用计数器大于1，所以就采用<strong>Copy-on-write</strong>的处理方法，将其复制一份再写，同时将原本的引用计数器减一</li></ul><p><img src="/2026/01/09/vLLM-paper-note/image-7.png"></p><ul><li><strong>波束搜索示例：</strong>&#x5176;保留了top k个最可能的序列，各序列除了prompt外，已生成的序列也可能会共享，通过PagedAttention的技术可以对其做到共享，并且因为block分块，所以在Copy-on-write复制的时候只会复制最新生成的token所在的一个block。</li></ul><p><img src="/2026/01/09/vLLM-paper-note/image-8.png"></p><ul><li><strong>共享前缀实例：</strong>&#x591A;个请求共享同一个前缀，所以可以直接使用同一个前缀的物理块</li></ul><p><img src="/2026/01/09/vLLM-paper-note/image-9.png"></p><h2 id="调度与抢占"><a href="#调度与抢占" class="headerlink" title="调度与抢占"></a>调度与抢占</h2><ul><li><p>vLLM对所有请求采用<strong>first-come-first-serve（FCFS）调度策略</strong>，确保公平，防止饥饿。</p></li><li><p>当vLLM需要抢占请求时，它确保最早到达的请求被优先服务，最新的请求被优先抢占。</p><ul><li><p>具体在抢占时采用“全有或全无”的策略，驱逐序列块时将序列中的所有块都驱逐，对于波束搜索这类一个请求中包含多个序列的，也是倾向于一起被抢占或重调度</p></li><li><p>而在恢复时有两种方法，如下图所示，，这两种方法的效率取决Block size以及系统swap速度和计算速度等</p><ul><li><p>与主机CPU内存进行交换</p></li><li><p>将K、V进行重计算</p></li></ul><p><img src="/2026/01/09/vLLM-paper-note/image-10.png"></p></li></ul></li></ul><h2 id="分布式执行"><a href="#分布式执行" class="headerlink" title="分布式执行"></a>分布式执行</h2><ul><li><p>对于TP并行，其采用的是Megatron-LM风格的TP并行，在分割多头注意力时，每个worker都至少保留完整的一个注意力头</p></li><li><p>并且整体也适配SPMD的执行策略，虽然访问的是同一个逻辑Block，但是不同worker上对应的物理Block是不同的</p></li></ul><h2 id="实现细节优化"><a href="#实现细节优化" class="headerlink" title="实现细节优化"></a>实现细节优化</h2><ul><li><p>内核级优化：</p><ul><li><p>Fused reshape and block write：KV Cache需要被reshape为block的格式然后被存储到物理显存中，为了加速将其融合为了一个kernel</p></li><li><p>Fusing block read and attention：其调整FasterTransform中的注意力内核，根据块表读取KV缓存，并动态执行注意力操作。为了确保合并内存访问，还分配一个GPU warp来读取每个块</p></li><li><p>Fused block copy：其实现了一个内核，将不同块的复制操作批处理到单个内核启动中，以避免大量小数据移动的调用</p></li></ul></li><li><p>vLLM使用三种关键方法实现各种解码算法：</p><ul><li><p>Fork: 从现有序列中创建一个新序列。</p></li><li><p>Append: 将一个新TOken附加到序列中</p></li><li><p>Free: 删除序列</p></li></ul></li></ul><h1 id="实验效果"><a href="#实验效果" class="headerlink" title="实验效果"></a>实验效果</h1><ul><li>由于vLLM出色的显存管理能力，其对比当时其他的FasterTransformer与Orca在单序列生成、多序列生成方面都取得了更好的效果</li></ul><p><img src="/2026/01/09/vLLM-paper-note/image-11.png"></p><p><img src="/2026/01/09/vLLM-paper-note/image-12.png"></p><p><img src="/2026/01/09/vLLM-paper-note/image-13.png"></p><ul><li>整体在ChatBot应用上的表现是Orca的两倍以上</li></ul><p><img src="/2026/01/09/vLLM-paper-note/image-14.png"></p><h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ul><li><p>虚拟页表技术是原本CPU内存管理的经典技术了，被挪用到大模型推理场景下进行显存管理确实有点大道至简的感觉</p></li><li><p>整体思路很好理解，效果也理所当然的很强。不过感觉确实最关键的是将其实现出来并能够支持上到生产环境去使用</p></li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>LLM</category>
+      
+      <category>vLLM</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>论文阅读</tag>
+      
+      <tag>LLM</tag>
+      
+      <tag>vLLM</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>【Megatron-LM源码分析（五）】-Tensor并行</title>
     <link href="/2026/01/08/megatron-lm-tp/"/>
     <url>/2026/01/08/megatron-lm-tp/</url>
