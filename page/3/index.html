@@ -266,6 +266,142 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/06/14/Picotron-Tutorial%20%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C/" target="_self">
+          【Picotron-Tutorial】数据并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/14/Picotron-Tutorial%20%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C/" target="_self">
+        <div>
+          原生数据并行理论分析在原生的数据并行中，每个数据并行的组都会自己处理自己的数据，这带来的一个问题在于我们需要及时同步训练过程中的梯度以及优化器的状态。 最原生的方法就是我们在前向传播后，在对每一个层进行反向传播后进行一次同步，如下图所示。由于梯度得到了及时的同步，所有优化器的状态自然也就会变得相同。  代码分析 修改dataloader为分布式，从而使得每个dp进程每次获取到的数据batch是不相
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-06-14 20:53" pubdate>
+              2025-06-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/06/07/Picotron-Tutorial%20Tensor%20Parallel/" target="_self">
+          【Picotron-Tutorial】Tensor并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/07/Picotron-Tutorial%20Tensor%20Parallel/" target="_self">
+        <div>
+          理论分析分析的对象 $$Y&#x3D;X@W$$ 列并行需要给每个GPU都复制一份X（往往都是早就有了），然后对于W进行列维度的切分。最后每个GPU会有不同列的结果，最后会对其进行all_gather拼接得到结果。  行并行对于行并行，由于W的行数减小了，所以X的列数也要跟着变，所以首先需要将X进行列维度的拆分，划分到各个GPU卡上，然后与W进行相乘，得到的结果再进行all_reduce。  ML
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-06-07 20:53" pubdate>
+              2025-06-07
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/06/01/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E4%B8%AD%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/" target="_self">
           深度学习中反向传播及优化器使用详解
         </a>
@@ -760,142 +896,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-04-30 20:53" pubdate>
               2025-04-30
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/04/25/Transformer-KV%20cache%E6%B5%85%E6%9E%90/" target="_self">
-          Transformer-KV cache浅析
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/25/Transformer-KV%20cache%E6%B5%85%E6%9E%90/" target="_self">
-        <div>
-          推理回顾假设模型最终生成了“遥遥领先”4个字。 当模型生成第一个“遥”字时，input&#x3D;”&lt;s&gt;”, “&lt;s&gt;”是起始字符。Attention的计算如下：  为了看上去方便，我们暂时忽略scale项根号d， 但是要注意这个scale面试时经常考。 如上图所示，最终Attention的计算公式如下，（softmaxed 表示已经按行进行了softmax）:  以此类
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-04-25 20:53" pubdate>
-              2025-04-25
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/04/23/Transformer%20%E4%B8%ADDecoder-only%E3%80%81Encoder-only%E3%80%81Decoder-encoder%E6%9E%B6%E6%9E%84%E5%8C%BA%E5%88%AB/" target="_self">
-          Transformer 中Decoder-only、Encoder-only、Decoder-encoder架构区别
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/23/Transformer%20%E4%B8%ADDecoder-only%E3%80%81Encoder-only%E3%80%81Decoder-encoder%E6%9E%B6%E6%9E%84%E5%8C%BA%E5%88%AB/" target="_self">
-        <div>
-          不同架构的特点Encoder-Decoder 模型&#x20; 特点:包含编码器和解码器两个部分。编码器处理输入序列，生成上下文向量;解码器则根据编码器的输出生成目标序列。这个结构能够同时处理输入和输出序列的关联。  典型模型：T5(Text-to-Text Transfer Transformer) 、&#x42;ART  &#x20;应用:序列到序列任务，如机器翻译、摘要生成。&#x20;
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-04-23 20:53" pubdate>
-              2025-04-23
             </time>
           </div>
         

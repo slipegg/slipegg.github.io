@@ -266,6 +266,146 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/01/12/nano-vllm-main-class/" target="_self">
+          【Nano-vLLM源码分析（二）】关键类实现
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/12/nano-vllm-main-class/" target="_self">
+        <div>
+          Block相关 Block Manger是实现vLLM中提出的PagedAttention的关键，PagedAttention通过对KV Cache实现类似虚拟页表的逻辑Block分区与物理Block分区的划分来实现更灵活的显存管理。  BlockManager 相关代码主要负责 KV cache 的 block 分配&#x2F;回收，以及 prefix cache（前缀块复用）：把“完整的 bl
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-12 19:28" pubdate>
+              2026-01-12
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/vLLM/" class="category-chain-item">vLLM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/vLLM/">#vLLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/10/nano-vllm-process/" target="_self">
+          【Nano-vLLM源码分析（一）】环境配置及整体流程概览
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/10/nano-vllm-process/" target="_self">
+        <div>
+          环境配置 整体环境还是很干净的，跟着readme应该能很快配置起来。  不过我这里是下载了源代码，然后使用了容器nvcr.io/nvidia/pytorch:25.04-py3来挂载文件夹运行，在容器内还需要pip3 install transformers xxhash，这样就配置好了基本的python环境。  然后还需要下载Qwen3模型，因为Nano-vLLM目前只专门适配了它。这里read
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-10 19:23" pubdate>
+              2026-01-10
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/vLLM/" class="category-chain-item">vLLM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/vLLM/">#vLLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/01/09/vLLM-paper-note/" target="_self">
           【论文阅读】Efficient Memory Management for Large Language  Model Serving with PagedAttention（vLLM论文）
         </a>
@@ -819,148 +959,6 @@
               <a href="/tags/LLM/">#LLM</a>
             
               <a href="/tags/Megatron-LM/">#Megatron-LM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/13/llama3-pre-training-paper-note/" target="_self">
-          【论文阅读】The Llama 3 Herd of Models（Section 3 Pre-Training）
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/13/llama3-pre-training-paper-note/" target="_self">
-        <div>
-          链接： https://arxiv.org/abs/2407.21783  团队： META   背景 Llama 3发表于2024年7月，其是一个包含8B、70B和405B参数的多语言语言模型群，实验结果显示，Llama 3的旗舰模型在各种任务上的表现与当时领先的语言模型如GPT-4相当，接近最先进水平。并且其还开发了多模态扩展模型，支持图像识别、视频识别和语音理解功能。  Llama 3语言
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-13 16:59" pubdate>
-              2025-12-13
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
-            
-              <a href="/tags/Llama3/">#Llama3</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/08/Reducing-Activation-Paper-Note/" target="_self">
-          【论文阅读】Reducing Activation Recomputation in Large Transformer Models
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/08/Reducing-Activation-Paper-Note/" target="_self">
-        <div>
-          链接：: https://arxiv.org/pdf/2205.05198.pdf  发表会议：MLSYS’22(CCF-B)&#x20;  团队：NVIDIA   背景在论文发表的2022年看来，一些研究在Transformer大模型训练中会采用激活重计算而不是存储的方式来减少激活值所占存储，但是其问题在于会引入很多冗余计算的开销，导致训练效率降低。故本文提出了序列并行和选择性激活重计算方法，
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-08 15:15" pubdate>
-              2025-12-08
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         

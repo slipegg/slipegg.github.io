@@ -1,0 +1,981 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="环境配置 整体环境还是很干净的，跟着readme应该能很快配置起来。  不过我这里是下载了源代码，然后使用了容器nvcr.io&#x2F;nvidia&#x2F;pytorch:25.04-py3来挂载文件夹运行，在容器内还需要pip3 install transformers xxhash，这样就配置好了基本的python环境。  然后还需要下载Qwen3模型，因为Nano-vLLM目前只专门适配了它。这里read">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Nano-vLLM源码分析（一）】环境配置及整体流程概览">
+<meta property="og:url" content="http://example.com/2026/01/10/nano-vllm-process/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="环境配置 整体环境还是很干净的，跟着readme应该能很快配置起来。  不过我这里是下载了源代码，然后使用了容器nvcr.io&#x2F;nvidia&#x2F;pytorch:25.04-py3来挂载文件夹运行，在容器内还需要pip3 install transformers xxhash，这样就配置好了基本的python环境。  然后还需要下载Qwen3模型，因为Nano-vLLM目前只专门适配了它。这里read">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2026/01/10/nano-vllm-process/image.png">
+<meta property="article:published_time" content="2026-01-10T11:23:16.000Z">
+<meta property="article:modified_time" content="2026-01-12T11:27:23.153Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="vLLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2026/01/10/nano-vllm-process/image.png">
+  
+  
+  
+  <title>【Nano-vLLM源码分析（一）】环境配置及整体流程概览 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【Nano-vLLM源码分析（一）】环境配置及整体流程概览"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-01-10 19:23" pubdate>
+          2026年1月10日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          12k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          59 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【Nano-vLLM源码分析（一）】环境配置及整体流程概览</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="环境配置"><a href="#环境配置" class="headerlink" title="环境配置"></a>环境配置</h1><ul>
+<li><p>整体环境还是很干净的，跟着readme应该能很快配置起来。</p>
+</li>
+<li><p>不过我这里是下载了源代码，然后使用了容器<code>nvcr.io/nvidia/pytorch:25.04-py3</code>来挂载文件夹运行，在容器内还需要<code>pip3 install transformers xxhash</code>，这样就配置好了基本的python环境。</p>
+</li>
+<li><p>然后还需要下载Qwen3模型，因为Nano-vLLM目前只专门适配了它。这里readme使用的是比较老的<code>huggingface-cli</code>来下载，如果使用最新的版本，直接使用如下的代码即可将模型下载好，注意这里下载的位置是<code>./huggingface/Qwen3-0.6B</code>。</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs plain&#x20;text">hf download   Qwen/Qwen3-0.6B   --force-download   --local-dir ./huggingface/Qwen3-0.6B<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>然后修改<code>example.py</code>中的模型位置为<code>./huggingface/Qwen3-0.6B</code>再直接运行<code>python3 example.py</code>就可以运行了。运行结果如下：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs bash">root@830fe60dca79:/workspace/nano-vllm<span class="hljs-comment"># python3 example.py </span><br>`torch_dtype` is deprecated! Use `dtype` instead!<br>[<span class="hljs-string">&#x27;&lt;|im_start|&gt;user\nintroduce yourself&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n&#x27;</span>, <span class="hljs-string">&#x27;&lt;|im_start|&gt;user\nlist all prime numbers within 100&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n&#x27;</span>]<br>Generating: 100%|█████████████████████████| 2/2 [00:12&lt;00:00,  6.24s/it, Prefill=24tok/s, Decode=30tok/s]<br><br><br>Prompt: <span class="hljs-string">&#x27;&lt;|im_start|&gt;user\nintroduce yourself&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n&#x27;</span><br>Completion: <span class="hljs-string">&quot;&lt;think&gt;\nOkay, the user asked me to introduce myself. I need to make sure I respond in a friendly and helpful manner. Let me start by acknowledging their question. I should mention that I&#x27;m an AI assistant designed to help with various tasks. It&#x27;s important to add a bit about my capabilities, like answering questions, providing information, etc. I should also offer assistance in a conversational tone. Let me check if I&#x27;m using the right structure and if there&#x27;s anything else they might need. Alright, I think that covers it.\n&lt;/think&gt;\n\nHello! I&#x27;m an AI assistant designed to help you with a wide range of questions and tasks. I can answer questions, provide information, offer recommendations, and even assist with writing or other creative tasks. How can I help you today?&lt;|im_end|&gt;&quot;</span><br><br><br>Prompt: <span class="hljs-string">&#x27;&lt;|im_start|&gt;user\nlist all prime numbers within 100&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n&#x27;</span><br>Completion: <span class="hljs-string">&quot;&lt;think&gt;\nOkay, so I need to list all the prime numbers between 100. Let me think. First, I remember that a prime number is a number greater than 1 that has no divisors other than 1 and itself. So, starting from 100, I need to check each number to see if it&#x27;s prime. \n\nLet me start by recalling some prime numbers. The primes less than 100 are 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, and 83. Wait, but the question is about numbers between 100. So, starting from 100 upwards. \n\nLet me check each number. Starting with 100. Is 100 a prime? Well, 100 is even, so it&#x27;s divisible by 2. So 100 is not prime. Next is 1&quot;</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>注意到在运行过程中由于其使用的是GPU 0，故会分配GPU 0的大量显存，主要占用显存的地方是模型以及kv cache</li>
+</ul>
+<p><img src="/2026/01/10/nano-vllm-process/image.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="流程概览"><a href="#流程概览" class="headerlink" title="流程概览"></a>流程概览</h1><h2 id="项目文件"><a href="#项目文件" class="headerlink" title="项目文件"></a>项目文件</h2><p>首先整体概览一下项目的文件结构，如下所示，添加了一些介绍</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs markdown">.<br>├── assets                          # 项目展示资源（如 logo），不参与核心逻辑<br>│   └── logo.png<br>├── bench.py                        # 简单的推理性能测试脚本（吞吐 / 延迟）<br>├── example.py                      # 最小可运行示例，展示 Nano-vLLM 的基本使用方式<br>├── huggingface                     # 本地 HuggingFace 模型目录<br>│   └── Qwen3-0.6B                  # Qwen3-0.6B 模型权重与 tokenizer 文件<br>│       ├── config.json             # 模型结构与超参数配置<br>│       ├── generation<span class="hljs-emphasis">_config.json  # 默认生成参数</span><br><span class="hljs-emphasis">│       ├── LICENSE</span><br><span class="hljs-emphasis">│       ├── merges.txt              # BPE 合并规则</span><br><span class="hljs-emphasis">│       ├── model.safetensors       # 模型权重文件</span><br><span class="hljs-emphasis">│       ├── README.md</span><br><span class="hljs-emphasis">│       ├── tokenizer_</span>config.json   # tokenizer 配置<br>│       ├── tokenizer.json          # tokenizer 定义<br>│       └── vocab.json              # 词表<br>├── LICENSE<br>├── nanovllm                        # Nano-vLLM 核心代码<br>│   ├── config.py                   # 全局配置定义（设备、dtype、模型路径等）<br>│   ├── engine                      # 推理引擎核心实现（vLLM 风格）<br>│   │   ├── block<span class="hljs-emphasis">_manager.py        # KV Cache 的 block 管理与分配逻辑</span><br><span class="hljs-emphasis">│   │   ├── llm_</span>engine.py           # 推理主循环，驱动调度与模型执行<br>│   │   ├── model<span class="hljs-emphasis">_runner.py         # 封装模型 forward 的执行逻辑</span><br><span class="hljs-emphasis">│   │   ├── scheduler.py            # 序列级调度器，决定每一步执行哪些请求</span><br><span class="hljs-emphasis">│   │   └── sequence.py             # 生成序列的状态表示与管理</span><br><span class="hljs-emphasis">│   ├── <span class="hljs-strong">__init__</span>.py</span><br><span class="hljs-emphasis">│   ├── layers                      # Transformer 推理所需的基础算子</span><br><span class="hljs-emphasis">│   │   ├── activation.py           # 激活函数实现</span><br><span class="hljs-emphasis">│   │   ├── attention.py            # 自注意力计算与 KV Cache 访问</span><br><span class="hljs-emphasis">│   │   ├── embed_</span>head.py           # Embedding 与 LM Head<br>│   │   ├── layernorm.py            # LayerNorm 实现<br>│   │   ├── linear.py               # 线性层实现<br>│   │   ├── rotary<span class="hljs-emphasis">_embedding.py     # RoPE 位置编码</span><br><span class="hljs-emphasis">│   │   └── sampler.py              # 从 logits 中采样下一个 token</span><br><span class="hljs-emphasis">│   ├── llm.py                      # 对外暴露的 LLM 接口（继承自LLMEngine，目前里面是pass）</span><br><span class="hljs-emphasis">│   ├── models                      # 模型结构定义</span><br><span class="hljs-emphasis">│   │   └── qwen3.py                # Qwen3 模型的最小实现</span><br><span class="hljs-emphasis">│   ├── sampling_</span>params.py          # 文本生成的采样参数定义<br>│   └── utils                       # 工具模块<br>│       ├── context.py              # 推理上下文与辅助状态管理<br>│       └── loader.py               # HuggingFace 权重加载与映射<br>├── pyproject.toml                  # Python 项目与依赖配置<br>└── README.md                       # 项目整体说明<br><br></code></pre></td></tr></table></figure>
+
+<h2 id="整体流程"><a href="#整体流程" class="headerlink" title="整体流程"></a>整体流程</h2><p><code>example.py</code>的代码如下所示</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">from</span> nanovllm <span class="hljs-keyword">import</span> LLM, SamplingParams<br><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoTokenizer<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">main</span>():<br>    path = os.path.expanduser(<span class="hljs-string">&quot;./huggingface/Qwen3-0.6B/&quot;</span>)<br>    tokenizer = AutoTokenizer.from_pretrained(path)<br>    llm = LLM(path, enforce_eager=<span class="hljs-literal">True</span>, tensor_parallel_size=<span class="hljs-number">1</span>)<br><br>    sampling_params = SamplingParams(temperature=<span class="hljs-number">0.6</span>, max_tokens=<span class="hljs-number">256</span>)<br>    prompts = [<br>        <span class="hljs-string">&quot;introduce yourself&quot;</span>,<br>        <span class="hljs-string">&quot;list all prime numbers within 100&quot;</span>,<br>    ]<br>    prompts = [<br>        tokenizer.apply_chat_template(<br>            [&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: prompt&#125;],<br>            tokenize=<span class="hljs-literal">False</span>,<br>            add_generation_prompt=<span class="hljs-literal">True</span>,<br>        )<br>        <span class="hljs-keyword">for</span> prompt <span class="hljs-keyword">in</span> prompts<br>    ]<br>    outputs = llm.generate(prompts, sampling_params)<br><br>    <span class="hljs-keyword">for</span> prompt, output <span class="hljs-keyword">in</span> <span class="hljs-built_in">zip</span>(prompts, outputs):<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;\n&quot;</span>)<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Prompt: <span class="hljs-subst">&#123;prompt!r&#125;</span>&quot;</span>)<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Completion: <span class="hljs-subst">&#123;output[<span class="hljs-string">&#x27;text&#x27;</span>]!r&#125;</span>&quot;</span>)<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    main()<br><br></code></pre></td></tr></table></figure>
+
+<p>现在跟着example的执行过程大致梳理一下整体流程：</p>
+<ol>
+<li><p>根据<code>Qwen3-0.6B</code>文件夹内容初始化Tokenizer以及LLM模型</p>
+<ol>
+<li><code>LLM</code>是对<code>LLMEngine</code>的包装，主要是为了对齐vLLM的行为，其代码如下所示</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> nanovllm.engine.llm_engine <span class="hljs-keyword">import</span> LLMEngine<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">LLM</span>(<span class="hljs-title class_ inherited__">LLMEngine</span>):<br>    <span class="hljs-keyword">pass</span><br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>LLMEngine初始化的代码如下所示，其读取了配置文件，然后其支持TP并行，会加载TP个进程，每个进程运行对应的<code>ModelRunner</code>。其还配置了对应的tokenizer与scheduler</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">LLMEngine</span>:<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, model, **kwargs</span>):<br>        config_fields = &#123;field.name <span class="hljs-keyword">for</span> field <span class="hljs-keyword">in</span> fields(Config)&#125;<br>        config_kwargs = &#123;k: v <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> kwargs.items() <span class="hljs-keyword">if</span> k <span class="hljs-keyword">in</span> config_fields&#125;<br>        config = Config(model, **config_kwargs)<br>        self.ps = []<br>        self.events = []<br>        ctx = mp.get_context(<span class="hljs-string">&quot;spawn&quot;</span>)<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">1</span>, config.tensor_parallel_size):<br>            event = ctx.Event()<br>            process = ctx.Process(target=ModelRunner, args=(config, i, event))<br>            process.start()<br>            self.ps.append(process)<br>            self.events.append(event)<br>        self.model_runner = ModelRunner(config, <span class="hljs-number">0</span>, self.events)<br>        self.tokenizer = AutoTokenizer.from_pretrained(config.model, use_fast=<span class="hljs-literal">True</span>)<br>        config.eos = self.tokenizer.eos_token_id<br>        self.scheduler = Scheduler(config)<br>        atexit.register(self.exit)<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>配置sampling_params</p>
+<ol>
+<li>其代码如下所示：</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@dataclass</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">SamplingParams</span>:<br>    temperature: <span class="hljs-built_in">float</span> = <span class="hljs-number">1.0</span><br>    max_tokens: <span class="hljs-built_in">int</span> = <span class="hljs-number">64</span><br>    ignore_eos: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">False</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__post_init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-keyword">assert</span> self.temperature &gt; <span class="hljs-number">1e-10</span>, <span class="hljs-string">&quot;greedy sampling is not permitted&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>主要是支持配置：</p>
+<ol>
+<li><p><code>temperature</code>： $$p_i &#x3D; \mathrm{softmax}!\left(\frac{z_i}{T}\right)$$，T负责控制缩放程度，T小于1.0分布会更尖锐，大于1.0分布会更加平缓。其通过<code>assert self.temperature &gt; 1e-10</code>避免了完全确定性的输出</p>
+</li>
+<li><p><code>max_tokens</code>：最多生成的token数量</p>
+</li>
+<li><p><code>ignore_eos</code>：如果为<code>true</code>，即使生成 EOS，也继续生成直到达到 <code>max_tokens</code></p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>使用tokenizer模板转换prompt</p>
+<ol>
+<li>经过chat模板转换后，得到的<code>prompts</code>结果如下</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">[<span class="hljs-string">&#x27;&lt;|im_start|&gt;user\nintroduce yourself&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n&#x27;</span>, <span class="hljs-string">&#x27;&lt;|im_start|&gt;user\nlist all prime numbers within 100&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n&#x27;</span>]<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>通过<code>llm.generate(prompts, sampling_params)</code>调用得到生成结果</p>
+<ol>
+<li><code>generate</code>的相关代码如下所示：</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">generate</span>(<span class="hljs-params"></span><br><span class="hljs-params">    self,</span><br><span class="hljs-params">    prompts: <span class="hljs-built_in">list</span>[<span class="hljs-built_in">str</span>] | <span class="hljs-built_in">list</span>[<span class="hljs-built_in">list</span>[<span class="hljs-built_in">int</span>]],</span><br><span class="hljs-params">    sampling_params: SamplingParams | <span class="hljs-built_in">list</span>[SamplingParams],</span><br><span class="hljs-params">    use_tqdm: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">True</span>,</span><br><span class="hljs-params"></span>) -&gt; <span class="hljs-built_in">list</span>[<span class="hljs-built_in">str</span>]:<br>    <span class="hljs-keyword">if</span> use_tqdm:<br>        pbar = tqdm(total=<span class="hljs-built_in">len</span>(prompts), desc=<span class="hljs-string">&quot;Generating&quot;</span>, dynamic_ncols=<span class="hljs-literal">True</span>)<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">isinstance</span>(sampling_params, <span class="hljs-built_in">list</span>):<br>        sampling_params = [sampling_params] * <span class="hljs-built_in">len</span>(prompts)<br>    <span class="hljs-keyword">for</span> prompt, sp <span class="hljs-keyword">in</span> <span class="hljs-built_in">zip</span>(prompts, sampling_params):<br>        self.add_request(prompt, sp)<br>    outputs = &#123;&#125;<br>    prefill_throughput = decode_throughput = <span class="hljs-number">0.</span><br>    <span class="hljs-keyword">while</span> <span class="hljs-keyword">not</span> self.is_finished():<br>        t = perf_counter()<br>        output, num_tokens = self.step()<br>        <span class="hljs-keyword">if</span> use_tqdm:<br>            <span class="hljs-keyword">if</span> num_tokens &gt; <span class="hljs-number">0</span>:<br>                prefill_throughput = num_tokens / (perf_counter() - t)<br>            <span class="hljs-keyword">else</span>:<br>                decode_throughput = -num_tokens / (perf_counter() - t)<br>            pbar.set_postfix(&#123;<br>                <span class="hljs-string">&quot;Prefill&quot;</span>: <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;<span class="hljs-built_in">int</span>(prefill_throughput)&#125;</span>tok/s&quot;</span>,<br>                <span class="hljs-string">&quot;Decode&quot;</span>: <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;<span class="hljs-built_in">int</span>(decode_throughput)&#125;</span>tok/s&quot;</span>,<br>            &#125;)<br>        <span class="hljs-keyword">for</span> seq_id, token_ids <span class="hljs-keyword">in</span> output:<br>            outputs[seq_id] = token_ids<br>            <span class="hljs-keyword">if</span> use_tqdm:<br>                pbar.update(<span class="hljs-number">1</span>)<br>    outputs = [outputs[seq_id] <span class="hljs-keyword">for</span> seq_id <span class="hljs-keyword">in</span> <span class="hljs-built_in">sorted</span>(outputs.keys())]<br>    outputs = [&#123;<span class="hljs-string">&quot;text&quot;</span>: self.tokenizer.decode(token_ids), <span class="hljs-string">&quot;token_ids&quot;</span>: token_ids&#125; <span class="hljs-keyword">for</span> token_ids <span class="hljs-keyword">in</span> outputs]<br>    <span class="hljs-keyword">if</span> use_tqdm:<br>        pbar.close()<br>    <span class="hljs-keyword">return</span> outputs<br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>首先会将各prompt与sampling_param组合为<code>Sequence</code>然后加入到scheduler中的waiting队列中</p>
+<ol>
+<li><code>add_request</code>的代码如下所示</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">add_request</span>(<span class="hljs-params">self, prompt: <span class="hljs-built_in">str</span> | <span class="hljs-built_in">list</span>[<span class="hljs-built_in">int</span>], sampling_params: SamplingParams</span>):<br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">isinstance</span>(prompt, <span class="hljs-built_in">str</span>):<br>        prompt = self.tokenizer.encode(prompt)<br>    seq = <span class="hljs-type">Sequence</span>(prompt, sampling_params)<br>    self.scheduler.add(seq)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>其主要会将prompt转换为token id列表，如这里的<code>&#39;&lt;|im_start|&gt;user\nintroduce yourself&lt;|im_end|&gt;\n&lt;|im_start|&gt;assistant\n&#39;</code>会被转化为<code>[151644, 872, 198, 396, 47845, 6133, 151645, 198, 151644, 77091, 198]</code></p>
+</li>
+<li><p>然后scheduler.add的代码如下所示，就是直接append到waiting队列中</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">add</span>(<span class="hljs-params">self, seq: <span class="hljs-type">Sequence</span></span>):<br>    self.waiting.append(seq)<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>然后进入while循环，循环结束的条件是<code>self.is_finished()</code></p>
+<ol>
+<li>LLM_Engine的<code>is_finished()</code>的代码如下所示：</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">is_finished</span>(<span class="hljs-params">self</span>):<br>    <span class="hljs-keyword">return</span> self.scheduler.is_finished()<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>Scheduler</code>的is_finished代码如下所示，即介绍的标准就是两个队列中都没有请求</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">is_finished</span>(<span class="hljs-params">self</span>):<br>    <span class="hljs-keyword">return</span> <span class="hljs-keyword">not</span> self.waiting <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> self.running<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>在while循环中主要的就是不断执行<code>self.step()</code>，然后更新进度条，根据<code>perf_counter()</code>得到的运算时间以及生成的token数量<code>num_tokens</code>计算吞吐并将输出结果存储在<code>outputs</code>中</p>
+<ol>
+<li><code>self.step()</code>的代码如下所示</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">step</span>(<span class="hljs-params">self</span>):<br>    seqs, is_prefill = self.scheduler.schedule()<br>    token_ids = self.model_runner.call(<span class="hljs-string">&quot;run&quot;</span>, seqs, is_prefill)<br>    self.scheduler.postprocess(seqs, token_ids)<br>    outputs = [(seq.seq_id, seq.completion_token_ids) <span class="hljs-keyword">for</span> seq <span class="hljs-keyword">in</span> seqs <span class="hljs-keyword">if</span> seq.is_finished]<br>    num_tokens = <span class="hljs-built_in">sum</span>(<span class="hljs-built_in">len</span>(seq) <span class="hljs-keyword">for</span> seq <span class="hljs-keyword">in</span> seqs) <span class="hljs-keyword">if</span> is_prefill <span class="hljs-keyword">else</span> -<span class="hljs-built_in">len</span>(seqs)<br>    <span class="hljs-keyword">return</span> outputs, num_tokens<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>其主要就是从scheduler中获取到要运行的seqs</p>
+<ol>
+<li><code>scheduler.schedule()</code>的代码如下所示</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">schedule</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-built_in">tuple</span>[<span class="hljs-built_in">list</span>[<span class="hljs-type">Sequence</span>], <span class="hljs-built_in">bool</span>]:<br>    <span class="hljs-comment"># prefill</span><br>    scheduled_seqs = []<br>    num_seqs = <span class="hljs-number">0</span><br>    num_batched_tokens = <span class="hljs-number">0</span><br>    <span class="hljs-keyword">while</span> self.waiting <span class="hljs-keyword">and</span> num_seqs &lt; self.max_num_seqs:<br>        seq = self.waiting[<span class="hljs-number">0</span>]<br>        <span class="hljs-keyword">if</span> num_batched_tokens + <span class="hljs-built_in">len</span>(seq) &gt; self.max_num_batched_tokens <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> self.block_manager.can_allocate(seq):<br>            <span class="hljs-keyword">break</span><br>        num_seqs += <span class="hljs-number">1</span><br>        self.block_manager.allocate(seq)<br>        num_batched_tokens += <span class="hljs-built_in">len</span>(seq) - seq.num_cached_tokens<br>        seq.status = SequenceStatus.RUNNING<br>        self.waiting.popleft()<br>        self.running.append(seq)<br>        scheduled_seqs.append(seq)<br>    <span class="hljs-keyword">if</span> scheduled_seqs:<br>        <span class="hljs-keyword">return</span> scheduled_seqs, <span class="hljs-literal">True</span><br><br>    <span class="hljs-comment"># decode</span><br>    <span class="hljs-keyword">while</span> self.running <span class="hljs-keyword">and</span> num_seqs &lt; self.max_num_seqs:<br>        seq = self.running.popleft()<br>        <span class="hljs-keyword">while</span> <span class="hljs-keyword">not</span> self.block_manager.can_append(seq):<br>            <span class="hljs-keyword">if</span> self.running:<br>                self.preempt(self.running.pop())<br>            <span class="hljs-keyword">else</span>:<br>                self.preempt(seq)<br>                <span class="hljs-keyword">break</span><br>        <span class="hljs-keyword">else</span>:<br>            num_seqs += <span class="hljs-number">1</span><br>            self.block_manager.may_append(seq)<br>            scheduled_seqs.append(seq)<br>    <span class="hljs-keyword">assert</span> scheduled_seqs<br>    self.running.extendleft(<span class="hljs-built_in">reversed</span>(scheduled_seqs))<br>    <span class="hljs-keyword">return</span> scheduled_seqs, <span class="hljs-literal">False</span><br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>其划分为了两大阶段的处理，首先是对多个请求进行<code>prefill</code>处理：</p>
+<ol>
+<li><p>进入<code>prefill</code>的while循环的要求是<code>waiting</code>队列中有请求，并且现在获取的seq数量没有超过<code>max_num_seqs</code>限制。此外还要求新获取的seq叠加的<code>num_batched_tokens</code>要小于<code>self.max_num_batched_tokens</code>，并且<code>block_manager</code>还有足够的显存进行分配</p>
+</li>
+<li><p>然后正常在while循环中处理的主要流程就是<code>block_manager</code>为新的seq分配cache，seq状态修改为running，<code>num_batched_tokens</code>添加<code> len(seq) - seq.num_cached_tokens</code>，<code>waiting</code>队列<code>popleft</code>，<code>running</code>队列<code>append</code>，<code>scheduled_seqs</code>结果<code>append</code></p>
+</li>
+<li><p>如果最后<code>scheduled_seqs</code>确实获取了seq，就直接返回<code>scheduled_seqs</code>及True标明这一次调度只处理了<code>prefill</code></p>
+</li>
+</ol>
+</li>
+<li><p>如果没有prefill请求了，就去处理<code>decode</code>：</p>
+<ol>
+<li><p>进入<code>decode</code>的while循环要求<code>running</code>队列中有请求，并且现在获取的seq数量没有超过<code>max_num_seqs</code>限制</p>
+</li>
+<li><p>在循环中需要从<code>running</code>队列中<code>popleft</code>获取seq，然后通过<code>block_manager</code>查看是否还有足够的显存进行分配，如果没有就需要去抢占其他seq，优先抢占<code>running</code>队列最新来的seq，如果都抢占完了再抢占自己，不过如果抢占了自己就直接退出while循环了，因为确实没有显存了。如果有足够的显存或者抢占得到了足够的显存，那么就调用<code>block_manager</code>进行<code>may_append</code>分配显存，并且结果队列<code>scheduled_seqs</code> <code>append</code>该seq</p>
+</li>
+<li><p>最后返回结果队列<code>scheduled_seqs</code> 及False标明是decode处理</p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>然后调用<code>model_runner</code>运行模型推理</p>
+<ol>
+<li>这里调用的是<code>model_runner</code>的run函数，如下所示</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">run</span>(<span class="hljs-params">self, seqs: <span class="hljs-built_in">list</span>[<span class="hljs-type">Sequence</span>], is_prefill: <span class="hljs-built_in">bool</span></span>) -&gt; <span class="hljs-built_in">list</span>[<span class="hljs-built_in">int</span>]:<br>    input_ids, positions = self.prepare_prefill(seqs) <span class="hljs-keyword">if</span> is_prefill <span class="hljs-keyword">else</span> self.prepare_decode(seqs)<br>    temperatures = self.prepare_sample(seqs) <span class="hljs-keyword">if</span> self.rank == <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br>    logits = self.run_model(input_ids, positions, is_prefill)<br>    token_ids = self.sampler(logits, temperatures).tolist() <span class="hljs-keyword">if</span> self.rank == <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> <span class="hljs-literal">None</span><br>    reset_context()<br>    <span class="hljs-keyword">return</span> token_ids<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>其主要流程是依据是否是prefill来做一些kv cache的准备工作</p>
+</li>
+<li><p>然后运行模型得到运行结果</p>
+</li>
+<li><p>最后采样得到<code>token_ids</code>并返回</p>
+</li>
+</ul>
+</li>
+<li><p>然后执行scheduler的一些后处理流程</p>
+<ol>
+<li><code>postprocess</code>的相关代码如下所示，</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">postprocess</span>(<span class="hljs-params">self, seqs: <span class="hljs-built_in">list</span>[<span class="hljs-type">Sequence</span>], token_ids: <span class="hljs-built_in">list</span>[<span class="hljs-built_in">int</span>]</span>) -&gt; <span class="hljs-built_in">list</span>[<span class="hljs-built_in">bool</span>]:<br>    <span class="hljs-keyword">for</span> seq, token_id <span class="hljs-keyword">in</span> <span class="hljs-built_in">zip</span>(seqs, token_ids):<br>        seq.append_token(token_id)<br>        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">not</span> seq.ignore_eos <span class="hljs-keyword">and</span> token_id == self.eos) <span class="hljs-keyword">or</span> seq.num_completion_tokens == seq.max_tokens:<br>            seq.status = SequenceStatus.FINISHED<br>            self.block_manager.deallocate(seq)<br>            self.running.remove(seq)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>其主要是逐个遍历<code>token_ids</code>，并将推理结果<code>token_id</code>添加到seq中，然后检查如果没有忽略eos而当前就是eos或者已经到达最大长度了，就将seq状态修改为<code>FINISHED</code>，然后block_manager释放掉这个seq对应的显存，并且也将其从running队列中删除</li>
+</ul>
+</li>
+<li><p>如果seq是已经推理结束了是<code>FINISHED</code>状态就将其记录到outputs中，并计算中共处理了多少tokens，然后返回</p>
+</li>
+</ul>
+</li>
+<li><p>最后将<code>outputs</code>使用<code>tokenizer.decode</code>解码得到text，并将token_id与text都返回</p>
+</li>
+</ul>
+</li>
+<li><p>打印生成结果</p>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/vLLM/" class="category-chain-item">vLLM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/vLLM/" class="print-no-link">#vLLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【Nano-vLLM源码分析（一）】环境配置及整体流程概览</div>
+      <div>http://example.com/2026/01/10/nano-vllm-process/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年1月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/01/12/nano-vllm-main-class/" title="【Nano-vLLM源码分析（二）】关键类实现">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">【Nano-vLLM源码分析（二）】关键类实现</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/01/09/vLLM-paper-note/" title="【论文阅读】Efficient Memory Management for Large Language  Model Serving with PagedAttention（vLLM论文）">
+                        <span class="hidden-mobile">【论文阅读】Efficient Memory Management for Large Language  Model Serving with PagedAttention（vLLM论文）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
