@@ -266,6 +266,76 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/12/22/megatron-lm-pre-train-process/" target="_self">
+          【Megatron-LM源码分析（二）】-GPT模型pretrain流程
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/22/megatron-lm-pre-train-process/" target="_self">
+        <div>
+          本次查看Megatron-LM的版本是core_r0.14.0，查看的GPT训练文件是pretrain_gpt.py 入口函数main入口函数代码如下： 123456789101112131415161718if __name__ == &quot;__main__&quot;:    # Temporary for transition to core datasets    train_val
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-22 15:41" pubdate>
+              2025-12-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/12/14/megatron-lm-env-and-example/" target="_self">
           【Megatron-LM源码分析（一）】-环境配置与训练示例跑通
         </a>
@@ -860,74 +930,6 @@
     <span>></span>
     
   <a href="/categories/LLM/FSDP/" class="category-chain-item">FSDP</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" target="_self">
-          【Picotron-Tutorial】上下文并行
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" target="_self">
-        <div>
-          理论分析上下文并行的核心思想是将序列并行的方法（也就是沿序列长度进行拆分）的思路应用到已经采用张量并行的模块上。 对于上下文并行，就像序列并行一样，我们将沿序列维度拆分输入，但这次我们对整个模型进行拆分，而不仅仅是对之前Tensor+Sequence并行中涉及的部分模型。 拆分序列是横向的切割，所以不会影响大多数模块，如MLP和LayerNorm，因为它们对每个token的处理是独立的。 在计算梯
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-06-28 20:53" pubdate>
-              2025-06-28
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
   
   
 

@@ -4,6 +4,37 @@
   
   
   <entry>
+    <title>CS336-Assignment5-Alignment and Reasoning RL 作业总结</title>
+    <link href="/2026/01/26/CS336-assignment5/"/>
+    <url>/2026/01/26/CS336-assignment5/</url>
+    
+    <content type="html"><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><ul><li><p>原课程链接：<a href="https://stanford-cs336.github.io/spring2025/">https://stanford-cs336.github.io/spring2025/</a></p></li><li><p>原作业链接：<a href="https://github.com/stanford-cs336/assignment5-alignment">https://github.com/stanford-cs336/assignment5-alignment</a></p></li><li><p>自己写的版本在(注意只写了sft和grpo，没有写Expert Iteration for MATH）：<a href="https://github.com/slipegg/assignment5-alignment">https://github.com/slipegg/assignment5-alignment</a></p></li><li><p>主要参考资料：</p><ul><li><p><a href="https://github.com/Zhangkuns/Standford/_CS336/_LanguageModelingfromScratch/tree/main">https://github.com/Zhangkuns/Standford\_CS336\_LanguageModelingfromScratch/tree/main</a></p></li><li><p><a href="https://zhuanlan.zhihu.com/p/1992175622886269951">https://zhuanlan.zhihu.com/p/1992175622886269951</a></p></li></ul></li><li><p>数据集：由于课程作业里提到的数据集是私有数据集，所以没法直接用，这里用的是一个老哥用gptoss自制的数据集<a href="https://huggingface.co/datasets/garg-aayush/sft-cs336-assign5-datasets">https://huggingface.co/datasets/garg-aayush/sft-cs336-assign5-datasets</a></p></li></ul><h1 id="作业概述"><a href="#作业概述" class="headerlink" title="作业概述"></a>作业概述</h1><ol><li><p>首先是用原始的Qwen2.5-Math-1.5B在数据集问题上进行了Zero-Shot测试：</p><ul><li>这里的模板比较有意思，模板如下：</li></ul><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sql">A conversation <span class="hljs-keyword">between</span> <span class="hljs-keyword">User</span> <span class="hljs-keyword">and</span> Assistant. The <span class="hljs-keyword">User</span> asks a question, <span class="hljs-keyword">and</span> the Assistant solves it. The Assistant <span class="hljs-keyword">first</span> thinks about the reasoning process <span class="hljs-keyword">in</span> the mind <span class="hljs-keyword">and</span> <span class="hljs-keyword">then</span> provides the <span class="hljs-keyword">User</span> <span class="hljs-keyword">with</span> the answer. The reasoning process <span class="hljs-keyword">is</span> enclosed <span class="hljs-keyword">within</span> <span class="hljs-operator">&lt;</span>think<span class="hljs-operator">&gt;</span> <span class="hljs-operator">&lt;</span><span class="hljs-operator">/</span>think<span class="hljs-operator">&gt;</span> <span class="hljs-keyword">and</span> answer <span class="hljs-keyword">is</span> enclosed <span class="hljs-keyword">within</span> <span class="hljs-operator">&lt;</span>answer<span class="hljs-operator">&gt;</span> <span class="hljs-operator">&lt;</span><span class="hljs-operator">/</span>answer<span class="hljs-operator">&gt;</span> tags, respectively, i.e., <span class="hljs-operator">&lt;</span>think<span class="hljs-operator">&gt;</span> reasoning process here <span class="hljs-operator">&lt;</span><span class="hljs-operator">/</span>think<span class="hljs-operator">&gt;</span> <span class="hljs-operator">&lt;</span>answer<span class="hljs-operator">&gt;</span> answer here <span class="hljs-operator">&lt;</span><span class="hljs-operator">/</span>answer<span class="hljs-operator">&gt;</span>.<br><span class="hljs-keyword">User</span>: &#123;question&#125;<br>Assistant: <span class="hljs-operator">&lt;</span>think<span class="hljs-operator">&gt;</span><br></code></pre></td></tr></table></figure><ul><li><p>然后将问题放入到模板中，再放入到vllm中得到模型输出结果，再使用提供的专用的答案判决器来判断格式与答案的正确，其判决主要就是先正则匹配&lt;answer&gt; xxx &lt;&#x2F;answer&gt;中的内容，然后再对匹配出的内容与ground truth进行比较，从而使得0.5与1&#x2F;2这种表达格式都能够判断为相同。</p></li><li><p>测试下来结果如下，其实整体还是可以的，可以看到其思考的过程，格式也基本都是一些小错误：</p><ol><li><p>格式正确率：41.8%</p></li><li><p>答案正确率：17.0%</p></li><li><p>格式+答案正确率：17.0%</p></li></ol></li></ul></li><li><p>然后对Qwen2.5-Math-1.5B进行sft：</p><ul><li><p>这里数据集在制作时使用了gpt-oss-120b来生成了推理轨迹，这里主要的做法是使用已有的推理轨迹像预训练一样进行训练来让模型学会这种高阶模型的思考路径。</p></li><li><p>其整体训练流程也比较经典，就是读取推理轨迹数据集，然后向右移动一位作为label，目标是最大化模型输出label的概率。</p></li><li><p>运行结果如下，可以看到其最终的格式正确率可以提升到95%往上，其格式+答案正确率可以提升到75%以上，还是有很大提升的。</p></li></ul></li></ol><p><img src="/2026/01/26/CS336-assignment5/CS336-Assignment5-%E4%BD%9C%E4%B8%9A%E6%80%BB%E7%BB%93-image-3.png"></p><p><img src="/2026/01/26/CS336-assignment5/CS336-Assignment5-%E4%BD%9C%E4%B8%9A%E6%80%BB%E7%BB%93-image-2.png"></p><ul><li><p>然后对Qwen2.5-Math-1.5B使用grpo进行训练：</p><ul><li><p>使用强化学习进行训练不再需要更高深的模型或人类的思考轨迹，而是让模型进行自我探索，然后再依据探索的结果给予其相应的奖励。</p></li><li><p>在grpo中，每个问题会使用vllm推理得到一组答案，然后使用答案判决器判断每组内每个输出的得分，一个组内的得分会进行归一化，即<code>(reward_by_group - reward_mean) / (reward_std + advantage_eps)</code>，从而得到<code>advantage</code>，注意这里原始的grpo论文是除以了<code>reward_std</code>，但是后面有论文指出不应该除以<code>reward_std</code>，因为除以<code>reward_std</code>会导致模型倾向于输出得分类似的答案。</p></li><li><p>而后依据<code>advantage</code>，我们需要用actor再次依据prompt进行输出，从而得到重要性采样需要的概率，依据以上这些内容我们就可以计算出loss，其loss实际表示的是要更新的新模型与旧模型之间的概率差距，其整体训练倾向是使得模型输出正<code>advantage</code>的概率越来越高，输出负<code>advantage</code>的概率越来越低。</p></li><li><p>训练过程中比较不同的地方在于推理也需要加入到训练过程中来，从而也就导致了模型权重需要在推理与训练框架中流动。</p></li><li><p>最终训练结果如下所示，注意因为显存不足，所以训了140步左右就memory out了，但是看评测结果最终格式正确率快速上升到了98%，格式+答案正确率来到了62%往上。</p></li></ul></li></ul><p><img src="/2026/01/26/CS336-assignment5/CS336-Assignment5-%E4%BD%9C%E4%B8%9A%E6%80%BB%E7%BB%93-image.png"></p><p><img src="/2026/01/26/CS336-assignment5/CS336-Assignment5-%E4%BD%9C%E4%B8%9A%E6%80%BB%E7%BB%93-image-1.png"></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>LLM</category>
+      
+      <category>CS336</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>LLM</tag>
+      
+      <tag>RL</tag>
+      
+      <tag>CS336</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>基础强化学习学习笔记</title>
     <link href="/2026/01/16/basic-rl-learning/"/>
     <url>/2026/01/16/basic-rl-learning/</url>
