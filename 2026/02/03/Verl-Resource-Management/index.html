@@ -1,0 +1,868 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="注意查看的是0.4.1.x版本的Verl代码：https:&#x2F;&#x2F;github.com&#x2F;verl-project&#x2F;verl&#x2F;tree&#x2F;v0.4.1.x  任务与资源管理模式概览  整体的概览图如上所示：  物理层：存在多个实际的服务器，假设每个服务器是同构的，即GPU数量相同。  Ray资源层：一个服务器对应一个Placement_Group，一个GPU对应一个Bundle（Ray中程序运行的原子资">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Verl源码分析（一）】Verl资源管理模式">
+<meta property="og:url" content="http://example.com/2026/02/03/Verl-Resource-Management/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="注意查看的是0.4.1.x版本的Verl代码：https:&#x2F;&#x2F;github.com&#x2F;verl-project&#x2F;verl&#x2F;tree&#x2F;v0.4.1.x  任务与资源管理模式概览  整体的概览图如上所示：  物理层：存在多个实际的服务器，假设每个服务器是同构的，即GPU数量相同。  Ray资源层：一个服务器对应一个Placement_Group，一个GPU对应一个Bundle（Ray中程序运行的原子资">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2026/02/03/Verl-Resource-Management/Verl%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E6%A8%A1%E5%BC%8F-diagram.png">
+<meta property="article:published_time" content="2026-02-03T07:46:40.000Z">
+<meta property="article:modified_time" content="2026-02-09T07:50:55.174Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="RL">
+<meta property="article:tag" content="Verl">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2026/02/03/Verl-Resource-Management/Verl%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E6%A8%A1%E5%BC%8F-diagram.png">
+  
+  
+  
+  <title>【Verl源码分析（一）】Verl资源管理模式 - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【Verl源码分析（一）】Verl资源管理模式"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-02-03 15:46" pubdate>
+          2026年2月3日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          14k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          70 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【Verl源码分析（一）】Verl资源管理模式</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>注意查看的是0.4.1.x版本的Verl代码：<a target="_blank" rel="noopener" href="https://github.com/verl-project/verl/tree/v0.4.1.x">https://github.com/verl-project/verl/tree/v0.4.1.x</a></p>
+</blockquote>
+<h1 id="任务与资源管理模式概览"><a href="#任务与资源管理模式概览" class="headerlink" title="任务与资源管理模式概览"></a>任务与资源管理模式概览</h1><p><img src="/2026/02/03/Verl-Resource-Management/Verl%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E6%A8%A1%E5%BC%8F-diagram.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>整体的概览图如上所示：</p>
+<ul>
+<li><p><strong>物理层</strong>：存在多个实际的服务器，假设每个服务器是同构的，即GPU数量相同。</p>
+</li>
+<li><p><strong>Ray资源层</strong>：一个服务器对应一个<code>Placement_Group</code>，一个GPU对应一个<code>Bundle</code>（Ray中程序运行的原子资源），多个<code>Placement_Group</code>组成了<code>Resource Pool</code>，<code>Resource Pool</code>内的资源含量由用户决定，在示例中多只存在一个<code>Resource Pool</code>，即global_pool，实际自行配置时可以设置多个<code>Resource Pool</code>，但是注意一个角色只应该在一个<code>Resource Pool</code>内。</p>
+</li>
+<li><p><strong>关键类层</strong>：</p>
+<ul>
+<li><p>Verl会将一个<code>Resource Pool</code>中放置的各个角色的类合并到<code>WorkDict</code>中，如图中的actor_rollout、critic，在合并时会用一个map记录各个角色与类的关系，然后各个角色的类的带<code>MAGIC_ATTR</code>属性的函数都会以<code>&#123;角色名&#125;_&#123;函数名&#125;</code>的命名方式保存在<code>WorkDict</code>中；</p>
+</li>
+<li><p>然后其会用<code>RayWorkGroup</code>来包裹<code>WorkDict</code>，在初始化<code>RayWorkGroup</code>时会在<code>Resource Pool</code>上生成多个<code>WorkDict</code>实例并将其存储在自身的<code>workers</code>属性中，<code>Resource Pool</code>中的每个<code>Bundle</code>对应一个实例，此外它还会重新生成<code>WorkDict</code>中各个带<code>MAGIC_ATTR</code>属性的函数，使得在相同的函数名在<code>RayWorkGroup</code>会先执行dispatch再执行execute_fn再执行collect，后面会专门介绍；</p>
+</li>
+<li><p>但是实际使用不会用这个合并的<code>RayWorkGroup</code>类去调用各个实例，而是会进一步按角色生成多个角色专属<code>RayWorkGroup</code>，各角色的<code>RayWorkGroup</code>也存在相同的<code>workers</code>属性来与实例管理并且也存在相同的函数，不同点在于其会额外将自身角色的函数名修改回来，从<code>&#123;角色名&#125;_&#123;函数名&#125;</code>修改为<code>&#123;函数名&#125;</code>，这样这些<code>RayWorkerGroup</code>角色类就可以与原本的角色的类一样通过原函数名来调用。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="RayWorkerGroup函数调用"><a href="#RayWorkerGroup函数调用" class="headerlink" title="RayWorkerGroup函数调用"></a>RayWorkerGroup函数调用</h1><ul>
+<li><code>WorkDict Ins</code>是对<code>WorkDict</code>的ray actor的实例化，其有各个原角色类的初始化实例，如包含有”actor_rollout”角色的<code>ActorRolloutRefWorker</code>，包含”critic”角色的<code>CriticWorker</code>。其初始化时会遍历各个角色类中带<code>MAGIC_ATTR</code>属性的函数，将该函数以<code>&#123;角色名&#125;_&#123;函数名&#125;</code>的格式存储起来。代码如下所示。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># deprecated, switching to FusedWorker</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">create_colocated_worker_cls</span>(<span class="hljs-params">class_dict: <span class="hljs-built_in">dict</span>[<span class="hljs-built_in">str</span>, RayClassWithInitArgs]</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    This function should return a class instance that delegates the calls to every</span><br><span class="hljs-string">    cls in cls_dict</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    cls_dict = &#123;&#125;<br>    init_args_dict = &#123;&#125;<br>    worker_cls = _determine_fsdp_megatron_base_class([cls.cls.__ray_actor_class__.__mro__ <span class="hljs-keyword">for</span> cls <span class="hljs-keyword">in</span> class_dict.values()])<br>    <span class="hljs-keyword">assert</span> <span class="hljs-built_in">issubclass</span>(worker_cls, Worker), <span class="hljs-string">f&quot;worker_cls <span class="hljs-subst">&#123;worker_cls&#125;</span> should be a subclass of Worker&quot;</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;colocated worker base class <span class="hljs-subst">&#123;worker_cls&#125;</span>&quot;</span>)<br><br>    <span class="hljs-keyword">for</span> key, cls <span class="hljs-keyword">in</span> class_dict.items():<br>        cls_dict[key] = cls.cls<br>        init_args_dict[key] = &#123;<span class="hljs-string">&quot;args&quot;</span>: cls.args, <span class="hljs-string">&quot;kwargs&quot;</span>: cls.kwargs&#125;<br><br>    <span class="hljs-keyword">assert</span> cls_dict.keys() == init_args_dict.keys()<br><br>    <span class="hljs-comment"># <span class="hljs-doctag">TODO:</span> create a class with customizable name</span><br>    <span class="hljs-keyword">class</span> <span class="hljs-title class_">WorkerDict</span>(<span class="hljs-title class_ inherited__">worker_cls</span>):<br>        <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>            <span class="hljs-built_in">super</span>().__init__()<br>            self.worker_dict = &#123;&#125;<br>            <span class="hljs-keyword">for</span> key, user_defined_cls <span class="hljs-keyword">in</span> cls_dict.items():<br>                user_defined_cls = _unwrap_ray_remote(user_defined_cls)<br>                <span class="hljs-comment"># directly instantiate the class without remote</span><br>                <span class="hljs-comment"># in worker class, e.g. &lt;verl.single_controller.base.worker.Worker&gt;</span><br>                <span class="hljs-comment"># when DISABLE_WORKER_INIT == 1 it will return immediately</span><br>                <span class="hljs-keyword">with</span> patch.<span class="hljs-built_in">dict</span>(os.environ, &#123;<span class="hljs-string">&quot;DISABLE_WORKER_INIT&quot;</span>: <span class="hljs-string">&quot;1&quot;</span>&#125;):<br>                    self.worker_dict[key] = user_defined_cls(*init_args_dict[key].get(<span class="hljs-string">&quot;args&quot;</span>, ()), **init_args_dict[key].get(<span class="hljs-string">&quot;kwargs&quot;</span>, &#123;&#125;))<br><br>    <span class="hljs-comment"># now monkey-patch the methods from inner class to WorkerDict</span><br>    <span class="hljs-keyword">for</span> key, user_defined_cls <span class="hljs-keyword">in</span> cls_dict.items():<br>        user_defined_cls = _unwrap_ray_remote(user_defined_cls)<br>        _bind_workers_method_to_parent(WorkerDict, key, user_defined_cls)<br><br>    remote_cls = ray.remote(WorkerDict)<br>    remote_cls = RayClassWithInitArgs(cls=remote_cls)<br>    <span class="hljs-keyword">return</span> remote_cls<br><br><span class="hljs-comment"># deprecated, switching to FusedWorker</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">_bind_workers_method_to_parent</span>(<span class="hljs-params">cls, key, user_defined_cls</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    Binds the methods of each worker to the WorkerDict.</span><br><span class="hljs-string">    Note that we only bind public methods that are decorated by register</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br><br>    <span class="hljs-keyword">for</span> method_name <span class="hljs-keyword">in</span> <span class="hljs-built_in">dir</span>(user_defined_cls):<br>        <span class="hljs-keyword">try</span>:<br>            method = <span class="hljs-built_in">getattr</span>(user_defined_cls, method_name)<br>            <span class="hljs-keyword">assert</span> <span class="hljs-built_in">callable</span>(method), <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;method_name&#125;</span> in <span class="hljs-subst">&#123;user_defined_cls&#125;</span> is not callable&quot;</span><br>        <span class="hljs-keyword">except</span> Exception:<br>            <span class="hljs-comment"># if it is a property, it will fail because Class doesn&#x27;t have instance property</span><br>            <span class="hljs-keyword">continue</span><br><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(method, MAGIC_ATTR):<br>            <span class="hljs-comment"># breakpoint()</span><br><br>            <span class="hljs-keyword">def</span> <span class="hljs-title function_">generate_function</span>(<span class="hljs-params">name, key=key</span>):<br>                <span class="hljs-keyword">def</span> <span class="hljs-title function_">func</span>(<span class="hljs-params">self, *args, **kwargs</span>):<br>                    <span class="hljs-comment"># dispatch to the actual worker</span><br>                    <span class="hljs-keyword">return</span> <span class="hljs-built_in">getattr</span>(self.worker_dict[key], name)(*args, **kwargs)<br><br>                <span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">async_func</span>(<span class="hljs-params">self, *args, **kwargs</span>):<br>                    <span class="hljs-comment"># dispatch to the actual worker</span><br>                    <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> <span class="hljs-built_in">getattr</span>(self.worker_dict[key], name)(*args, **kwargs)<br><br>                wrapper = async_func <span class="hljs-keyword">if</span> inspect.iscoroutinefunction(method) <span class="hljs-keyword">else</span> func  <span class="hljs-comment"># noqa: B023</span><br><br>                <span class="hljs-keyword">return</span> wrapper<br><br>            func = generate_function(method_name)<br>            <span class="hljs-comment"># pass MAGIC_ATTR for outer worker group</span><br>            attrs = <span class="hljs-built_in">getattr</span>(method, MAGIC_ATTR)<br>            <span class="hljs-built_in">setattr</span>(func, MAGIC_ATTR, attrs)<br>            <span class="hljs-keyword">try</span>:<br>                <span class="hljs-comment"># bind direct rollout method to class without prefix</span><br>                <span class="hljs-keyword">if</span> attrs[<span class="hljs-string">&quot;dispatch_mode&quot;</span>] == Dispatch.DIRECT_ROLLOUT_METHOD <span class="hljs-keyword">and</span> <span class="hljs-string">&quot;rollout&quot;</span> <span class="hljs-keyword">in</span> key:<br>                    <span class="hljs-keyword">assert</span> <span class="hljs-keyword">not</span> <span class="hljs-built_in">hasattr</span>(cls, method_name), <span class="hljs-string">f&quot;conflict direct rollout method <span class="hljs-subst">&#123;method_name&#125;</span> with role <span class="hljs-subst">&#123;key&#125;</span>&quot;</span><br>                    <span class="hljs-built_in">setattr</span>(cls, method_name, func)<br>                    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;bind role <span class="hljs-subst">&#123;key&#125;</span> method <span class="hljs-subst">&#123;method_name&#125;</span> to class <span class="hljs-subst">&#123;cls&#125;</span>&quot;</span>)<br>                <span class="hljs-keyword">else</span>:<br>                    method_name_with_prefix = key + <span class="hljs-string">&quot;_&quot;</span> + method_name<br>                    <span class="hljs-built_in">setattr</span>(cls, method_name_with_prefix, func)<br>            <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>                <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">f&quot;Fail to set method_name <span class="hljs-subst">&#123;method_name&#125;</span>&quot;</span>) <span class="hljs-keyword">from</span> e<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p><code>RayWorkGroup</code>在初始化时会对<code>WorkDict</code>中带<code>MAGIC_ATTR</code>属性的函数进行进一步包装，其主要是根据<code>MAGIC_ATTR</code>属性获取dispatch_fn、collect_fn、execute_fn，然后将函数的执行使用<code>func_generator</code>包裹为先dispatch_fn广播参数，再调用execute_fn进行执行，最后使用collect_fn收集结果。代码如下所示。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><code class="hljs python">    <span class="hljs-keyword">def</span> <span class="hljs-title function_">_bind_worker_method</span>(<span class="hljs-params">self, user_defined_cls, func_generator</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;Binds worker methods to the WorkerGroup based on registered attributes.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Args:</span><br><span class="hljs-string">            user_defined_cls (type): The class containing methods to bind</span><br><span class="hljs-string">            func_generator (Callable): Function that generates the bound method</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Returns:</span><br><span class="hljs-string">            List[str]: List of method names that were successfully bound</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        method_names = []<br>        <span class="hljs-keyword">for</span> method_name <span class="hljs-keyword">in</span> <span class="hljs-built_in">dir</span>(user_defined_cls):<br>            <span class="hljs-keyword">try</span>:<br>                method = <span class="hljs-built_in">getattr</span>(user_defined_cls, method_name)<br>                <span class="hljs-keyword">assert</span> <span class="hljs-built_in">callable</span>(method), <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;method_name&#125;</span> in <span class="hljs-subst">&#123;user_defined_cls&#125;</span> is not callable&quot;</span><br>            <span class="hljs-keyword">except</span> Exception:<br>                <span class="hljs-comment"># if it is a property, it will fail because Class doesn&#x27;t have instance property</span><br>                <span class="hljs-keyword">continue</span><br><br>            <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(method, MAGIC_ATTR):<br>                <span class="hljs-comment"># this method is decorated by register</span><br>                attribute = <span class="hljs-built_in">getattr</span>(method, MAGIC_ATTR)<br>                <span class="hljs-keyword">assert</span> <span class="hljs-built_in">isinstance</span>(attribute, <span class="hljs-type">Dict</span>), <span class="hljs-string">f&quot;attribute must be a dictionary. Got <span class="hljs-subst">&#123;<span class="hljs-built_in">type</span>(attribute)&#125;</span>&quot;</span><br>                <span class="hljs-keyword">assert</span> <span class="hljs-string">&quot;dispatch_mode&quot;</span> <span class="hljs-keyword">in</span> attribute, <span class="hljs-string">&quot;attribute must contain dispatch_mode in its key&quot;</span><br><br>                dispatch_mode = attribute[<span class="hljs-string">&quot;dispatch_mode&quot;</span>]<br>                execute_mode = attribute[<span class="hljs-string">&quot;execute_mode&quot;</span>]<br>                blocking = attribute[<span class="hljs-string">&quot;blocking&quot;</span>]<br><br>                <span class="hljs-comment"># get dispatch fn</span><br>                <span class="hljs-keyword">if</span> <span class="hljs-built_in">isinstance</span>(dispatch_mode, Dispatch):<br>                    <span class="hljs-comment"># get default dispatch fn</span><br>                    fn = get_predefined_dispatch_fn(dispatch_mode=dispatch_mode)<br>                    dispatch_fn = fn[<span class="hljs-string">&quot;dispatch_fn&quot;</span>]<br>                    collect_fn = fn[<span class="hljs-string">&quot;collect_fn&quot;</span>]<br>                <span class="hljs-keyword">else</span>:<br>                    <span class="hljs-keyword">assert</span> <span class="hljs-built_in">isinstance</span>(dispatch_mode, <span class="hljs-built_in">dict</span>)<br>                    <span class="hljs-keyword">assert</span> <span class="hljs-string">&quot;dispatch_fn&quot;</span> <span class="hljs-keyword">in</span> dispatch_mode<br>                    <span class="hljs-keyword">assert</span> <span class="hljs-string">&quot;collect_fn&quot;</span> <span class="hljs-keyword">in</span> dispatch_mode<br>                    dispatch_fn = dispatch_mode[<span class="hljs-string">&quot;dispatch_fn&quot;</span>]<br>                    collect_fn = dispatch_mode[<span class="hljs-string">&quot;collect_fn&quot;</span>]<br><br>                <span class="hljs-comment"># get execute_fn_name</span><br>                execute_mode = get_predefined_execute_fn(execute_mode=execute_mode)<br>                wg_execute_fn_name = execute_mode[<span class="hljs-string">&quot;execute_fn_name&quot;</span>]<br><br>                <span class="hljs-comment"># get execute_fn from string</span><br>                <span class="hljs-keyword">try</span>:<br>                    execute_fn = <span class="hljs-built_in">getattr</span>(self, wg_execute_fn_name)<br>                    <span class="hljs-keyword">assert</span> <span class="hljs-built_in">callable</span>(execute_fn), <span class="hljs-string">&quot;execute_fn must be callable&quot;</span><br>                <span class="hljs-keyword">except</span> Exception:<br>                    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;execute_fn <span class="hljs-subst">&#123;wg_execute_fn_name&#125;</span> is invalid&quot;</span>)<br>                    <span class="hljs-keyword">raise</span><br><br>                <span class="hljs-comment"># bind a new method to the RayWorkerGroup</span><br>                func = func_generator(<br>                    self,<br>                    method_name,<br>                    dispatch_fn=dispatch_fn,<br>                    collect_fn=collect_fn,<br>                    execute_fn=execute_fn,<br>                    blocking=blocking,<br>                )<br><br>                <span class="hljs-keyword">try</span>:<br>                    <span class="hljs-built_in">setattr</span>(self, method_name, func)<br>                    method_names.append(method_name)<br>                <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> e:<br>                    <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">f&quot;Fail to set method_name <span class="hljs-subst">&#123;method_name&#125;</span>&quot;</span>) <span class="hljs-keyword">from</span> e<br><br>        <span class="hljs-keyword">return</span> method_names<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">func_generator</span>(<span class="hljs-params">self, method_name, dispatch_fn, collect_fn, execute_fn, blocking</span>):<br>    <span class="hljs-keyword">class</span> <span class="hljs-title class_">Functor</span>:<br>        <span class="hljs-keyword">def</span> <span class="hljs-title function_">__call__</span>(<span class="hljs-params">this, *args, **kwargs</span>):<br>            args, kwargs = dispatch_fn(self, *args, **kwargs)<br>            padding_count = kwargs.pop(_padding_size_key, <span class="hljs-number">0</span>)<br>            output = execute_fn(method_name, *args, **kwargs)<br>            <span class="hljs-keyword">if</span> blocking:<br>                output = ray.get(output)<br>            output = collect_fn(self, output)<br>            <span class="hljs-keyword">if</span> padding_count &gt; <span class="hljs-number">0</span>:<br>                <span class="hljs-keyword">if</span> <span class="hljs-built_in">isinstance</span>(output, DataProto):<br>                    indices = [i <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-built_in">len</span>(output))][:-padding_count]<br>                    output = output.select_idxs(indices)<br>                <span class="hljs-keyword">elif</span> <span class="hljs-built_in">isinstance</span>(output, <span class="hljs-built_in">list</span>):<br>                    output = output[:-padding_count]<br>            <span class="hljs-keyword">return</span> output<br><br>    <span class="hljs-comment"># use class type to pass the method_name to get a better observability</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-built_in">type</span>(method_name, (Functor,), &#123;&#125;)()<br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p><code>dispatch_fn</code>、<code>collect_fn</code>：支持自定义也支持从默认提供的函数中获取，默认提供的有以下这些。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-string">DISPATCH_MODE_FN_REGISTRY</span> <span class="hljs-string">=</span> &#123;<br>    <span class="hljs-attr">Dispatch.ONE_TO_ALL:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_one_to_all</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_all_to_all</span>,<br>    &#125;,<br>    <span class="hljs-attr">Dispatch.ALL_TO_ALL:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_all_to_all</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_all_to_all</span>,<br>    &#125;,<br>    <span class="hljs-attr">Dispatch.MEGATRON_COMPUTE:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_megatron_compute</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_megatron_compute</span>,<br>    &#125;,<br>    <span class="hljs-attr">Dispatch.MEGATRON_PP_AS_DP:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_megatron_pp_as_dp</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_megatron_pp_as_dp</span>,<br>    &#125;,<br>    <span class="hljs-attr">Dispatch.MEGATRON_PP_ONLY:</span> &#123;<span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_one_to_all</span>, <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_megatron_pp_only</span>&#125;,<br>    <span class="hljs-attr">Dispatch.MEGATRON_COMPUTE_PROTO:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_megatron_compute_data_proto</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_megatron_compute_data_proto</span>,<br>    &#125;,<br>    <span class="hljs-attr">Dispatch.MEGATRON_PP_AS_DP_PROTO:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_megatron_pp_as_dp_data_proto</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_megatron_pp_as_dp_data_proto</span>,<br>    &#125;,<br>    <span class="hljs-attr">Dispatch.DP_COMPUTE:</span> &#123;<span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_dp_compute</span>, <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_dp_compute</span>&#125;,<br>    <span class="hljs-attr">Dispatch.DP_COMPUTE_PROTO:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_dp_compute_data_proto</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_dp_compute_data_proto</span>,<br>    &#125;,<br>    <span class="hljs-attr">Dispatch.DP_COMPUTE_PROTO_WITH_FUNC:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_dp_compute_data_proto_with_func</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_dp_compute_data_proto</span>,<br>    &#125;,<br>    <span class="hljs-attr">Dispatch.DP_COMPUTE_METRIC:</span> &#123;<span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dispatch_dp_compute_data_proto</span>, <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">collect_dp_compute</span>&#125;,<br>    <span class="hljs-attr">Dispatch.DIRECT_ROLLOUT_METHOD:</span> &#123;<br>        <span class="hljs-attr">&quot;dispatch_fn&quot;:</span> <span class="hljs-string">dummy_direct_rollout_call</span>,<br>        <span class="hljs-attr">&quot;collect_fn&quot;:</span> <span class="hljs-string">dummy_direct_rollout_call</span>,<br>    &#125;,<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>这里专门将Dispatch.ONE_TO_ALL提出来查看，对于dispatch_fn其主要作用是将参数复制<code>world_size</code>份，因为后面每个<code>WorkDict Ins</code>都会取对应位置的参数进行运行。这里复杂一些的策略会涉及到将数据切分给各个Ins以及如何收集各个Ins的结果等。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">dispatch_one_to_all</span>(<span class="hljs-params">worker_group, *args, **kwargs</span>):<br>    args = <span class="hljs-built_in">tuple</span>([arg] * worker_group.world_size <span class="hljs-keyword">for</span> arg <span class="hljs-keyword">in</span> args)<br>    kwargs = &#123;k: [v] * worker_group.world_size <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> kwargs.items()&#125;<br>    <span class="hljs-keyword">return</span> args, kwargs<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">collect_all_to_all</span>(<span class="hljs-params">worker_group, output</span>):<br>    <span class="hljs-keyword">return</span> output<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><code>execute_fn</code>：预定义的fn有<code>execute_all</code>和<code>execute_rank_zero</code>，<code>RayWorkerGroup</code>类中相关实现如下所示。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_predefined_execute_fn</span>(<span class="hljs-params">execute_mode</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    Note that here we only asks execute_all and execute_rank_zero to be implemented</span><br><span class="hljs-string">    Leave the choice of how these two functions handle argument &#x27;blocking&#x27; to users</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    predefined_execute_mode_fn = &#123;<br>        Execute.ALL: &#123;<span class="hljs-string">&quot;execute_fn_name&quot;</span>: <span class="hljs-string">&quot;execute_all&quot;</span>&#125;,<br>        Execute.RANK_ZERO: &#123;<span class="hljs-string">&quot;execute_fn_name&quot;</span>: <span class="hljs-string">&quot;execute_rank_zero&quot;</span>&#125;,<br>    &#125;<br>    <span class="hljs-keyword">return</span> predefined_execute_mode_fn[execute_mode]<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>execute_all</code>就是遍历各个worker（即<code>WorkDict Ins</code>）使用对应的参数来调用各个worker中对应的函数来执行。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">RayWorkerGroup</span>(<span class="hljs-title class_ inherited__">WorkerGroup</span>):<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">execute_all</span>(<span class="hljs-params">self, method_name: <span class="hljs-built_in">str</span>, *args, **kwargs</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;Alias for execute_all_async.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Args:</span><br><span class="hljs-string">            method_name: Name of the method to execute</span><br><span class="hljs-string">            *args: Positional arguments for the method</span><br><span class="hljs-string">            **kwargs: Keyword arguments for the method</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Returns:</span><br><span class="hljs-string">            List of remote object references to the method executions</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.execute_all_async(method_name, *args, **kwargs)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">execute_all_async</span>(<span class="hljs-params">self, method_name: <span class="hljs-built_in">str</span>, *args, **kwargs</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;Execute a method on all workers asynchronously.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Args:</span><br><span class="hljs-string">            method_name: Name of the method to execute</span><br><span class="hljs-string">            *args: Positional arguments for the method</span><br><span class="hljs-string">            **kwargs: Keyword arguments for the method</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Returns:</span><br><span class="hljs-string">            List of remote object references to the method executions</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        <span class="hljs-comment"># Here, we assume that if all arguments in args and kwargs are lists,</span><br>        <span class="hljs-comment"># and their lengths match len(self._workers), we&#x27;ll distribute each</span><br>        <span class="hljs-comment"># element in these lists to the corresponding worker</span><br>        <span class="hljs-comment"># print(f&quot;execute_all_async: method &#123;method_name&#125;(&#123;args&#125;, &#123;kwargs&#125;)&quot;)</span><br>        length = <span class="hljs-built_in">len</span>(self._workers)<br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">all</span>(<span class="hljs-built_in">isinstance</span>(arg, <span class="hljs-built_in">list</span>) <span class="hljs-keyword">for</span> arg <span class="hljs-keyword">in</span> args) <span class="hljs-keyword">and</span> <span class="hljs-built_in">all</span>(<span class="hljs-built_in">isinstance</span>(kwarg, <span class="hljs-built_in">list</span>) <span class="hljs-keyword">for</span> kwarg <span class="hljs-keyword">in</span> kwargs.values()):<br>            <span class="hljs-keyword">if</span> <span class="hljs-built_in">all</span>(<span class="hljs-built_in">len</span>(arg) == length <span class="hljs-keyword">for</span> arg <span class="hljs-keyword">in</span> args) <span class="hljs-keyword">and</span> <span class="hljs-built_in">all</span>(<span class="hljs-built_in">len</span>(kwarg) == length <span class="hljs-keyword">for</span> kwarg <span class="hljs-keyword">in</span> kwargs.values()):<br>                <span class="hljs-comment"># print(f&quot;splitting args and kwargs into &#123;length&#125; shards&quot;)</span><br>                result = []<br>                <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(length):<br>                    sliced_args = <span class="hljs-built_in">tuple</span>(arg[i] <span class="hljs-keyword">for</span> arg <span class="hljs-keyword">in</span> args)<br>                    sliced_kwargs = &#123;k: v[i] <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> kwargs.items()&#125;<br>                    result.append(self._execute_remote_single_worker(self._workers[i], method_name, *sliced_args, **sliced_kwargs))<br>                <span class="hljs-keyword">return</span> result<br><br>        <span class="hljs-keyword">return</span> [self._execute_remote_single_worker(worker, method_name, *args, **kwargs) <span class="hljs-keyword">for</span> worker <span class="hljs-keyword">in</span> self._workers]<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">_execute_remote_single_worker</span>(<span class="hljs-params">self, worker, method_name: <span class="hljs-built_in">str</span>, *args, **kwargs</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;Execute a method on a single worker remotely.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Args:</span><br><span class="hljs-string">            worker: The worker actor handle</span><br><span class="hljs-string">            method_name: Name of the method to execute</span><br><span class="hljs-string">            *args: Positional arguments for the method</span><br><span class="hljs-string">            **kwargs: Keyword arguments for the method</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Returns:</span><br><span class="hljs-string">            Remote object reference to the method execution</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        <span class="hljs-keyword">if</span> self.fused_worker_used <span class="hljs-keyword">and</span> method_name <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> self.method_names:<br>            remote_call = <span class="hljs-built_in">getattr</span>(worker, self.fused_worker_execute_fn_name)<br>            <span class="hljs-keyword">return</span> remote_call.remote(<span class="hljs-string">f&quot;<span class="hljs-subst">&#123;self.sub_cls_name&#125;</span>_fwmn_<span class="hljs-subst">&#123;method_name&#125;</span>&quot;</span>, *args, **kwargs)<br>        <span class="hljs-comment"># fused worker not used</span><br>        remote_call = <span class="hljs-built_in">getattr</span>(worker, method_name)<br>        <span class="hljs-keyword">return</span> remote_call.remote(*args, **kwargs)<br>     <br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>execute_rank_zero</code>就是顾名思义只在workers[0]中执行。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">RayWorkerGroup</span>(<span class="hljs-title class_ inherited__">WorkerGroup</span>):<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">execute_rank_zero</span>(<span class="hljs-params">self, method_name: <span class="hljs-built_in">str</span>, *args, **kwargs</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;Alias for execute_rank_zero_async.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Args:</span><br><span class="hljs-string">            method_name: Name of the method to execute</span><br><span class="hljs-string">            *args: Positional arguments for the method</span><br><span class="hljs-string">            **kwargs: Keyword arguments for the method</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Returns:</span><br><span class="hljs-string">            Remote object reference to the method execution</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self.execute_rank_zero_async(method_name, *args, **kwargs)<br>        <br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">execute_rank_zero_async</span>(<span class="hljs-params">self, method_name: <span class="hljs-built_in">str</span>, *args, **kwargs</span>):<br>        <span class="hljs-string">&quot;&quot;&quot;Execute a method on rank zero worker asynchronously.</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Args:</span><br><span class="hljs-string">            method_name: Name of the method to execute</span><br><span class="hljs-string">            *args: Positional arguments for the method</span><br><span class="hljs-string">            **kwargs: Keyword arguments for the method</span><br><span class="hljs-string"></span><br><span class="hljs-string">        Returns:</span><br><span class="hljs-string">            Remote object reference to the method execution</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        <span class="hljs-keyword">return</span> self._execute_remote_single_worker(self._workers[<span class="hljs-number">0</span>], method_name, *args, **kwargs)<br></code></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Verl/" class="category-chain-item">Verl</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/RL/" class="print-no-link">#RL</a>
+      
+        <a href="/tags/Verl/" class="print-no-link">#Verl</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【Verl源码分析（一）】Verl资源管理模式</div>
+      <div>http://example.com/2026/02/03/Verl-Resource-Management/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年2月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/01/29/Verl-Install-Demo/" title="Verl安装&amp;Demo跑通&amp;Vscode Debug（低版本Cuda&amp;容器安装）">
+                        <span class="hidden-mobile">Verl安装&amp;Demo跑通&amp;Vscode Debug（低版本Cuda&amp;容器安装）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

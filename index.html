@@ -266,6 +266,150 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/02/03/Verl-Resource-Management/" target="_self">
+          【Verl源码分析（一）】Verl资源管理模式
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/03/Verl-Resource-Management/" target="_self">
+        <div>
+          注意查看的是0.4.1.x版本的Verl代码：https://github.com/verl-project/verl/tree/v0.4.1.x  任务与资源管理模式概览  整体的概览图如上所示：  物理层：存在多个实际的服务器，假设每个服务器是同构的，即GPU数量相同。  Ray资源层：一个服务器对应一个Placement_Group，一个GPU对应一个Bundle（Ray中程序运行的原子资
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-02-03 15:46" pubdate>
+              2026-02-03
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Verl/" class="category-chain-item">Verl</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/RL/">#RL</a>
+            
+              <a href="/tags/Verl/">#Verl</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/01/29/Verl-Install-Demo/" target="_self">
+          Verl安装&amp;Demo跑通&amp;Vscode Debug（低版本Cuda&amp;容器安装）
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/29/Verl-Install-Demo/" target="_self">
+        <div>
+          由于手上只有4090，所以驱动比较老，如下所示，所以使用的是verl 0.4.1.x的版本(https://github.com/verl-project/verl/tree/v0.4.1.x) 12345678910111213$ nvidia-smiThu Jan 29 15:55:02 2026       +-----------------------------------------
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-29 15:41" pubdate>
+              2026-01-29
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Verl/" class="category-chain-item">Verl</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/RL/">#RL</a>
+            
+              <a href="/tags/Verl/">#Verl</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/01/26/CS336-assignment5/" target="_self">
           CS336-Assignment5-Alignment and Reasoning RL 作业总结
         </a>
@@ -819,148 +963,6 @@
               <a href="/tags/LLM/">#LLM</a>
             
               <a href="/tags/Megatron-LM/">#Megatron-LM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/26/megatron-lm-profiler/" target="_self">
-          【Megatron-LM源码分析（三）】-性能分析
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/26/megatron-lm-profiler/" target="_self">
-        <div>
-          在算力利用率方面，Megatron-LM支持通过Pytorch Profiler和Nsys进行分析，注意这两者在Megatron-LM中是互斥的。  PyTorch Profiler：框架原生工具，更高层，侧重于 Python&#x2F;PyTorch 算子层级，可以看到代码级的调用链，适合识别 Python 端的慢算子、内存泄漏、调度开销。  Nsys：系统级追踪工具，更底层，侧重于 CUDA
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-26 15:47" pubdate>
-              2025-12-26
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/22/ScheMoE-paper-note/" target="_self">
-          【论文阅读】ScheMoE:An Extensible Mixture-of-Experts  Distributed Training System with Tasks Scheduling
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/22/ScheMoE-paper-note/" target="_self">
-        <div>
-          链接：https://dl.acm.org/doi/10.1145/3627703.3650083  发表会议：EuroSys ‘24(CCF-A)&#x20;  团队：哈工大、香港科技、华为   背景 Moe架构的大模型愈发流行，而Moe流程中存在将数据通过通信转发给对应GPU上专家的行为，如下图是数据并行与专家并行的示例，这种通信行为会导致系统训练效率降低。    现有的优化Moe训练效率的
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-22 21:58" pubdate>
-              2025-12-22
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/MoE/">#MoE</a>
             
           </div>
         
