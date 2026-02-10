@@ -266,6 +266,76 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/12/28/megatron-lm-ddp/" target="_self">
+          【Megatron-LM源码分析（四）】-DDP数据并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/28/megatron-lm-ddp/" target="_self">
+        <div>
+          数据并行存在多种，最简单的就是DDP，每个DP都拥有完整的模型，然后在每个batch结束后在DP间同步梯度，最后统一进行优化器更新。再复杂一些的数据宾县会上ZERO技术，将模型、梯度、优化器状态等进行切分。 这里主要关注最简单的DDP，主要关注DP并行组如何划分，如果做个各个DP读取不同的数据，以及训练过程中如何做到梯度同步。 DP并行组查看megatron/core/parallel_state
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-28 15:50" pubdate>
+              2025-12-28
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/12/26/megatron-lm-profiler/" target="_self">
           【Megatron-LM源码分析（三）】-性能分析
         </a>
@@ -848,74 +918,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-08-19 20:53" pubdate>
               2025-08-19
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/k8s/kubelet/" class="category-chain-item">kubelet</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/k8s/">#k8s</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/08/11/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-Pod%E7%AE%A1%E7%90%86/" target="_self">
-          【k8s kubelet 源代码阅读（一）】-Pod管理
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/11/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-Pod%E7%AE%A1%E7%90%86/" target="_self">
-        <div>
-          关键组件介绍probeManager当一个pod被kubelet感知到之后，就会调用probeManager的AddPod来为各个容器启动探针，监控状态变化。具体执行如下：  获取所有的pod.Spec.Containers以及pod中支持重新启动的initContainers，然后逐个处理  如果这个容器配置了StartupProbe或者ReadinessProbe或者LivenessProbe
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-08-11 20:53" pubdate>
-              2025-08-11
             </time>
           </div>
         

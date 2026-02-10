@@ -266,6 +266,78 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/02/03/Verl-Data-Process/" target="_self">
+          【Verl源码分析（二）】Verl中的数据流动
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/03/Verl-Data-Process/" target="_self">
+        <div>
+          注意查看的是0.4.1.x版本的Verl代码：https://github.com/verl-project/verl/tree/v0.4.1.x  下面给出verl/trainer/ppo/ray_trainer.py中RayPPOTrainer.fit简化后的核心流程代码，也就是Verl中训练的核心流程，下面以此为核心从数据流动的视角进行介绍： 12345678910111213141516
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-02-03 16:37" pubdate>
+              2026-02-03
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Verl/" class="category-chain-item">Verl</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/RL/">#RL</a>
+            
+              <a href="/tags/Verl/">#Verl</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/02/03/Verl-Resource-Management/" target="_self">
           【Verl源码分析（一）】Verl资源管理模式
         </a>
@@ -893,76 +965,6 @@
               <a href="/tags/LLM/">#LLM</a>
             
               <a href="/tags/MoE/">#MoE</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/28/megatron-lm-ddp/" target="_self">
-          【Megatron-LM源码分析（四）】-DDP数据并行
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/28/megatron-lm-ddp/" target="_self">
-        <div>
-          数据并行存在多种，最简单的就是DDP，每个DP都拥有完整的模型，然后在每个batch结束后在DP间同步梯度，最后统一进行优化器更新。再复杂一些的数据宾县会上ZERO技术，将模型、梯度、优化器状态等进行切分。 这里主要关注最简单的DDP，主要关注DP并行组如何划分，如果做个各个DP读取不同的数据，以及训练过程中如何做到梯度同步。 DP并行组查看megatron/core/parallel_state
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-28 15:50" pubdate>
-              2025-12-28
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
             
           </div>
         

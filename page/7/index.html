@@ -266,6 +266,76 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2024/03/28/linearizability/" target="_self">
+          分布式系统中的线性一致性
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2024/03/28/linearizability/" target="_self">
+        <div>
+          前言分布式一致性指的是在同一个系统中，不同客户端操作看到的数据之间的关系。这里重点关注的是网络键值存储系统中的一致性模型。 首先为什么这有可能出现问题呢？主要是来源于分布式系统中特有的问题，包括：  并发读&#x2F;写 副本 缓存 故障、恢复 重传 …  这些问题就有可能导致系统出现意想不到的场景，比如如下是一个简单的生产者代码： 12put(&quot;result&quot;, 27)put
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2024-03-28 11:36" pubdate>
+              2024-03-28
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/MIT6-824/" class="category-chain-item">MIT6.824</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/MIT6-824/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">#分布式</a>
+            
+              <a href="/tags/MIT6-824/">#MIT6.824</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2024/03/19/MIT6-824lab2B/" target="_self">
           【MIT6.824】lab2B-log replication 实现笔记
         </a>
@@ -865,67 +935,6 @@
               <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
             
               <a href="/tags/GFS/">#GFS</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2023/12/01/IDEA%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91%E9%80%89%E9%A1%B9%E4%B8%A2%E5%A4%B1%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95/" target="_self">
-          IDEA远程开发选项丢失修复方法
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2023/12/01/IDEA%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91%E9%80%89%E9%A1%B9%E4%B8%A2%E5%A4%B1%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%B3%95/" target="_self">
-        <div>
-          今天打开IDEA发现远程开发选项没有了：  发现全网也没有什么提到过这个错误的，所有捣鼓了好久还进行了IDEA的重装也一直都没有解决，最后查看IDEA官方的介绍文档才发现了问题所在：Remote Development Gateway插件被关闭了 故而解决方法就是点击IDEA的设置选项卡，在插件(plugs)选项中重新勾选Remote Development Gateway来启用该插件即可  点击
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2023-12-01 17:03" pubdate>
-              2023-12-01
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E5%85%B6%E4%BB%96/" class="category-chain-item">其他</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/IDEA/">#IDEA</a>
             
           </div>
         
