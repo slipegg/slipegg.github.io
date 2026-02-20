@@ -266,6 +266,78 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/02/20/Verl-train-inference/" target="_self">
+          【Verl源码分析（三）】Verl中训练引擎与推理引擎共置处理（以FSDP、vLLM为例）
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/02/20/Verl-train-inference/" target="_self">
+        <div>
+          Verl在进行强化学习训练时，既需要使用推理引擎执行推理采样，也需要训练引擎进行模型更新，所以需要使用两类引擎，故这里以FSDP训练引擎和vLLM推理引擎为例对Verl的相关处理进行介绍。  注意查看的是0.4.1.x版本的Verl代码：https://github.com/verl-project/verl/tree/v0.4.1.x  初始化如前所述（https://slipegg.githu
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-02-20 16:50" pubdate>
+              2026-02-20
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Verl/" class="category-chain-item">Verl</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/RL/">#RL</a>
+            
+              <a href="/tags/Verl/">#Verl</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/02/03/Verl-Data-Process/" target="_self">
           【Verl源码分析（二）】Verl中的数据流动
         </a>
@@ -893,78 +965,6 @@
               <a href="/tags/LLM/">#LLM</a>
             
               <a href="/tags/Megatron-LM/">#Megatron-LM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/28/ByteScale-paper-note/" target="_self">
-          【论文阅读】ByteScale:Efficient Scaling of LLM Training with a  2048K Context Length on More Than 12,000
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/28/ByteScale-paper-note/" target="_self">
-        <div>
-          链接：https://arxiv.org/abs/2502.21231  团队：ByteDance   背景 为了提升大语言模型的长上下文能力，长文本的训练是有必要的，经过通过Flash Attention技术可以将Attention相关计算的显存占用降低为O(S)，但是计算量依旧为O(S^2)，这会极大的消耗显存和算力。  为了降低显存开销，传统的方法是使用静态的数据并行叠加上下文并行，即固定
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-28 23:08" pubdate>
-              2025-12-28
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/MoE/">#MoE</a>
             
           </div>
         

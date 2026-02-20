@@ -266,6 +266,74 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/08/19/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%BA%8C%E3%80%91-%E8%8A%82%E7%82%B9%E7%8A%B6%E6%80%81%E4%B8%8A%E6%8A%A5/" target="_self">
+          【k8s kubelet 源代码阅读（二）】-节点状态上报
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/19/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%BA%8C%E3%80%91-%E8%8A%82%E7%82%B9%E7%8A%B6%E6%80%81%E4%B8%8A%E6%8A%A5/" target="_self">
+        <div>
+          主处理流程在kubelet的Run中会调用相应的代码进行节点状态更新，代码如下： 123456789101112131415161718192021222324252627282930if kl.kubeClient != nil &#123;    // Start two go-routines to update the status.    //    // The first will
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-08-19 20:53" pubdate>
+              2025-08-19
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/k8s/" class="category-chain-item">k8s</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/k8s/kubelet/" class="category-chain-item">kubelet</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/k8s/">#k8s</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/08/11/k8s%20kubelet%E6%BA%90%E4%BB%A3%E7%A0%81%E9%98%85%E8%AF%BB%E3%80%90%E4%B8%80%E3%80%91-Pod%E7%AE%A1%E7%90%86/" target="_self">
           【k8s kubelet 源代码阅读（一）】-Pod管理
         </a>
@@ -828,74 +896,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-05-25 20:53" pubdate>
               2025-05-25
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/" target="_self">
-          GPU架构概览
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/10/GPU%E6%9E%B6%E6%9E%84%E7%AE%80%E4%BB%8B/" target="_self">
-        <div>
-          GPU架构概览物理体系架构下图是A100的物理体系架构：  绿色部分是计算核心   在 NVidia 的 GPU 里，最基本的处理单元是SP（Streaming Processor），A100中，64SP会组成一个SM（streaming Multiprocessor），SM是GPU中调度的基础单元，A100中总共具有108个SM，所以得到共有108*64&#x3D;6192个计算核心。   中间
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-05-10 20:53" pubdate>
-              2025-05-10
             </time>
           </div>
         
