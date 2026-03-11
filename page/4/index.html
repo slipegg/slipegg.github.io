@@ -266,6 +266,74 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/06/14/Picotron-Tutorial%20%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C/" target="_self">
+          【Picotron-Tutorial】数据并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/14/Picotron-Tutorial%20%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C/" target="_self">
+        <div>
+          原生数据并行理论分析在原生的数据并行中，每个数据并行的组都会自己处理自己的数据，这带来的一个问题在于我们需要及时同步训练过程中的梯度以及优化器的状态。 最原生的方法就是我们在前向传播后，在对每一个层进行反向传播后进行一次同步，如下图所示。由于梯度得到了及时的同步，所有优化器的状态自然也就会变得相同。  代码分析 修改dataloader为分布式，从而使得每个dp进程每次获取到的数据batch是不相
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-06-14 20:53" pubdate>
+              2025-06-14
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/06/07/Picotron-Tutorial%20Tensor%20Parallel/" target="_self">
           【Picotron-Tutorial】Tensor并行
         </a>
@@ -828,74 +896,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-04-30 20:53" pubdate>
               2025-04-30
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/04/25/Transformer-KV%20cache%E6%B5%85%E6%9E%90/" target="_self">
-          Transformer-KV cache浅析
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/25/Transformer-KV%20cache%E6%B5%85%E6%9E%90/" target="_self">
-        <div>
-          推理回顾假设模型最终生成了“遥遥领先”4个字。 当模型生成第一个“遥”字时，input&#x3D;”&lt;s&gt;”, “&lt;s&gt;”是起始字符。Attention的计算如下：  为了看上去方便，我们暂时忽略scale项根号d， 但是要注意这个scale面试时经常考。 如上图所示，最终Attention的计算公式如下，（softmaxed 表示已经按行进行了softmax）:  以此类
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-04-25 20:53" pubdate>
-              2025-04-25
             </time>
           </div>
         
