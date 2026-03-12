@@ -266,6 +266,80 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/03/11/Search-R1-Paper-Note/" target="_self">
+          【论文阅读】Search-R1:Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/03/11/Search-R1-Paper-Note/" target="_self">
+        <div>
+          背景大语言模型虽然已经具备很强的推理能力，但一旦问题依赖外部知识、最新信息或多跳检索，单靠参数记忆往往不够。常见做法有两类：  RAG，先检索再生成，但RAG 的检索往往是一次性的，不能处理多跳检索；  把搜索引擎当作工具，让模型边想边查。目前这类方法主要依赖prompt注入或者通过sft来增强。其问题在于模型通常并没有在训练中真正学会“如何搜索”。   于是作者提出 Search-R1：把搜索引
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-03-11 21:44" pubdate>
+              2026-03-11
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/RLHF/">#RLHF</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/03/10/k8s-agentsandbox-agentcube/" target="_self">
           K8s中的Sandbox编排浅析（Agent-sandbox&amp;Agentcube解析）
         </a>
@@ -903,76 +977,6 @@
               <a href="/tags/LLM/">#LLM</a>
             
               <a href="/tags/RL/">#RL</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/01/12/nano-vllm-main-class/" target="_self">
-          【Nano-vLLM源码分析（二）】关键类实现
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/12/nano-vllm-main-class/" target="_self">
-        <div>
-          Block相关 Block Manger是实现vLLM中提出的PagedAttention的关键，PagedAttention通过对KV Cache实现类似虚拟页表的逻辑Block分区与物理Block分区的划分来实现更灵活的显存管理。  BlockManager 相关代码主要负责 KV cache 的 block 分配&#x2F;回收，以及 prefix cache（前缀块复用）：把“完整的 bl
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-01-12 19:28" pubdate>
-              2026-01-12
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/vLLM/" class="category-chain-item">vLLM</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/vLLM/">#vLLM</a>
             
           </div>
         

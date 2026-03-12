@@ -266,6 +266,76 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2026/01/12/nano-vllm-main-class/" target="_self">
+          【Nano-vLLM源码分析（二）】关键类实现
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2026/01/12/nano-vllm-main-class/" target="_self">
+        <div>
+          Block相关 Block Manger是实现vLLM中提出的PagedAttention的关键，PagedAttention通过对KV Cache实现类似虚拟页表的逻辑Block分区与物理Block分区的划分来实现更灵活的显存管理。  BlockManager 相关代码主要负责 KV cache 的 block 分配&#x2F;回收，以及 prefix cache（前缀块复用）：把“完整的 bl
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-01-12 19:28" pubdate>
+              2026-01-12
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/vLLM/" class="category-chain-item">vLLM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/vLLM/">#vLLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2026/01/10/nano-vllm-process/" target="_self">
           【Nano-vLLM源码分析（一）】环境配置及整体流程概览
         </a>
@@ -850,76 +920,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-12-22 15:41" pubdate>
               2025-12-22
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/12/14/megatron-lm-env-and-example/" target="_self">
-          【Megatron-LM源码分析（一）】-环境配置与训练示例跑通
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/14/megatron-lm-env-and-example/" target="_self">
-        <div>
-          环境配置 下载代码：  1git clone https://github.com/NVIDIA/Megatron-LM.git   切换到稳定分支：  1git checkout -b core_r0.14.0 origin/core_r0.14.0   拉取指定docker镜像：  1docker pull nvcr.io/nvidia/pytorch:25.04-py3  最小示例示例运行流
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-12-14 13:38" pubdate>
-              2025-12-14
             </time>
           </div>
         

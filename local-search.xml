@@ -4,6 +4,39 @@
   
   
   <entry>
+    <title>【论文阅读】Search-R1:Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning</title>
+    <link href="/2026/03/11/Search-R1-Paper-Note/"/>
+    <url>/2026/03/11/Search-R1-Paper-Note/</url>
+    
+    <content type="html"><![CDATA[<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>大语言模型虽然已经具备很强的推理能力，但一旦问题依赖<strong>外部知识</strong>、<strong>最新信息</strong>或<strong>多跳检索</strong>，单靠参数记忆往往不够。常见做法有两类：</p><ul><li><p>RAG，先检索再生成，但RAG 的检索往往是一次性的，不能处理多跳检索；</p></li><li><p>把搜索引擎当作工具，让模型边想边查。目前这类方法主要依赖<strong>prompt</strong>注入或者通过<strong>sft</strong>来增强。其问题在于<strong>模型通常并没有在训练中真正学会“如何搜索”。</strong></p></li></ul><p>于是作者提出 <strong>Search-R1</strong>：把<strong>搜索引擎</strong>直接放进<strong>强化学习</strong>环境里，让模型在<strong>推理</strong>过程中<strong>自主决定</strong>何时搜、搜什么、如何结合搜索结果来继续推理，最后再将“推理 + 搜索 + 再推理”作为一个完整轨迹来训练。</p><h1 id="方法思路"><a href="#方法思路" class="headerlink" title="方法思路"></a>方法思路</h1><h2 id="总体流程"><a href="#总体流程" class="headerlink" title="总体流程"></a>总体流程</h2><p>整个流程可以概括成下面几步：</p><ul><li><p>输入一个问题后，模型先在 <code>&lt;think&gt;...&lt;/think&gt;</code> 中进行思考。</p></li><li><p>如果觉得缺少信息，就生成一个 <code>&lt;search&gt;...&lt;/search&gt;</code> 查询。</p></li><li><p>系统检测到搜索标记后，调用搜索引擎，返回结果，并包装成 <code>&lt;information&gt;...&lt;/information&gt;</code> 插入上下文。</p></li><li><p>模型继续基于已有推理和新检索内容往下生成。</p></li><li><p>当模型认为信息足够时，在 <code>&lt;answer&gt;...&lt;/answer&gt;</code> 中给出最终答案。</p></li></ul><p>这种设计的重点在于：<strong>搜索不是固定前置步骤，而是嵌入在推理过程中</strong>。模型可以边想边搜，多轮迭代。</p><p>下图对其PPO训练和GRPO训练两类流程进行了说明：</p><p><img src="/2026/03/11/Search-R1-Paper-Note/%E3%80%90%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E3%80%91Search-R1!%20Training%20LLMs%20to%20Reason%20and%20Leverage%20Search%20Engines%20with%20Reinforcement%20Learning-image-6.png"></p><h2 id="Rollout中的多轮搜索调用"><a href="#Rollout中的多轮搜索调用" class="headerlink" title="Rollout中的多轮搜索调用"></a>Rollout中的多轮搜索调用</h2><p>文把搜索引擎视为环境的一部分，在 rollout 时允许模型进行多轮交互。模型每次先生成一段当前 action，如果匹配发现生成了 <code>&lt;/search&gt;</code>，就解析出查询词并执行检索，然后将检索的内容追加到结果中，继续推理，如有需要还可以继续search。</p><p>为了避免无限search，其还设置了一个最大 action budget这个机制使得 Search-R1 能处理需要<strong>分步定位信息</strong>、<strong>逐步验证结论</strong>的复杂问答任务，如果action超过了指定轮数就会直接返回生成的结果。</p><p><img src="/2026/03/11/Search-R1-Paper-Note/%E3%80%90%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E3%80%91Search-R1!%20Training%20LLMs%20to%20Reason%20and%20Leverage%20Search%20Engines%20with%20Reinforcement%20Learning-image-7.png"></p><h2 id="RL训练设置"><a href="#RL训练设置" class="headerlink" title="RL训练设置"></a>RL训练设置</h2><h3 id="强化学习目标函数"><a href="#强化学习目标函数" class="headerlink" title="强化学习目标函数"></a>强化学习目标函数</h3><p>论文把目标写成：在给定输入 $x$ 和搜索引擎 $R$ 的条件下，最大化模型生成轨迹的期望奖励，同时加入与参考模型之间的 KL 正则，都是一些经典做法。</p><ul><li>对于PPO训练，其公式为：</li></ul><p><img src="/2026/03/11/Search-R1-Paper-Note/%E3%80%90%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E3%80%91Search-R1!%20Training%20LLMs%20to%20Reason%20and%20Leverage%20Search%20Engines%20with%20Reinforcement%20Learning-image-3.png"></p><ul><li>对于GRPO训练，其公式为：</li></ul><p><img src="/2026/03/11/Search-R1-Paper-Note/%E3%80%90%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E3%80%91Search-R1!%20Training%20LLMs%20to%20Reason%20and%20Leverage%20Search%20Engines%20with%20Reinforcement%20Learning-image-5.png"></p><h3 id="训练Prompt模板"><a href="#训练Prompt模板" class="headerlink" title="训练Prompt模板"></a>训练Prompt模板</h3><p>其训练时使用的Prompt模板如下：</p><p><img src="/2026/03/11/Search-R1-Paper-Note/%E3%80%90%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E3%80%91Search-R1!%20Training%20LLMs%20to%20Reason%20and%20Leverage%20Search%20Engines%20with%20Reinforcement%20Learning-image-4.png"></p><h3 id="奖励模型"><a href="#奖励模型" class="headerlink" title="奖励模型"></a>奖励模型</h3><p>只用了结果奖励，对比结果是否正确，没有用过程奖励。虽然这样比较朴素但确实能训起来。</p><h1 id="实验效果"><a href="#实验效果" class="headerlink" title="实验效果"></a>实验效果</h1><h2 id="实验配置"><a href="#实验配置" class="headerlink" title="实验配置"></a>实验配置</h2><ul><li><p>在 7 个问答数据集上评测，覆盖一般问答和多跳问答两类任务：</p><ul><li><p>General QA：NQ、TriviaQA、PopQA</p></li><li><p>Multi-Hop QA：HotpotQA、2WikiMultiHopQA、Musique、Bamboogle</p></li></ul></li><li><p>基础模型：</p><ul><li><p>Qwen2.5-3B（Base &#x2F; Instruct）</p></li><li><p>Qwen2.5-7B（Base &#x2F; Instruct）</p></li></ul></li><li><p>对比方法：</p><ul><li><p>无检索的推理：Direct Inference、CoT</p></li><li><p>基于检索的推理：RAG、IRCoT、Search-o1</p></li><li><p>基于微调的方式方法：SFT、另一种R1方法、Rejection Sampling</p></li></ul></li><li><p>为了保证公平，论文统一使用：</p><ul><li><p>2018 Wikipedia 作为知识库</p></li><li><p>top-3 passages 作为默认检索数</p></li><li><p>NQ + HotpotQA 合并训练集</p></li><li><p>精确匹配作为评测指标</p></li></ul></li></ul><h2 id="实验结果"><a href="#实验结果" class="headerlink" title="实验结果"></a>实验结果</h2><p>整体结果很强，Search-R1 在大多数设置下都优于基线。</p><p>下面是PPO的结果：</p><p><img src="/2026/03/11/Search-R1-Paper-Note/%E3%80%90%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E3%80%91Search-R1!%20Training%20LLMs%20to%20Reason%20and%20Leverage%20Search%20Engines%20with%20Reinforcement%20Learning-image.png"></p><p>下面是PPO与GRPO对比的结果，PPO明显更强一些：</p><p><img src="/2026/03/11/Search-R1-Paper-Note/%E3%80%90%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E3%80%91Search-R1!%20Training%20LLMs%20to%20Reason%20and%20Leverage%20Search%20Engines%20with%20Reinforcement%20Learning-image-1.png"></p><p>下图是训练的一些细节，可以看到GRPO收敛的更快，但最终奖励差不多。</p><p><img src="/2026/03/11/Search-R1-Paper-Note/%E3%80%90%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB%E3%80%91Search-R1!%20Training%20LLMs%20to%20Reason%20and%20Leverage%20Search%20Engines%20with%20Reinforcement%20Learning-image-2.png"></p><h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>个人认为主要贡献是跑通了使用强化学习来进行search调用增强的一整个流程，整体的设计并没有说很惊艳的部分，但是有些细节确实是值得注意的，并且也确实是跑出来效果了，RL有时真是力大砖飞。</p><p>看这篇论文目前谷歌学术上的引用数已经到了740了，我认为同期应该有很多人在做类似的事情，不过这篇应该是最快且效果最好的那一批，并且其开源了代码也是进一步扩大了其影响力。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>LLM</category>
+      
+      <category>基础知识</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>论文阅读</tag>
+      
+      <tag>LLM</tag>
+      
+      <tag>Agent</tag>
+      
+      <tag>RLHF</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>K8s中的Sandbox编排浅析（Agent-sandbox&amp;Agentcube解析）</title>
     <link href="/2026/03/10/k8s-agentsandbox-agentcube/"/>
     <url>/2026/03/10/k8s-agentsandbox-agentcube/</url>

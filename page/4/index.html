@@ -266,6 +266,74 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/" target="_self">
+          【Picotron-Tutorial】流水线并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/" target="_self">
+        <div>
+          Afab并行理论分析最简单的pipeline并行就是将模型划分为好几层，然后分别放置在不同的GPU上依次进行前向传播和后先传播，如下图所示。但是这带来的最大的问题是效率过低，存在很多空闲时刻。   一个16层模型的流水线并行示例，该模型分布在4块GPU上。数字表示层编号。  假设$t_f$ 和$t_b$ 分别是单个微批次在流水线的一个阶段上进行前向传播和反向传播所需的时间（通常假设 $t_b\ap
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-06-24 20:53" pubdate>
+              2025-06-24
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/06/14/Picotron-Tutorial%20%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C/" target="_self">
           【Picotron-Tutorial】数据并行
         </a>
@@ -848,74 +916,6 @@
     <span>></span>
     
   <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/04/30/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%98%BE%E5%AD%98%E5%8D%A0%E7%94%A8/" target="_self">
-          大模型显存占用浅析
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/04/30/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%98%BE%E5%AD%98%E5%8D%A0%E7%94%A8/" target="_self">
-        <div>
-          基础知识浮点数对于大模型常说的1B、7B中的B指的是Billion，即十亿参数，然后还需考虑模型采用什么位数来存储，常见的表示类型如下：  可以非常直观地看到，浮点数主要是由符号位（sign）、指数位（exponent）和小数位（mantissa）三部分组成。 符号位都是1位（0表示正，1表示负），指数位影响浮点数范围，小数位影响精度。 其中TF32并不是有32bit，只有19bit不要记错了。B
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-04-30 20:53" pubdate>
-              2025-04-30
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
   
   
 
