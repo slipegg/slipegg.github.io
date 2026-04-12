@@ -266,6 +266,76 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/12/22/megatron-lm-pre-train-process/" target="_self">
+          【Megatron-LM源码分析（二）】-GPT模型pretrain流程
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/22/megatron-lm-pre-train-process/" target="_self">
+        <div>
+          本次查看Megatron-LM的版本是core_r0.14.0，查看的GPT训练文件是pretrain_gpt.py 入口函数main入口函数代码如下： 123456789101112131415161718if __name__ == &quot;__main__&quot;:    # Temporary for transition to core datasets    train_val
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-22 15:41" pubdate>
+              2025-12-22
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Megatron-LM/" class="category-chain-item">Megatron-LM</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Megatron-LM/">#Megatron-LM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/12/14/megatron-lm-env-and-example/" target="_self">
           【Megatron-LM源码分析（一）】-环境配置与训练示例跑通
         </a>
@@ -844,74 +914,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-07-12 20:53" pubdate>
               2025-07-12
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/FSDP/" class="category-chain-item">FSDP</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/07/02/pytorch-fsdp-1/" target="_self">
-          【pytorch-fsdp 源代码阅读（一）】-全流程概览
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/07/02/pytorch-fsdp-1/" target="_self">
-        <div>
-          专有名词解释 warp：对模型进行包裹，使其具备fsdp的相关的分布式能力  shard: 对参数进行切分，得到每个rank sharded的参数  unshard: 将切分的参数allgather，得到完整的参数  reshard：将完整的参数释放，只保留每个rank的sharded的参数  sharded：切分后的参数  unsharded：完整的参数   fsdp概览如下图所示，首先对于Ze
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-07-02 20:53" pubdate>
-              2025-07-02
             </time>
           </div>
         
