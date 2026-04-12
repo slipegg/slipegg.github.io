@@ -408,6 +408,78 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/12/09/Rail-only-paper-note/" target="_self">
+          【论文阅读】Rail-only:A Low-Cost High-Performance Network for Training LLMs with Trillion Parameters
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/12/09/Rail-only-paper-note/" target="_self">
+        <div>
+          链接：https://arxiv.org/pdf/2205.05198.pdf 发表会议：HOTI’24(CCF-C) 团队：Meta, MIT  背景训练大模型的大规模集群往往采用全连接的CLOS架构，而将 Clos 网络扩展到数万个 GPU并不容易并且造价高昂。而实际上训练大模型并不需要所有GPU都可以全连接，通过分析大模型训练的网络流量模式可以发现大部分通信都发生在rank相同的GPU对之
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-12-09 21:53" pubdate>
+              2025-12-09
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/">#论文阅读</a>
+            
+              <a href="/tags/%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C/">#高性能网络</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/12/08/Reducing-Activation-Paper-Note/" target="_self">
           【论文阅读】Reducing Activation Recomputation in Large Transformer Models
         </a>
@@ -860,74 +932,6 @@
     <span>></span>
     
   <a href="/categories/LLM/FSDP/" class="category-chain-item">FSDP</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" target="_self">
-          【Picotron-Tutorial】上下文并行
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" target="_self">
-        <div>
-          理论分析上下文并行的核心思想是将序列并行的方法（也就是沿序列长度进行拆分）的思路应用到已经采用张量并行的模块上。 对于上下文并行，就像序列并行一样，我们将沿序列维度拆分输入，但这次我们对整个模型进行拆分，而不仅仅是对之前Tensor+Sequence并行中涉及的部分模型。 拆分序列是横向的切割，所以不会影响大多数模块，如MLP和LayerNorm，因为它们对每个token的处理是独立的。 在计算梯
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-06-28 20:53" pubdate>
-              2025-06-28
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
   
   
 
