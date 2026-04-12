@@ -266,6 +266,74 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
+        <a href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" target="_self">
+          【Picotron-Tutorial】上下文并行
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/06/28/Picotron-Tutorial%20Context%20parallel/" target="_self">
+        <div>
+          理论分析上下文并行的核心思想是将序列并行的方法（也就是沿序列长度进行拆分）的思路应用到已经采用张量并行的模块上。 对于上下文并行，就像序列并行一样，我们将沿序列维度拆分输入，但这次我们对整个模型进行拆分，而不仅仅是对之前Tensor+Sequence并行中涉及的部分模型。 拆分序列是横向的切割，所以不会影响大多数模块，如MLP和LayerNorm，因为它们对每个token的处理是独立的。 在计算梯
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-06-28 20:53" pubdate>
+              2025-06-28
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/Picotron-Tutorial/" class="category-chain-item">Picotron-Tutorial</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
         <a href="/2025/06/24/Picotron-Tutorial%20pipeline%20parallel/" target="_self">
           【Picotron-Tutorial】流水线并行
         </a>
@@ -828,74 +896,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2025-05-02 20:53" pubdate>
               2025-05-02
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/LLM/Build-a-Large-Language-Model-From-Scratch/" class="category-chain-item">Build a Large Language Model (From Scratch)</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/05/01/LLMFromScratch1/" target="_self">
-          【从零构建大模型】一、文本数据处理
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/05/01/LLMFromScratch1/" target="_self">
-        <div>
-          概览构建大模型的全景图如下，本文介绍了最开始的数据处理。  数据处理的全景图如下所示，大致流程为：  将原文本，一般为一个string，进行分割。  对分割后的词转化为id。  生成一个embeddings层，然后id作为序号去embeddings层中取对应的行作为自己的表征。    如此转化后就将原本深度学习模型不能处理的原始数据转化为了可以处理的矩阵，同时我们希望这最后表示原始数据的矩阵中也能
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-05-01 20:53" pubdate>
-              2025-05-01
             </time>
           </div>
         

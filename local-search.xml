@@ -4,6 +4,19 @@
   
   
   <entry>
+    <title>mac-migration-1775965229</title>
+    <link href="/2026/04/12/mac-migration-1775965229/"/>
+    <url>/2026/04/12/mac-migration-1775965229/</url>
+    
+    <content type="html"><![CDATA[]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>【论文阅读】Search-R1:Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning</title>
     <link href="/2026/03/11/Search-R1-Paper-Note/"/>
     <url>/2026/03/11/Search-R1-Paper-Note/</url>
@@ -22,9 +35,9 @@
     
     <tags>
       
-      <tag>论文阅读</tag>
-      
       <tag>LLM</tag>
+      
+      <tag>论文阅读</tag>
       
       <tag>Agent</tag>
       
@@ -55,11 +68,11 @@
     
     <tags>
       
-      <tag>k8s</tag>
-      
       <tag>LLM</tag>
       
       <tag>RL</tag>
+      
+      <tag>k8s</tag>
       
       <tag>sandbox</tag>
       
@@ -88,9 +101,9 @@
     
     <tags>
       
-      <tag>论文阅读</tag>
-      
       <tag>LLM</tag>
+      
+      <tag>论文阅读</tag>
       
       <tag>GLM-5</tag>
       
@@ -278,9 +291,9 @@
       
       <tag>LLM</tag>
       
-      <tag>RL</tag>
-      
       <tag>CS336</tag>
+      
+      <tag>RL</tag>
       
     </tags>
     
@@ -423,9 +436,9 @@
     
     <tags>
       
-      <tag>论文阅读</tag>
-      
       <tag>LLM</tag>
+      
+      <tag>论文阅读</tag>
       
       <tag>vLLM</tag>
       
@@ -483,9 +496,9 @@
     
     <tags>
       
-      <tag>论文阅读</tag>
-      
       <tag>LLM</tag>
+      
+      <tag>论文阅读</tag>
       
       <tag>MoE</tag>
       
@@ -572,9 +585,9 @@
     
     <tags>
       
-      <tag>论文阅读</tag>
-      
       <tag>LLM</tag>
+      
+      <tag>论文阅读</tag>
       
       <tag>MoE</tag>
       
@@ -692,9 +705,9 @@
     
     <tags>
       
-      <tag>论文阅读</tag>
-      
       <tag>LLM</tag>
+      
+      <tag>论文阅读</tag>
       
     </tags>
     
@@ -721,9 +734,9 @@
     
     <tags>
       
-      <tag>论文阅读</tag>
-      
       <tag>LLM</tag>
+      
+      <tag>论文阅读</tag>
       
       <tag>Megatron-LM</tag>
       
@@ -1454,11 +1467,11 @@
     
     <tags>
       
+      <tag>LLM</tag>
+      
       <tag>论文阅读</tag>
       
       <tag>分布式训练</tag>
-      
-      <tag>LLM</tag>
       
     </tags>
     
@@ -2008,9 +2021,9 @@
     
     <tags>
       
-      <tag>转载</tag>
-      
       <tag>Go</tag>
+      
+      <tag>转载</tag>
       
     </tags>
     
@@ -2095,11 +2108,11 @@
     
     <tags>
       
+      <tag>论文阅读</tag>
+      
       <tag>分布式</tag>
       
       <tag>MIT6.824</tag>
-      
-      <tag>论文阅读</tag>
       
     </tags>
     
@@ -2126,11 +2139,11 @@
     
     <tags>
       
+      <tag>论文阅读</tag>
+      
       <tag>分布式</tag>
       
       <tag>MIT6.824</tag>
-      
-      <tag>论文阅读</tag>
       
     </tags>
     
@@ -2157,11 +2170,11 @@
     
     <tags>
       
+      <tag>论文阅读</tag>
+      
       <tag>分布式</tag>
       
       <tag>MIT6.824</tag>
-      
-      <tag>论文阅读</tag>
       
       <tag>GFS</tag>
       
@@ -2215,11 +2228,11 @@
     
     <tags>
       
-      <tag>go</tag>
-      
       <tag>分布式</tag>
       
       <tag>MIT6.824</tag>
+      
+      <tag>go</tag>
       
     </tags>
     
@@ -2304,13 +2317,13 @@
     
     <tags>
       
-      <tag>转载</tag>
+      <tag>论文阅读</tag>
       
       <tag>分布式</tag>
       
       <tag>MIT6.824</tag>
       
-      <tag>论文阅读</tag>
+      <tag>转载</tag>
       
       <tag>MapReduce</tag>
       
