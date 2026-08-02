@@ -1,0 +1,935 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.jpg">
+  <link rel="icon" href="/img/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#1C262C">
+  <meta name="author" content="滑滑蛋">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="论文链接：https:&#x2F;&#x2F;github.com&#x2F;MoonshotAI&#x2F;Kimi-K3&#x2F;blob&#x2F;main&#x2F;k3_tech_report.pdf  团队：Kimi   背景Kimi K3 以接近 Fable 5 的性能外加开源强势出圈，所以对其技术报告产生了兴趣，特别来阅读一下。本文更主要的是关注 Agentic RL 训练相关的内容，特别是 sandbox 方面。 摘要 Kimi K3 是一个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【论文阅读】Kimi K3! Open Frontier Intelligence">
+<meta property="og:url" content="http://example.com/2026/08/02/kimi-k3-paper-note/index.html">
+<meta property="og:site_name" content="滑滑蛋的个人博客">
+<meta property="og:description" content="论文链接：https:&#x2F;&#x2F;github.com&#x2F;MoonshotAI&#x2F;Kimi-K3&#x2F;blob&#x2F;main&#x2F;k3_tech_report.pdf  团队：Kimi   背景Kimi K3 以接近 Fable 5 的性能外加开源强势出圈，所以对其技术报告产生了兴趣，特别来阅读一下。本文更主要的是关注 Agentic RL 训练相关的内容，特别是 sandbox 方面。 摘要 Kimi K3 是一个">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2026/08/02/kimi-k3-paper-note/image.png">
+<meta property="og:image" content="http://example.com/2026/08/02/kimi-k3-paper-note/image-1.png">
+<meta property="og:image" content="http://example.com/2026/08/02/kimi-k3-paper-note/image-2.png">
+<meta property="og:image" content="http://example.com/2026/08/02/kimi-k3-paper-note/image-3.png">
+<meta property="article:published_time" content="2026-08-02T08:38:00.000Z">
+<meta property="article:modified_time" content="2026-08-02T08:43:33.829Z">
+<meta property="article:author" content="滑滑蛋">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="论文阅读">
+<meta property="article:tag" content="Agentic RL">
+<meta property="article:tag" content="Kimi K3">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2026/08/02/kimi-k3-paper-note/image.png">
+  
+  
+  
+  <title>【论文阅读】Kimi K3! Open Frontier Intelligence - 滑滑蛋的个人博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.5","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":3},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":"d38d21fca521d897798e5bdd940a90d0","google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","app_key":"pZeun9WfI1yaQrIoUbvTQrXv","server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+    <!-- Baidu Analytics -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?d38d21fca521d897798e5bdd940a90d0";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+      }
+    </script>
+  
+
+  
+    <!-- Google tag (gtag.js) -->
+    <script async>
+      if (!Fluid.ctx.dnt) {
+        Fluid.utils.createScript("https://www.googletagmanager.com/gtag/js?id=", function() {
+          window.dataLayer = window.dataLayer || [];
+          function gtag() {
+            dataLayer.push(arguments);
+          }
+          gtag('js', new Date());
+          gtag('config', '');
+        });
+      }
+    </script>
+  
+
+  
+
+  
+
+  
+
+  
+    
+  
+
+
+
+  
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>滑滑蛋</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【论文阅读】Kimi K3! Open Frontier Intelligence"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-02 16:38" pubdate>
+          2026年8月2日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          32 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="leancloud-page-views-container" class="post-meta" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="leancloud-page-views"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">【论文阅读】Kimi K3! Open Frontier Intelligence</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li><p><strong>论文链接：</strong><a target="_blank" rel="noopener" href="https://github.com/MoonshotAI/Kimi-K3/blob/main/k3_tech_report.pdf">https://github.com/MoonshotAI/Kimi-K3/blob/main/k3_tech_report.pdf</a></p>
+</li>
+<li><p><strong>团队：</strong>Kimi</p>
+</li>
+</ul>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>Kimi K3 以接近 Fable 5 的性能外加开源强势出圈，所以对其技术报告产生了兴趣，特别来阅读一下。本文更主要的是关注 Agentic RL 训练相关的内容，特别是 sandbox 方面。</p>
+<h1 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h1><ul>
+<li><p>Kimi K3 是一个 2.8T 参数的混合参数模型，具有 104B 的激活参数，以及原生视觉能力和 100 万 token 上下文窗口。</p>
+</li>
+<li><p>Kimi K3 基于 Kimi Delta Attention 和 Attention Residuals 构建，二者改善了跨序列长度和模型深度的信息流动。结合能够高效地为每个 token 激活 896 个路由专家中的 16 个的 Stable LatentMoE，以及精细化的训练与数据方案，这些进展使得整体扩展效率相比 Kimi K2 提升了约 2.5 倍。</p>
+</li>
+<li><p>Kimi K3 后训练阶段着重于跨通用、智能体（agentic）和编程领域以及多种推理努力（reasoning-effort）级别的强化学习，从而实现组合泛化能力和稳健的长程执行能力。</p>
+</li>
+<li><p>在 2.8T 参数规模下，Kimi K3 得到了多个领域基础设施进步的支持：面向 KDA 的算法—系统协同设计、具有高效内存管理的完美均衡专家并行训练、具备持久化 rollout 和沙盒状态的百万 token 智能体强化学习，以及部署方面的创新。</p>
+</li>
+<li><p>实验表明 Kimi K3 只落后于最前沿的 Claude Code Fable 5 以及 GPT 5.6 Sol，而优于其他开源与闭源模型。</p>
+</li>
+</ul>
+<h1 id="后训练"><a href="#后训练" class="headerlink" title="后训练"></a>后训练</h1><h2 id="流程与方法"><a href="#流程与方法" class="headerlink" title="流程与方法"></a>流程与方法</h2><p>后训练遵循三阶段范式：</p>
+<ol>
+<li><p>通过 SFT 初始基础 Agent 能力</p>
+</li>
+<li><p>通过 RL 开发具有不同推理强度的专业领域专家</p>
+</li>
+<li><p>通过 Multi-Teacher On-Policy Distillation (MOPD) 将多领域专家融合到一个模型中</p>
+</li>
+</ol>
+<h3 id="SFT"><a href="#SFT" class="headerlink" title="SFT"></a>SFT</h3><p>其在原本 SFT 数据的基础上又一次进行了拓展，其使用原本 Kimi 系列的领域专业模型合成数据轨迹，并进行多阶段验证和人在回路（human-in-the-loop）标注。为了更一致地表示复杂的智能轨迹，其使用了基于 XTML 的对话模板。</p>
+<ul>
+<li>因为普通的聊天模板如下所示，只能做角色区分。</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">user:</span> <span class="hljs-string">北京天气怎么样？</span><br><span class="hljs-attr">assistant:</span> <span class="hljs-string">北京今天……</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>而 XTML 可以更加灵活的表示 Agentic 相关的思考、工具调用、工具调用结果等。</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">conversation</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">turn</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">user</span>&gt;</span><br>      查询一下北京今天的天气，并告诉我是否需要带伞。<br>    <span class="hljs-tag">&lt;/<span class="hljs-name">user</span>&gt;</span><br>  <span class="hljs-tag">&lt;/<span class="hljs-name">turn</span>&gt;</span><br><br>  <span class="hljs-tag">&lt;<span class="hljs-name">turn</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">assistant</span>&gt;</span><br>      <span class="hljs-tag">&lt;<span class="hljs-name">analysis</span>&gt;</span><br>        用户需要实时天气信息，需要调用天气查询工具。<br>      <span class="hljs-tag">&lt;/<span class="hljs-name">analysis</span>&gt;</span><br><br>      <span class="hljs-tag">&lt;<span class="hljs-name">tool_call</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">name</span>&gt;</span>get_weather<span class="hljs-tag">&lt;/<span class="hljs-name">name</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">arguments</span>&gt;</span><br>          &#123;<br>            &quot;city&quot;: &quot;北京&quot;,<br>            &quot;date&quot;: &quot;today&quot;<br>          &#125;<br>        <span class="hljs-tag">&lt;/<span class="hljs-name">arguments</span>&gt;</span><br>      <span class="hljs-tag">&lt;/<span class="hljs-name">tool_call</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">assistant</span>&gt;</span><br>  <span class="hljs-tag">&lt;/<span class="hljs-name">turn</span>&gt;</span><br><br>  <span class="hljs-tag">&lt;<span class="hljs-name">turn</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">tool</span>&gt;</span><br>      <span class="hljs-tag">&lt;<span class="hljs-name">tool_result</span>&gt;</span><br>        &#123;<br>          &quot;condition&quot;: &quot;小雨&quot;,<br>          &quot;temperature&quot;: &quot;23-28°C&quot;,<br>          &quot;precipitation_probability&quot;: 80<br>        &#125;<br>      <span class="hljs-tag">&lt;/<span class="hljs-name">tool_result</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">tool</span>&gt;</span><br>  <span class="hljs-tag">&lt;/<span class="hljs-name">turn</span>&gt;</span><br><br>  <span class="hljs-tag">&lt;<span class="hljs-name">turn</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">assistant</span>&gt;</span><br>      <span class="hljs-tag">&lt;<span class="hljs-name">analysis</span>&gt;</span><br>        降雨概率为 80%，应当建议用户带伞。<br>      <span class="hljs-tag">&lt;/<span class="hljs-name">analysis</span>&gt;</span><br><br>      <span class="hljs-tag">&lt;<span class="hljs-name">final</span>&gt;</span><br>        北京今天有小雨，气温约 23～28°C，降雨概率为 80%，建议带伞。<br>      <span class="hljs-tag">&lt;/<span class="hljs-name">final</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">assistant</span>&gt;</span><br>  <span class="hljs-tag">&lt;/<span class="hljs-name">turn</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">conversation</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>SFT 使 Kimi K3 具备自适应推理、精确工具调用以及在长周期智能体场景中稳健执行的能力。此外，其从 SFT 阶段开始应用量化感知训练（QAT），采用 MXFP4 权重和 MXFP8 激活。</p>
+<h3 id="RL"><a href="#RL" class="headerlink" title="RL"></a>RL</h3><p>其将 RL 任务划分了为如下的三大类，每一类涵盖了广泛的子任务，并在每个推理强度上为每个领域训练一个单一的专家模型。</p>
+<ul>
+<li><p>通用任务：涵盖通用体验、视觉、推理、忠实性、搜索能力和知识工作任务。</p>
+</li>
+<li><p>通用智能体：涵盖长时程助手任务、深度研究和段落级写作；</p>
+</li>
+<li><p>编程智能体：涵盖软件工程（SWE）、编程体验、内核任务和网页开发。</p>
+</li>
+</ul>
+<p><strong>算法</strong>方面，为了缓解长程任务的长尾问题，其对 <em>partial rollout</em> 架构进行了拓展。在每次 rollout 阶段，其对 N 个 prompt 采样 K 个结果（类似 GRPO），从而维持 N×K 个 active sessions。然后其设置一个比例 $\lambda$，当完成比例达到 $\lambda \times N \times K$ 时暂停剩余未完成的 session 并入队，并取其中完全了 K 个采样的 prompt 及其轨迹进行训练（因为是 co-locate 的，训练时就不能推理），而后在下一轮时优先恢复被暂停 session 的执行。在这种 <em>partial rollout</em> 架构下，会出现单条长周期轨迹跨越多次迭代的情况，其采用了 per-token 正则化的手段来容忍这种 off-policy 情形，以维持训练稳定。</p>
+<p><strong>推理强度控制</strong>方面，其在 RL 过程中实现了一种针对每个问题的预算控制机制，对于每个问题 x 都关联一个由冷启动模型估计的初始 token 预算 $b_0(x)$，并对总 token 预算超过 $\tau b_0(x)$ 的轨迹将奖励覆盖为 -1。对于一般任务，token 预算计算的是思考 token 的数量，对于 agentic 任务，token 预算计算的是包括推理轨迹和工具调用参数两部分的累计输出 token。其整体训练的思路是先训练一个 $\tau$ 最大的模型，而后通过调小 $\tau$ 来抑制过度思考，从而得到其他更小推理强度的模型。</p>
+<p><strong>Agentic Generative Reward Model（GRM）</strong>方面，对于不可验证的通用任务，其采用了 GRM，保留了与 Kimi K2.5 中相同的基于二元比较的锦标赛式群组奖励机制。整体流程为：</p>
+<ol>
+<li><p>agent 读取结果、产物或者输出；</p>
+</li>
+<li><p>生成评分标准；</p>
+</li>
+<li><p>依据评分标准对每个候选打分；</p>
+</li>
+<li><p>将分数记录在评分板上。</p>
+</li>
+</ol>
+<p>并且为了防止模型输出愈发冗长的问题，其会参考冷启动模型估计出的初始冗长长度 $l_0$，如果输出长度大于 $\sigma l_0$ 就在比较中自动判负。</p>
+<h3 id="Multi-Teacher-On-Policy-Distillation"><a href="#Multi-Teacher-On-Policy-Distillation" class="headerlink" title="Multi-Teacher On-Policy Distillation"></a>Multi-Teacher On-Policy Distillation</h3><p>其总共设置了 3 种推理强度（low、high、max），叠加 3 类任务，总共有 9 个模型，优化过程由 9 个专家中相应的教师模型 π(d,e) teacher 进行引导。给定输入查询 x 和前缀响应 y&lt;t，教师模型 π(d,e) teacher 与学生模型 πθ 之间在 yt 上评估的逐 token OPD 奖励定义为：</p>
+<p><img src="/2026/08/02/kimi-k3-paper-note/image.png" srcset="/img/loading.gif" lazyload></p>
+<p>其中 sg(·) 表示停止梯度算子，Rmax &gt; 0 是用于约束极端优势信号的裁剪阈值，从而稳定强化学习训练。</p>
+<h3 id="量化感知的后训练（QAT）"><a href="#量化感知的后训练（QAT）" class="headerlink" title="量化感知的后训练（QAT）"></a>量化感知的后训练（QAT）</h3><p>为了减少部署时的内存占用和服务成本，其将主导模型参数内存的 MoE 专家权重量化为 MXFP4，激活值以 MXFP8 计算，而所有非专家组件则保持较高精度。在整个后训练阶段执行量化感知训练（QAT），涵盖 SFT 和 RL，从而使模型能够适应量化引起的精度损失。在 RL 期间，rollout 和训练共享相同的量化方案——消除了训练与推理之间的不匹配。</p>
+<p>Kimi K3 在预训练时配备了一个多令牌预测（multi-token-prediction，MTP）层，该层的结构与主干模块（backbone block）保持一致。由于 EAGLE-3 的草稿模型（draft model）由单个解码器层组成，其结构与 MTP 层相匹配，训练时将预训练的 MTP 层微调为 EAGLE-3 风格的草稿模型，此时目标模型（target model）被冻结，仅更新草稿层及其特征融合投影。草稿模型微调也遵循后训练 QAT 配置。</p>
+<h2 id="RL-任务合成与-Agent-环境"><a href="#RL-任务合成与-Agent-环境" class="headerlink" title="RL 任务合成与 Agent 环境"></a>RL 任务合成与 Agent 环境</h2><p>为了支持跨复杂长周期任务的可扩展训练，其设计了一系列专门的<strong>白盒环境</strong>和<strong>任务合成范式</strong>。</p>
+<h3 id="统一白盒强化学习环境"><a href="#统一白盒强化学习环境" class="headerlink" title="统一白盒强化学习环境"></a>统一白盒强化学习环境</h3><p>为了防止模型过度拟合到特定的 Agent 工具上，其开发了一套统一的<strong>白盒强化学习环境</strong>，该环境将智能体框架表示为一组可配置、可组合的模块，包括工具接口、系统提示、上下文管理策略、技能、记忆、子智能体及其他组件。通过配置组合这些模块，该环境能够实例化主流框架，例如 Kimi Code、Claude Code、Codex、OpenClaw 和 Hermes，以及全新的框架。在强化学习训练过程中，通过为不同的任务组动态构建不同的框架配置，使 Kimi K3 接触到这些模块的多样化组合，而非依赖于任何单一框架的惯例。同样的抽象机制也能够顺利支持跨多种任务领域的强化学习，为训练更加通用的智能体提供了可扩展的基础。</p>
+<h3 id="知识图谱引导的任务合成"><a href="#知识图谱引导的任务合成" class="headerlink" title="知识图谱引导的任务合成"></a>知识图谱引导的任务合成</h3><p>为了大规模地同时控制粒度和覆盖范围，其构建了一个自我演化、分层组织的知识图谱，智能体通过在知识密集型和编程领域进行网络规模的探索来持续扩展该图谱，如下所示。</p>
+<p><img src="/2026/08/02/kimi-k3-paper-note/image-1.png" srcset="/img/loading.gif" lazyload></p>
+<p>在<strong>知识图谱构建</strong>方面，其将知识图谱构建为一个有向无环图，扩展过程始于一组预定义的粗粒度种子节点。随后，为每个节点分配一个智能体实例，并执行多次网络搜索以探究相应的概念。在添加新节点之前，智能体会先探索现有图谱，以识别等价或相关的概念，在适当情况下复用现有节点，并尽量减少重复。无论智能体先发现哪个端点，边始终从较粗粒度的概念指向较细粒度的概念。新添加的节点随后会被分配给智能体进行进一步探索。当所分配的智能体判定当前概念已足够原子化时，某一分支便停止扩展。</p>
+<p>在<strong>任务合成</strong>方面，为实现跨领域和任务类型的目标分布，系统以不同粒度层级对节点进行采样，采样方式既可以是单个节点，也可以是相关节点的组合。从采样节点中提取的关键词与知识图谱中其祖先节点的上下文信息相结合，用以构建网络查询。检索到的真实世界材料经过组装后，由合成智能体生成各种任务类型的训练任务。</p>
+<h2 id="Infra-for-1M-Agentic-RL"><a href="#Infra-for-1M-Agentic-RL" class="headerlink" title="Infra for 1M Agentic RL"></a>Infra for 1M Agentic RL</h2><h3 id="长上下文-RL-Infra"><a href="#长上下文-RL-Infra" class="headerlink" title="长上下文 RL Infra"></a>长上下文 RL Infra</h3><p>其采用同置（co-located）强化学习训练，将每个 1M-context 的 Kimi K3 强化学习实验控制在数百个 GPU 之内，并使用 partial rollouts 来降低超长轨迹带来的尾部延迟。虽然这提高了硬件利用率，但是长上下文为 KV-Cache 的保留引入了额外的 DRAM 需求，从而与训练侧状态产生竞争。此外，要同时实现预填充（prefill）和解码（decoding）的高效率，需要对前缀管理和请求调度进行精心设计。</p>
+<p>在 <strong>KV-Cache pool 管理</strong>方面，其通过一种写回（write-back）设计，将前缀保留与 GPU 驻留解耦。活跃的解码块保留在 GPU 的 KV 缓存中，而可复用的空闲前缀仅在其被从 GPU 中逐出时，才写回到位于 CPU DRAM 中的外部 KV 缓存池，并在下一次复用之前被预取回来。为了给外部内存池提供充足的 DRAM，其在一次训练迭代结束后将训练状态（模型权重和优化器状态）卸载到硬盘存储中。</p>
+<p>在 <strong>Rollout 自动限流调度器</strong>方面，在多步 rollout 中，上下文随着轨迹推进而逐渐增长，这使得基于全轨迹平均长度设定固定并发度既难以估计，又在早期过于保守。反之，将并发度设置得过高会在后期阶段造成 KV 缓存压力，并可能触发抢占。因此，其在 LLM 请求调度层设计了一种自动限流机制，利用诸如活跃请求数、排队请求数和 KV 缓存利用率等运行时信号，来动态控制发送到推理引擎的请求数量。这既能保持早期 rollout 的良好利用率，又能在 KV 缓存压力上升时降低并发度，从而在无需手动调优的情况下同时避免利用率不足和过载。</p>
+<p>在 <strong>non-policy 模型前向传播的梯度缓冲区复用</strong>方面，强化学习损失计算通常需要 ref 模型，其权重过大而无法常驻于 GPU。故其将这些权重保存在 CPU 内存中，仅在需要时才实例化，并使用策略模型的 FP32 梯度缓冲区存储来承载其参数张量。这种做法复用了现有的 GPU 内存，无需额外分配或造成碎片化，并且保持安全，因为当后续计算真实梯度时这些缓冲区会被覆盖。</p>
+<h3 id="Sandbox-Infra"><a href="#Sandbox-Infra" class="headerlink" title="Sandbox Infra"></a>Sandbox Infra</h3><p>其采用了多种沙箱运行时，包括传统的基于容器的运行时、GPU 沙箱运行时和 MicroVM 沙箱运行时，系统名为 AgentENV（<a target="_blank" rel="noopener" href="https://github.com/kvcache-ai/AgentENV">https://github.com/kvcache-ai/AgentENV</a>）。其围绕 3 个核心目标构建。</p>
+<ol>
+<li><p><strong>高保真隔离</strong>。这一方面可以避免由智能体的非预期操作引发的内核崩溃，另一方面也能够避免限制智能体的能力，让其尽可能探索，该系统允许智能体应能够随意挂载磁盘、运行容器，甚至启动虚拟机。而这主要来自于 MicroVM 的运行时。</p>
+</li>
+<li><p><strong>灵活沙箱生命周期</strong>。AgentENV 支持沙箱状态的增量式检查点保存与恢复，其中在检查点保存期间仅保存自上次检查点以来被写脏的内存页，从而实现了低至 133 毫秒和 49 毫秒的检查点保存与恢复延迟。在此基础上，AgentENV 提供了三种有助于提升智能体强化学习效率的高层操作。</p>
+<ol>
+<li><p><strong>Pause and Resume</strong>：处于暂停状态的沙箱不消耗任何内存或 CPU 资源；因此，当智能体正在等待模型的推理结果时，可以暂停沙箱，而这一等待时间可能占到沙箱生命周期的 98% 之多。</p>
+</li>
+<li><p><strong>Fork</strong>：分叉可以在保持原始沙箱继续运行的同时，从其精确状态创建一个新沙箱，这对于无副作用的奖励评判非常有用。</p>
+</li>
+<li><p><strong>Snapshot</strong>：可以按固定间隔保存沙箱的快照，以用于错误恢复。</p>
+</li>
+</ol>
+</li>
+<li><p><strong>高效率与高密度</strong>。在其工作负载中，数以万计的沙箱（每个都具有一组独特的镜像）可能需要在数秒内被创建。所以其采用 OverlayBD 作为镜像格式，并结合自定义的 ublk 驱动实现、存储层共享以及 P2P 传输，从而在大规模场景下实现亚秒级的启动延迟。其通过写时复制内存和页缓存优化进一步降低了内存使用量，在实际工作负载中实现了高达 6.5× 的内存超额分配比率。</p>
+</li>
+</ol>
+<p>在整个 Kimi K3 的训练和评估过程中，共创建了 1,505,678 个镜像的 51,219,741 个沙箱。</p>
+<h1 id="Inference-and-Online-Serving"><a href="#Inference-and-Online-Serving" class="headerlink" title="Inference and Online Serving"></a>Inference and Online Serving</h1><h2 id="Fleet-Level-Scheduling"><a href="#Fleet-Level-Scheduling" class="headerlink" title="Fleet-Level Scheduling"></a>Fleet-Level Scheduling</h2><p>服务请求存在两个关键问题：</p>
+<ul>
+<li><p>前缀缓存未命中的代价比命中高出几个数量级，</p>
+</li>
+<li><p>对于百万级 token 上下文请求的突发涌入可能会使短请求陷入饥饿</p>
+</li>
+</ul>
+<p>所以服务挑战从单次请求效率转向可预测性。故而其提出了两种集群级调度策略来解决这一问题：</p>
+<ul>
+<li><p>缓存感知的亲和性调度：一次性哈希会将每个会话固定到两个集群，一个负责为其流量提供服务，一个当做预先分配的次集群用以容灾。在服务集群中缓存依赖于集群内部的传输。一旦集群故障将中断所有绑定到它的会话，而次集群将重新计算预填充，由于哈希均匀分散到多个集群，所以对整体其他集群的影响是可控的。</p>
+</li>
+<li><p>基于预算的准入控制：采用基于预算的准入控制，为不同的请求类别分配独立的资源预算，使得突发的长上下文流量最多只消耗其自身份额的容量，而不会降低其他类别所体验到的系统级 SLO。</p>
+</li>
+</ul>
+<h1 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h1><ul>
+<li>外部开源 benchmark 测试如下：</li>
+</ul>
+<p><img src="/2026/08/02/kimi-k3-paper-note/image-2.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>内部 benchmark 测试如下：</li>
+</ul>
+<p><img src="/2026/08/02/kimi-k3-paper-note/image-3.png" srcset="/img/loading.gif" lazyload></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/LLM/" class="category-chain-item">LLM</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/LLM/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" class="category-chain-item">基础知识</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/%E8%AE%BA%E6%96%87%E9%98%85%E8%AF%BB/" class="print-no-link">#论文阅读</a>
+      
+        <a href="/tags/Agentic-RL/" class="print-no-link">#Agentic RL</a>
+      
+        <a href="/tags/Kimi-K3/" class="print-no-link">#Kimi K3</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【论文阅读】Kimi K3! Open Frontier Intelligence</div>
+      <div>http://example.com/2026/08/02/kimi-k3-paper-note/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>滑滑蛋</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月2日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/04/13/agentic-rl-infra-forge-roll-seer-slime/" title="阅读笔记：Agentic RL 时代的 Infra 重构（Forge、ROLL、Seer、Slime）">
+                        <span class="hidden-mobile">阅读笔记：Agentic RL 时代的 Infra 重构（Forge、ROLL、Seer、Slime）</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"WMtHomhQYlrbIodTwoPU3gTY-MdYXbMMI","appKey":"pZeun9WfI1yaQrIoUbvTQrXv","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://wmthomhq.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="leancloud-site-pv-container" style="display: none">
+        总访问量 
+        <span id="leancloud-site-pv"></span>
+         次
+      </span>
+    
+    
+      <span id="leancloud-site-uv-container" style="display: none">
+        总访客数 
+        <span id="leancloud-site-uv"></span>
+         次
+      </span>
+    
+    
+
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script defer src="/js/leancloud.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
